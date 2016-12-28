@@ -10,7 +10,8 @@ It is under development (not released yet). You can see the development backlog 
 
 I intend to write a wiki explaining how to use it. For while, an example of the XML configuration file and some screenshots:
 
-![alt tag](https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap01.png)
-![alt tag](https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap02.png)
-![alt tag](https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap03.png)
-![alt tag](https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap04.png)
+
+<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap01.png" width="400">
+<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap02.png" width="400">
+<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap03.png" width="400">
+<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap04.png" width="400">
