@@ -165,7 +165,7 @@ public class PnlGuiPayload extends JPanel {
 		pnlFormattedFields.add(lblType);
 
 		lblDynamic.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblDynamic.setBounds(530, 10, 70, 16);
+		lblDynamic.setBounds(580, 10, 70, 16);
 		pnlFormattedFields.add(lblDynamic);
 		
 		pnlFormattedFields.add(scrFields);

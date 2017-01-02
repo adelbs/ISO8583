@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
@@ -71,7 +72,9 @@ public class GuiPayloadMessage {
 		private FieldVO fieldVO;
 		
 		private JCheckBox ckBox;
-		private JTextField textField;
+		private JTextField txtType;
+		private JTextField txtLength;
+		private JTextField txtValue;
 		
 		private JLabel lblFieldNum;
 		private JLabel lblFieldName;
@@ -85,7 +88,9 @@ public class GuiPayloadMessage {
 			this.isSubfield = isSubfield;
 			
 			ckBox = new JCheckBox();
-			textField = new JTextField();
+			txtType = new JTextField();
+			txtLength = new JTextField();
+			txtValue = new JTextField();
 			subfieldList = new ArrayList<GuiPayloadField>();
 			
 			lblFieldNum = new JLabel(fieldVO.getBitNum().toString());
@@ -101,44 +106,70 @@ public class GuiPayloadMessage {
 			ckBox.setBounds(10, 10 + (lineNum * 25), 22, 22);
 			lblFieldNum.setBounds(40, 10 + (lineNum * 25), 50, 22);
 			lblFieldName.setBounds(80, 10 + (lineNum * 25), 100, 22);
-			textField.setBounds(190, 10 + (lineNum * 25), 270, 22);
 			lblType.setBounds(470, 10 + (lineNum * 25), 100, 22);
-			lblDynamic.setBounds(550, 10 + (lineNum * 25), 50, 22);
+			lblDynamic.setBounds(600, 10 + (lineNum * 25), 50, 22);
+			
+			if (fieldVO.getType() == TypeEnum.ALPHANUMERIC) {
+				txtValue.setBounds(190, 10 + (lineNum * 25), 260, 22);
+			}
+			else if (fieldVO.getType() == TypeEnum.TLV) {
+				txtType.setBounds(190, 10 + (lineNum * 25), 80, 22);
+				txtLength.setBounds(280, 10 + (lineNum * 25), 80, 22);
+				txtValue.setBounds(370, 10 + (lineNum * 25), 80, 22);
+				
+				pnlFields.add(txtType);
+				pnlFields.add(txtLength);
+			}
 			
 			if (!isSubfield)
 				pnlFields.add(ckBox);
 				
 			pnlFields.add(lblFieldNum);
 			pnlFields.add(lblFieldName);
-			pnlFields.add(textField);
+			pnlFields.add(txtValue);
 			pnlFields.add(lblType);
 			
-			if (!fieldVO.getDynaCondition().equals(""))
+			if (!fieldVO.getDynaCondition().equals("") && !fieldVO.getDynaCondition().equals("true"))
 				pnlFields.add(lblDynamic);
 			
-			ckBox.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					setEnabled(((JCheckBox) e.getSource()).isSelected());
-					setText("");
-					for (GuiPayloadField subfield : subfieldList) {
-						subfield.setEnabled(((JCheckBox) e.getSource()).isSelected());
-						subfield.setText("");
+			if (fieldVO.getDynaCondition().equals("true")) {
+				ckBox.setSelected(true);
+				ckBox.setEnabled(false);
+				ckBoxClick(ckBox);
+				
+				setEnabled(true);
+			}
+			else {
+				ckBox.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						ckBoxClick((JCheckBox) e.getSource());
 					}
-				}
-			});
-			
-			setEnabled(false);
+				});
+				
+				setEnabled(false);
+			}
+		}
+		
+		private void ckBoxClick(JCheckBox ckBox) {
+			setEnabled(ckBox.isSelected());
+			setText("");
+			for (GuiPayloadField subfield : subfieldList) {
+				subfield.setEnabled(ckBox.isSelected());
+				subfield.setText("");
+			}
 		}
 		
 		private void addSubline(FieldVO fieldVO) {
-			pnlFields.remove(textField);
+			pnlFields.remove(txtValue);
 			pnlFields.remove(lblType);
 			subfieldList.add(new GuiPayloadField(fieldVO, true));
 		}
 		
 		private void setEnabled(boolean enabled) {
-			textField.setEnabled(enabled);
+			txtType.setEnabled(enabled);
+			txtLength.setEnabled(enabled);
+			txtValue.setEnabled(enabled);
 			lblFieldNum.setEnabled(enabled);
 			lblFieldName.setEnabled(enabled);
 			lblType.setEnabled(enabled);
@@ -146,13 +177,21 @@ public class GuiPayloadMessage {
 		}
 		
 		private void setText(String text) {
-			textField.setText(text);
+			txtValue.setText(text);
 		}
 		
-		private String getText() {
-			return textField.getText();
+		private String getType() {
+			return txtType.getText();
 		}
 		
+		private String getLength() {
+			return txtLength.getText();
+		}
+		
+		private String getValue() {
+			return txtValue.getText();
+		}
+			
 		private StringBuilder getXML() {
 			StringBuilder xmlField = new StringBuilder();
 			String tabs = isSubfield ? "\t\t" : "\t";
@@ -170,8 +209,13 @@ public class GuiPayloadMessage {
 				
 				if (hasSubfield) 
 					xmlField.append("\n\t</bit>");
-				else 
-					xmlField.append(" value=\"").append(getText()).append("\"/>");
+				else {
+					if (fieldVO.getType() == TypeEnum.TLV) {
+						xmlField.append(" type=\"").append(getType()).
+								append("\" length=\"").append(getLength()).append("\"");
+					}
+					xmlField.append(" value=\"").append(getValue()).append("\"/>");
+				}
 			}
 			
 			return xmlField;

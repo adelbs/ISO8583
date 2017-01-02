@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.gui.PnlGuiConfig;
 
 public class FieldVO extends GenericIsoVO {
@@ -16,6 +17,8 @@ public class FieldVO extends GenericIsoVO {
 	
 	private TypeEnum type;
 	
+	private TypeLengthEnum typeLength;
+	
 	private Integer length;
 	
 	private EncodingEnum encoding;
@@ -27,12 +30,13 @@ public class FieldVO extends GenericIsoVO {
 	
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
 
-	public FieldVO(String name, String subFieldName, Integer bitNum, TypeEnum type, Integer length, EncodingEnum encoding, String dynaCondition) {
+	public FieldVO(String name, String subFieldName, Integer bitNum, TypeEnum type, TypeLengthEnum typeLength, Integer length, EncodingEnum encoding, String dynaCondition) {
 		this.name = name;
 		this.subFieldName = subFieldName;
 		this.bitNum = bitNum;
 		this.type = type;
 		this.length = length;
+		this.typeLength = typeLength;
 		this.encoding = encoding;
 		this.dynaCondition = dynaCondition;
 	}
@@ -112,5 +116,13 @@ public class FieldVO extends GenericIsoVO {
 
 	public void setSubFieldName(String subFieldName) {
 		this.subFieldName = subFieldName;
+	}
+
+	public TypeLengthEnum getTypeLength() {
+		return typeLength;
+	}
+
+	public void setTypeLength(TypeLengthEnum typeLength) {
+		this.typeLength = typeLength;
 	}
 }

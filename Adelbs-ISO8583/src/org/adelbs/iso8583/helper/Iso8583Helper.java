@@ -17,6 +17,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
@@ -73,7 +74,7 @@ public class Iso8583Helper {
 				!(((DefaultMutableTreeNode) ((DefaultMutableTreeNode) node).getParent()).getUserObject() instanceof FieldVO));
 		
 		if (add) {
-			newNode = new DefaultMutableTreeNode(new FieldVO("NewField", "", 1, TypeEnum.ALPHA, 1, EncodingEnum.UTF8, ""));
+			newNode = new DefaultMutableTreeNode(new FieldVO("NewField", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 1, EncodingEnum.UTF8, ""));
 			((DefaultMutableTreeNode) node).add(newNode);
 		}
 		
@@ -97,7 +98,8 @@ public class Iso8583Helper {
 		messageVo.setBitmatEncoding(bitmatEncoding);
 	}
 	
-	public void saveField(FieldVO fieldVo, String name, String subField, String bitNum, TypeEnum type, String length, EncodingEnum encoding, String dynaCondition) {
+	public void saveField(FieldVO fieldVo, String name, String subField, String bitNum, TypeEnum type, 
+			TypeLengthEnum typeLength, String length, EncodingEnum encoding, String dynaCondition) {
 		
 		if (name == null || name.trim().equals(""))
 			fieldVo.setName("NewField");
@@ -123,6 +125,7 @@ public class Iso8583Helper {
 		else
 			fieldVo.setLength(Integer.parseInt(length));
 
+		fieldVo.setTypeLength(typeLength);
 		fieldVo.setEncoding(encoding);
 		fieldVo.setDynaCondition(dynaCondition.trim());
 	}
@@ -139,7 +142,7 @@ public class Iso8583Helper {
 		while (enu.hasMoreElements()) {
 			fieldVo = (FieldVO) enu.nextElement().getUserObject();
 			fieldVo.setName(name + count);
-			fieldVo.setBitNum(count);
+			//fieldVo.setBitNum(count);
 			
 			sum += fieldVo.getLength();
 			count++;
@@ -184,9 +187,6 @@ public class Iso8583Helper {
 				
 				if (node.getChildCount() > 0) {
 					
-					if (fieldVo.getDynaCondition() != null && !fieldVo.getDynaCondition().equals(""))
-						xmlISO.append("condition=\"").append(fieldVo.getDynaCondition()).append("\" ");
-					
 					xmlISO.append(">");
 					
 					//Capturando os FieldVO filhos
@@ -213,11 +213,13 @@ public class Iso8583Helper {
 	private void appendFieldVO(StringBuilder xmlISO, FieldVO fieldVo, boolean hasChild, boolean subField) {
 		xmlISO.append("\n").append(subField ? "\t\t\t" : "\t\t").append("<field ").
 			append("name=\"").append(fieldVo.getName()).append("\" ").		
-			append("bitnum=\"").append(fieldVo.getBitNum()).append("\" ");
+			append("bitnum=\"").append(fieldVo.getBitNum()).append("\" ").
+			append("condition=\"").append(fieldVo.getDynaCondition()).append("\" ");
 		
 		//Somente adiciona length se nao tiver filhos
 		if (!hasChild) {
-			xmlISO.append("length=\"").append(fieldVo.getLength()).append("\" ").
+			xmlISO.append("length-type=\"").append(fieldVo.getTypeLength().toPlainString()).append("\" ").
+				append("length=\"").append(fieldVo.getLength()).append("\" ").
 				append("type=\"").append(fieldVo.getType()).append("\" ").
 				append("encoding=\"").append(fieldVo.getEncoding().toPlainString()).append("\" ").
 				append("/>");
@@ -305,6 +307,7 @@ public class Iso8583Helper {
 
 		fieldVo.setBitNum(Integer.parseInt(getAttr(node, "bitnum", "0")));
 		fieldVo.setType(TypeEnum.getType(getAttr(node, "type", "")));
+		fieldVo.setTypeLength(TypeLengthEnum.getTypeLength(getAttr(node, "length-type", "")));
 		fieldVo.setLength(Integer.parseInt(getAttr(node, "length", "0")));
 		fieldVo.setEncoding(EncodingEnum.getEncoding(getAttr(node, "encoding", "")));
 		fieldVo.setDynaCondition(getAttr(node, "condition", ""));
@@ -427,8 +430,16 @@ public class Iso8583Helper {
 					for (int j = 0; j < selectedNodeParent.getChildCount(); j++) {
 						fieldVO2 = (FieldVO) ((DefaultMutableTreeNode) selectedNodeParent.getChildAt(j)).getUserObject();
 						if (!fieldVO1.equals(fieldVO2) && fieldVO1.getBitNum().intValue() == fieldVO2.getBitNum().intValue()) {
-							fieldVO1.addValidationError(NodeValidationError.DUPLICATED_BIT);
-							fieldVO2.addValidationError(NodeValidationError.DUPLICATED_BIT);
+							
+							boolean isDynamic1 = !fieldVO1.getDynaCondition().equals("") && !fieldVO1.getDynaCondition().equals("true");
+							boolean isDynamic2 = !fieldVO2.getDynaCondition().equals("") && !fieldVO2.getDynaCondition().equals("true");
+							
+							if (!isDynamic1)
+								fieldVO1.addValidationError(NodeValidationError.DUPLICATED_BIT);
+							
+							if (!isDynamic2)
+								fieldVO2.addValidationError(NodeValidationError.DUPLICATED_BIT);
+
 							break;
 						}
 					}
@@ -456,10 +467,25 @@ public class Iso8583Helper {
 		}
 		
 		if (selectedNodeParent != null && !(selectedNodeParent.getUserObject() instanceof String)) {
-			if (!isoVO.isValid())
-				((GenericIsoVO) selectedNodeParent.getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
-			else
-				((GenericIsoVO) selectedNodeParent.getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
+			if (selectedNodeParent.getParent() != null && ((DefaultMutableTreeNode) selectedNodeParent.getParent()).getUserObject() instanceof MessageVO) {
+				if (!isoVO.isValid()) {
+					((GenericIsoVO) selectedNodeParent.getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
+					((GenericIsoVO) ((DefaultMutableTreeNode) selectedNodeParent.getParent()).getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
+				}
+				else {
+					((GenericIsoVO) selectedNodeParent.getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
+					((GenericIsoVO) ((DefaultMutableTreeNode) selectedNodeParent.getParent()).getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
+				}
+			}
+			else {
+				if (!isoVO.isValid()) {
+					((GenericIsoVO) selectedNodeParent.getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
+				}
+				else {
+					((GenericIsoVO) selectedNodeParent.getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
+				}
+				
+			}
 		}
 		
 		return isoVO.isValid();

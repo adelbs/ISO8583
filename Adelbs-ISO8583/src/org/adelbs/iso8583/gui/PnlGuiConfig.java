@@ -36,11 +36,13 @@ import javax.swing.tree.TreeSelectionModel;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.OperatorEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.helper.Iso8583Helper;
 import org.adelbs.iso8583.helper.SortTreeHelper;
 import org.adelbs.iso8583.vo.CmbItemVO;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
+import javax.swing.SwingConstants;
 
 public class PnlGuiConfig extends JPanel{
 	
@@ -72,6 +74,9 @@ public class PnlGuiConfig extends JPanel{
 	private JTextField txtLength = new JTextField();
 	private JLabel lblEncoding = new JLabel("Encoding");
 	private JComboBox<EncodingEnum> cmbEncoding = new JComboBox<EncodingEnum>();
+	private JCheckBox chckbxMandatory = new JCheckBox("Mandatory");
+	private JLabel lblLenValue = new JLabel("Length value");
+	private JComboBox<TypeLengthEnum> cmbLength = new JComboBox<TypeLengthEnum>();
 	
 	//Painel Dynamic ********************************************
 	private JPanel pnlDynamic = new JPanel();
@@ -107,7 +112,7 @@ public class PnlGuiConfig extends JPanel{
 		//######### Apenas para visualizacao no WindowBuilder *********************************
 		scrTreeTypes.setBounds(12, 20, 246, 350); //FAKE!!!!!
 		pnlMessageProp.setBounds(271, 12, 450, 60); //FAKE!!!!
-		pnlProperties.setBounds(271, pnlMessageProp.getHeight() + pnlMessageProp.getY() + 10, 450, 162); //FAKE!!!!!
+		pnlProperties.setBounds(271, pnlMessageProp.getHeight() + pnlMessageProp.getY() + 10, 450, 185); //FAKE!!!!!
 		pnlDynamic.setBounds(270, pnlProperties.getHeight() + pnlProperties.getY() + 10, 450, 200); //FAKE!!!!!
 		
 		//SINCRONIZAR VALORES ABAIXO COM O RESIZE
@@ -136,7 +141,7 @@ public class PnlGuiConfig extends JPanel{
 				//Paineis de propriedades
 				pnlMessageProp.setBounds(271, 12, getWidth() - 280, 60);
 				
-				pnlProperties.setBounds(271, pnlMessageProp.getHeight() + pnlMessageProp.getY() + 10, getWidth() - 280, 162);
+				pnlProperties.setBounds(271, pnlMessageProp.getHeight() + pnlMessageProp.getY() + 10, getWidth() - 280, 185);
 				pnlDynamic.setBounds(270, pnlProperties.getHeight() + pnlProperties.getY() + 10, getWidth() - 280, getHeight() - pnlProperties.getHeight() - 103);
 				
 				//Campos
@@ -209,7 +214,7 @@ public class PnlGuiConfig extends JPanel{
 				btnRemove.setEnabled(false);
 				enableMessageProp(false);
 				enableProperties(false);
-				enableDynamic(false);
+				enableDynamic(false, true);
 				clearMessageProp();
 				clearProperties();
 				clearDynamic();
@@ -247,33 +252,54 @@ public class PnlGuiConfig extends JPanel{
 		pnlMessageProp.add(cmbHeaderEncoding);
 		
 		//Painel proprerties **************************************************************************************
-		lblName.setBounds(12, 27, 88, 16);
+		lblName.setBounds(12, 27, 83, 16);
+		lblName.setHorizontalAlignment(SwingConstants.RIGHT);
 		txtName.setColumns(10);
 		txtName.addKeyListener(saveKeyListener);
 		
-		lblSubfield.setBounds(10, 59, 88, 16);
+		lblSubfield.setBounds(10, 59, 83, 16);
+		lblSubfield.setHorizontalAlignment(SwingConstants.RIGHT);
 		txtSubField.setColumns(10);
 		txtSubField.addKeyListener(saveKeyListener);
-		
-		lblNum.setBounds(12, 92, 88, 16);
+		lblSubfield.setEnabled(false);
+		txtSubField.setEnabled(false);
+
+		lblNum.setBounds(12, 92, 83, 16);
+		lblNum.setHorizontalAlignment(SwingConstants.RIGHT);
 		txtNum.setBounds(101, 89, 70, 22);
 		txtNum.setColumns(10);
 		txtNum.addKeyListener(saveKeyListener);
 		
-		lblType.setBounds(200, 92, 88, 16);
-		cmbType.setBounds(262, 89, 116, 22);
-		cmbType.setModel(new DefaultComboBoxModel<TypeEnum>(new TypeEnum[] {TypeEnum.ALPHA, 
-				TypeEnum.DATE_EXP, TypeEnum.DATE4, TypeEnum.LVAR, TypeEnum.LLVAR, TypeEnum.LLLVAR, TypeEnum.NUMERIC, TypeEnum.TIME}));
+		lblType.setBounds(28, 122, 61, 16);
+		lblType.setHorizontalAlignment(SwingConstants.RIGHT);
+		cmbType.setBounds(101, 121, 116, 22);
+		cmbType.setModel(new DefaultComboBoxModel<TypeEnum>(new TypeEnum[] {TypeEnum.ALPHANUMERIC, TypeEnum.TLV}));
 		
-		lblLenght.setBounds(12, 127, 88, 16);
-		txtLength.setBounds(101, 124, 70, 22);
+		lblLenght.setBounds(12, 155, 83, 16);
+		lblLenght.setHorizontalAlignment(SwingConstants.RIGHT);
+		cmbLength.setBounds(101, 152, 116, 22);
+		cmbLength.setModel(new DefaultComboBoxModel<TypeLengthEnum>(new TypeLengthEnum[] {TypeLengthEnum.FIXED, TypeLengthEnum.NVAR}));
+		
+		cmbLength.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				cmbLengthClick();
+			}
+		});
+		
+		lblLenValue.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblLenValue.setBounds(235, 156, 83, 16);
+		txtLength.setBounds(322, 153, 51, 22);
 		txtLength.setColumns(10);
 		
-		lblEncoding.setBounds(200, 127, 88, 16);
-		cmbEncoding.setBounds(262, 124, 116, 22);
+		lblEncoding.setBounds(257, 123, 61, 16);
+		lblEncoding.setHorizontalAlignment(SwingConstants.RIGHT);
+		cmbEncoding.setBounds(322, 122, 116, 22);
 		cmbEncoding.setModel(new DefaultComboBoxModel<EncodingEnum>(new EncodingEnum[] {
 				EncodingEnum.UTF8, EncodingEnum.EBCDIC, 
 				EncodingEnum.ISO88591, EncodingEnum.BINARY}));
+		
+		chckbxMandatory.setBounds(179, 88, 113, 25);
 		
 		pnlProperties.add(lblName);
 		pnlProperties.add(txtName);
@@ -287,10 +313,12 @@ public class PnlGuiConfig extends JPanel{
 		pnlProperties.add(txtLength);
 		pnlProperties.add(lblEncoding);
 		pnlProperties.add(cmbEncoding);
+		pnlProperties.add(chckbxMandatory);
+		pnlProperties.add(cmbLength);
+		pnlProperties.add(lblLenValue);
 		
 		//Painel Dynamic **********************************************************************************************************
 		ckDynamic.setBounds(8, 0, 77, 25);
-		ckDynamic.setEnabled(false);
 
 		cmbDynaOperator.addItem(new CmbItemVO("-- LOGIC OPERATION --", "-- LOGIC OPERATION --"));
 		cmbDynaOperator.addItem(new CmbItemVO("EQUAL (" + OperatorEnum.EQUAL.toString() + ")", OperatorEnum.EQUAL.toString()));
@@ -375,15 +403,16 @@ public class PnlGuiConfig extends JPanel{
 					
 					//Habilitando os campos
 					if (selectedNode.getUserObject() instanceof FieldVO) {
-						enableProperties(true);
 						enableMessageProp(false);
+						enableProperties(true);
+						enableDynamic(true, true);
 						ckDynamicClick();
 						disableSuperField();
 					}
 					else {
 						enableMessageProp(!(selectedNode.getUserObject() instanceof String));
 						enableProperties(false);
-						enableDynamic(false);
+						enableDynamic(false, true);
 					}
 	
 					boolean isParentField = (selectedNodeParent != null && (selectedNodeParent.getUserObject() instanceof FieldVO));
@@ -470,7 +499,25 @@ public class PnlGuiConfig extends JPanel{
 		scrTreeTypes.setViewportView(treeTypes);
 		
 		enableProperties(false);
-		enableDynamic(false);
+		enableDynamic(false, true);
+		
+		chckbxMandatory.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (chckbxMandatory.isSelected()) {
+					txtDynaCondition.setText("true");
+					ckDynamic.setSelected(false);
+					ckDynamic.setEnabled(false);
+				}
+				else {
+					txtDynaCondition.setText("");
+					ckDynamic.setEnabled(true);
+				}
+				
+				ckDynamicClick();
+			}
+		});
 		
 		ckDynamic.addActionListener(new ActionListener() {
 			
@@ -489,8 +536,8 @@ public class PnlGuiConfig extends JPanel{
 					Iso8583Helper.getInstance().validateNode((MessageVO) selectedNode.getUserObject(), selectedNodeParent);
 				}
 				else if (selectedNode.getUserObject() instanceof FieldVO) {
-					Iso8583Helper.getInstance().saveField((FieldVO) selectedNode.getUserObject(), 
-							txtName.getText(), txtSubField.getText(),txtNum.getText(), (TypeEnum) cmbType.getSelectedItem(), txtLength.getText(), 
+					Iso8583Helper.getInstance().saveField((FieldVO) selectedNode.getUserObject(), txtName.getText(), 
+							txtSubField.getText(),txtNum.getText(), (TypeEnum) cmbType.getSelectedItem(), (TypeLengthEnum) cmbLength.getSelectedItem(), txtLength.getText(), 
 							(EncodingEnum) cmbEncoding.getSelectedItem(), txtDynaCondition.getText());
 					
 					if (selectedNodeParent.getUserObject() instanceof FieldVO)
@@ -518,13 +565,16 @@ public class PnlGuiConfig extends JPanel{
 			txtSubField.setText(fieldVo.getSubFieldName());
 			txtNum.setText(String.valueOf(fieldVo.getBitNum()));
 			cmbType.setSelectedItem(fieldVo.getType());
+			cmbLength.setSelectedItem(fieldVo.getTypeLength());
 			txtLength.setText(String.valueOf(fieldVo.getLength()));
 			cmbEncoding.setSelectedItem(fieldVo.getEncoding());
+			chckbxMandatory.setSelected(fieldVo.getDynaCondition().equals("true"));
 			
-			cmbDynaOperator.setSelectedItem(fieldVo.getDynaCondition().toString());
+			cmbDynaOperator.setSelectedItem(fieldVo.getDynaCondition());
 			txtDynaCondition.setText(fieldVo.getDynaCondition());
-			ckDynamic.setSelected(fieldVo.getDynaCondition() != null && !fieldVo.getDynaCondition().trim().equals(""));
+			ckDynamic.setSelected(fieldVo.getDynaCondition() != null && !fieldVo.getDynaCondition().trim().equals("") && !fieldVo.getDynaCondition().trim().equals("true"));
 			
+			cmbLengthClick();
 		}
 
 		if (selectedNode.getUserObject() instanceof String)
@@ -560,14 +610,18 @@ public class PnlGuiConfig extends JPanel{
 		lblType.setEnabled(value);
 		cmbType.setEnabled(value);
 		lblLenght.setEnabled(value);
+		lblLenValue.setEnabled(value);
 		txtLength.setEnabled(value);
+		cmbLength.setEnabled(value);
 		lblEncoding.setEnabled(value);
 		cmbEncoding.setEnabled(value);
+		chckbxMandatory.setEnabled(value);
 	}
 	
-	private void enableDynamic(boolean value) {
-		lblSubfield.setEnabled(false);
-		txtSubField.setEnabled(false);
+	private void enableDynamic(boolean value, boolean full) {
+		ckDynamic.setEnabled(!txtDynaCondition.getText().equals("true"));
+		ckDynamic.setEnabled(full ? value : ckDynamic.isEnabled());
+		
 		cmbDynaBit.setEnabled(value);
 		cmbDynaOperator.setEnabled(value);
 		lblDynaValue.setEnabled(value);
@@ -583,18 +637,23 @@ public class PnlGuiConfig extends JPanel{
 			lblType.setEnabled(false);
 			cmbType.setEnabled(false);
 			lblLenght.setEnabled(false);
+			lblLenValue.setEnabled(false);
 			txtLength.setEnabled(false);
+			cmbLength.setEnabled(false);
 			lblEncoding.setEnabled(false);
 			cmbEncoding.setEnabled(false);
 			
-			ckDynamic.setEnabled(true);
+			lblNum.setText("Bit Num");
 		}
 		
 		if (selectedNodeParent.getUserObject() instanceof FieldVO) {
 			lblName.setEnabled(false);
 			txtName.setEnabled(false);
-			lblNum.setEnabled(false);
-			txtNum.setEnabled(false);
+			chckbxMandatory.setSelected(false);
+			chckbxMandatory.setEnabled(false);
+			ckDynamic.setSelected(false);
+			ckDynamic.setEnabled(false);
+			lblNum.setText("Order");
 		}
 	}
 	
@@ -609,11 +668,13 @@ public class PnlGuiConfig extends JPanel{
 		cmbType.setSelectedIndex(0);
 		txtLength.setText("");
 		cmbEncoding.setSelectedIndex(0);
+		chckbxMandatory.setSelected(false);
+		cmbLength.setSelectedIndex(0);
 	}
 	
 	private void ckDynamicClick() {
 		if (ckDynamic.isSelected()) {
-			enableDynamic(true);
+			enableDynamic(true, false);
 			
 			FieldVO fieldVO = null;
 			cmbDynaBit.removeAllItems();
@@ -626,9 +687,16 @@ public class PnlGuiConfig extends JPanel{
 			cmbDynaBit.addActionListener(new AddLogicActionListener(cmbDynaBit));
 		}
 		else {
-			enableDynamic(false);
+			enableDynamic(false, false);
 			clearDynamic();
 		}
+	}
+	
+	private void cmbLengthClick() {
+		if (cmbLength.getSelectedItem() == TypeLengthEnum.NVAR)
+			lblLenValue.setText("Num of Bits");
+		else 
+			lblLenValue.setText("Length value");
 	}
 	
 	private void clearDynamic() {
@@ -636,17 +704,16 @@ public class PnlGuiConfig extends JPanel{
 		cmbDynaBit.removeAllItems();
 		cmbDynaOperator.setSelectedIndex(0);
 		txtDynaValue.setText("");
-		txtDynaCondition.setText("");
+		txtDynaCondition.setText(chckbxMandatory.isSelected() ? "true" : "");
 	}
 	
 	public void updateTree() {
-		ckDynamic.setEnabled(false);
 		clearMessageProp();
 		clearProperties();
 		clearDynamic();
 		enableMessageProp(false);
 		enableProperties(false);
-		enableDynamic(false);
+		enableDynamic(false, true);
 		
 		treeTypes.updateUI();
 	}
