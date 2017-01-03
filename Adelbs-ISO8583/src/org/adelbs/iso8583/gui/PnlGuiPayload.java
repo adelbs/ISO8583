@@ -25,13 +25,14 @@ import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.helper.Iso8583Helper;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
+import org.adelbs.iso8583.vo.GuiPayloadMessageVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiPayload extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private GuiPayloadMessage guiPayloadMessage;
+	private GuiPayloadMessageVO guiPayloadMessage;
 	
 	private JLabel lblMessageType = new JLabel("Message Type");
 	private JComboBox<MessageVO> cmbMessageType = new JComboBox<MessageVO>();
@@ -185,7 +186,12 @@ public class PnlGuiPayload extends JPanel {
 		
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				guiPayloadMessage.updateXML();
+				if (tabbedPane.getSelectedIndex() == 0)
+					guiPayloadMessage.updateGUIfromXML();
+				else if (tabbedPane.getSelectedIndex() == 1)
+					guiPayloadMessage.updateXMLfromGUI();
+				
+				guiPayloadMessage.updateRawMessage();
 			}
 		});
 	}
@@ -203,7 +209,7 @@ public class PnlGuiPayload extends JPanel {
 				tabbedPane.setEnabled(true);
 				
 				DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) Iso8583Helper.getInstance().getConfigTreeNode().getChildAt(cmbMessageType.getSelectedIndex());
-				guiPayloadMessage = new GuiPayloadMessage((MessageVO) cmbMessageType.getSelectedItem(), pnlFields, xmlText);
+				guiPayloadMessage = new GuiPayloadMessageVO((MessageVO) cmbMessageType.getSelectedItem(), pnlFields, xmlText);
 				
 				FieldVO fieldVO;
 				int line = 0;

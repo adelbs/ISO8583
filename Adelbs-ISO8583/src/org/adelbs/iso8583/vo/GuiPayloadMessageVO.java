@@ -1,4 +1,4 @@
-package org.adelbs.iso8583.gui;
+package org.adelbs.iso8583.vo;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,11 +11,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
-import org.adelbs.iso8583.vo.FieldVO;
-import org.adelbs.iso8583.vo.MessageVO;
 
-public class GuiPayloadMessage {
+public class GuiPayloadMessageVO {
 
 	private MessageVO messageVO;
 	
@@ -25,7 +24,7 @@ public class GuiPayloadMessage {
 	private JPanel pnlFields;
 	private XmlTextPane xmlText;
 	
-	public GuiPayloadMessage(MessageVO messageVO, JPanel pnlFields, XmlTextPane xmlText) {
+	public GuiPayloadMessageVO(MessageVO messageVO, JPanel pnlFields, XmlTextPane xmlText) {
 		this.pnlFields = pnlFields;
 		this.xmlText = xmlText;
 		this.messageVO = messageVO;
@@ -52,7 +51,11 @@ public class GuiPayloadMessage {
 			fieldList.get(fieldList.size() - 1).addSubline(fieldVO);
 	}
 
-	public void updateXML() {
+	public void updateGUIfromXML() {
+		
+	}
+	
+	public void updateXMLfromGUI() {
 		StringBuilder xmlMessage = new StringBuilder();
 		
 		xmlMessage.append("<?xml version=\"1.0\" ?>\n\n");
@@ -63,6 +66,10 @@ public class GuiPayloadMessage {
 			
 		xmlMessage.append("\n</message>");
 		xmlText.setText(xmlMessage.toString());
+	}
+	
+	public void updateRawMessage() {
+		
 	}
 	
 	private class GuiPayloadField {

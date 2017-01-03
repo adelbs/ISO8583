@@ -15,7 +15,7 @@ public class PnlXmlConfig extends JPanel {
 
 	private JScrollPane scrollPane = new JScrollPane();
 	
-	public PnlXmlConfig(final PnlMain pnlMain) {
+	public PnlXmlConfig() {
 		
 		setLayout(null);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);

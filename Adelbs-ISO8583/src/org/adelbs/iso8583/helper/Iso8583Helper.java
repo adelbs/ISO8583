@@ -18,6 +18,7 @@ import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
+import org.adelbs.iso8583.gui.FrmMain;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
@@ -79,55 +80,6 @@ public class Iso8583Helper {
 		}
 		
 		return newNode;
-	}
-	
-	public void removeNode(Component mainFrame, Object node) {
-		if (node != null && !((DefaultMutableTreeNode) node).isRoot()) {
-			if (JOptionPane.showConfirmDialog(mainFrame, "Are you sure you want to remove this Object?", "Remove Object", JOptionPane.YES_NO_OPTION) == 0)
-				((DefaultMutableTreeNode) node).removeFromParent();
-		}
-	}
-
-	public void saveMessage(MessageVO messageVo, String type, EncodingEnum bitmatEncoding) {
-
-		if (type == null || type.trim().equals(""))
-			messageVo.setType("0000");
-		else
-			messageVo.setType(type.trim().replaceAll(" ", ""));
-		
-		messageVo.setBitmatEncoding(bitmatEncoding);
-	}
-	
-	public void saveField(FieldVO fieldVo, String name, String subField, String bitNum, TypeEnum type, 
-			TypeLengthEnum typeLength, String length, EncodingEnum encoding, String dynaCondition) {
-		
-		if (name == null || name.trim().equals(""))
-			fieldVo.setName("NewField");
-		else
-			fieldVo.setName(name.trim().replaceAll(" ", ""));
-
-		if (subField == null || subField.trim().equals(""))
-			fieldVo.setSubFieldName("");
-		else
-			fieldVo.setSubFieldName(subField.trim().replaceAll(" ", ""));
-		
-		try {
-			fieldVo.setBitNum(Integer.parseInt(bitNum));
-		}
-		catch (Exception x) {
-			fieldVo.setBitNum(1);
-		}
-
-		fieldVo.setType(type);
-		
-		if (length == null || length.trim().equals(""))
-			fieldVo.setLength(1);
-		else
-			fieldVo.setLength(Integer.parseInt(length));
-
-		fieldVo.setTypeLength(typeLength);
-		fieldVo.setEncoding(encoding);
-		fieldVo.setDynaCondition(dynaCondition.trim());
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -226,7 +178,7 @@ public class Iso8583Helper {
 		}
 	}
 	
-	public void parseXmlToConfig(Component mainFrame) {
+	public void parseXmlToConfig() {
 		try {
 			if (!xmlText.getText().trim().equals("")) {
 				configTreeNode.removeAllChildren();
@@ -258,9 +210,7 @@ public class Iso8583Helper {
 		}
 		catch (Exception x) {
 			x.printStackTrace();
-			
-			if (mainFrame != null)
-				JOptionPane.showMessageDialog(mainFrame, "Invalid XML! See the log file.\n\n" + x.getMessage());
+			JOptionPane.showMessageDialog(FrmMain.getInstance(), "Invalid XML! See the log file.\n\n" + x.getMessage());
 		}
 	}
 

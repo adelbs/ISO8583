@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
-import org.adelbs.iso8583.gui.PnlGuiConfig;
+import org.adelbs.iso8583.gui.FrmMain;
 
 public class FieldVO extends GenericIsoVO {
 
@@ -83,7 +83,7 @@ public class FieldVO extends GenericIsoVO {
 	
 	public String toString() {
 		String fieldName = (subFieldName != null && !subFieldName.equals("")) ? subFieldName: name;
-		return (PnlGuiConfig.isShowBitNum() ? "[" + bitNum + "] " : "") + fieldName + getValidationMessage();
+		return (FrmMain.getInstance().getPnlGuiConfig().isShowBitNum() ? "[" + bitNum + "] " : "") + fieldName + getValidationMessage();
 	}
 
 	public Integer getLength() {
