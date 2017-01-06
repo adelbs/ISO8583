@@ -61,7 +61,7 @@ public class Iso8583Helper {
 	}
 	
 	public DefaultMutableTreeNode addType() {
-		MessageVO parseVO = new MessageVO("0000", EncodingEnum.BINARY);
+		MessageVO parseVO = new MessageVO("0000", EncodingEnum.UTF8, EncodingEnum.UTF8);
 		DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(parseVO);
 		configTreeNode.add(newNode);
 		return newNode;
@@ -127,6 +127,7 @@ public class Iso8583Helper {
 			node = enuParse.nextElement();
 			messageVo = (MessageVO) node.getUserObject();
 			xmlISO.append("\n\n\t<message type=\"").append(messageVo.getType()).
+					append("\" header-encoding=\"").append(messageVo.getHeaderEncoding().toPlainString()).
 					append("\" bitmap-encoding=\"").append(messageVo.getBitmatEncoding().toPlainString()).append("\">");
 			
 			//Capturando os FieldVO
@@ -166,16 +167,13 @@ public class Iso8583Helper {
 		xmlISO.append("\n").append(subField ? "\t\t\t" : "\t\t").append("<field ").
 			append("name=\"").append(fieldVo.getName()).append("\" ").		
 			append("bitnum=\"").append(fieldVo.getBitNum()).append("\" ").
-			append("condition=\"").append(fieldVo.getDynaCondition()).append("\" ");
+			append("condition=\"").append(fieldVo.getDynaCondition()).append("\" ").
+			append("length-type=\"").append(fieldVo.getTypeLength().toPlainString()).append("\" ").
+			append("length=\"").append(fieldVo.getLength()).append("\" ").
+			append("type=\"").append(fieldVo.getType()).append("\" ").
+			append("encoding=\"").append(fieldVo.getEncoding().toPlainString()).append("\" ");
 		
-		//Somente adiciona length se nao tiver filhos
-		if (!hasChild) {
-			xmlISO.append("length-type=\"").append(fieldVo.getTypeLength().toPlainString()).append("\" ").
-				append("length=\"").append(fieldVo.getLength()).append("\" ").
-				append("type=\"").append(fieldVo.getType()).append("\" ").
-				append("encoding=\"").append(fieldVo.getEncoding().toPlainString()).append("\" ").
-				append("/>");
-		}
+		if (!hasChild) xmlISO.append("/>");
 	}
 	
 	public void parseXmlToConfig() {
@@ -201,6 +199,7 @@ public class Iso8583Helper {
 						lastParseNode = addType();
 						
 						((MessageVO) lastParseNode.getUserObject()).setType(getAttr(node, "type", "0000"));;
+						((MessageVO) lastParseNode.getUserObject()).setHeaderEncoding(EncodingEnum.getEncoding(getAttr(node, "header-encoding", "")));
 						((MessageVO) lastParseNode.getUserObject()).setBitmatEncoding(EncodingEnum.getEncoding(getAttr(node, "bitmap-encoding", "")));
 						
 						addFieldsToTree(node, lastParseNode);
@@ -358,6 +357,23 @@ public class Iso8583Helper {
 		}
 	}
 
+	public void validateAllNodes() {
+		validateAllNodes(configTreeNode);
+	}
+	
+	public void validateAllNodes(DefaultMutableTreeNode rootNode) {
+
+		DefaultMutableTreeNode node;
+		
+		for (int i = 0; i < rootNode.getChildCount(); i++) {
+			node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
+			if (node.getChildCount() > 0)
+				validateAllNodes(node);
+		}
+		
+		validateNode((GenericIsoVO) rootNode.getUserObject(), (DefaultMutableTreeNode) rootNode.getParent());
+	}
+	
 	public boolean validateNode(GenericIsoVO isoVO, DefaultMutableTreeNode selectedNodeParent) {
 		if (isoVO instanceof FieldVO) {
 			if (!"".equals(validateCondition((FieldVO) isoVO)))
@@ -448,6 +464,9 @@ public class Iso8583Helper {
 			String condition = "Object[] BIT = new Object[255];\n";
 			condition = condition + fieldVO.getDynaCondition();
 			Eval.me(condition);
+			
+			if (condition.indexOf("BIT[" + fieldVO.getBitNum() + "]") > -1)
+				throw new Exception("You cannot look for the same bit value.");
 		}
 		catch (Exception x) {
 			resultMessage = x.getMessage();

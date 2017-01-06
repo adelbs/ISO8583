@@ -1,8 +1,10 @@
 package org.adelbs.iso8583.constants;
 
+import javax.swing.JComboBox;
+
 public enum EncodingEnum {
 
-	BINARY("BINARY"), EBCDIC("EBCDIC"), ISO88591("ISO 8859-1"), UTF8("UTF-8");
+	BINARY("BINARY"), EBCDIC("EBCDIC"), ISO88591("ISO 8859-1"), UTF8("UTF-8"), HEXA("HEXA");
 	
 	private String value;
 	
@@ -27,7 +29,17 @@ public enum EncodingEnum {
 			return EncodingEnum.ISO88591;
 		else if ("UTF8".equals(value))
 			return EncodingEnum.UTF8;
+		else if ("HEXA".equals(value))
+			return EncodingEnum.HEXA;
 
 		return EncodingEnum.UTF8;
+	}
+	
+	public static void addCmbItemList(JComboBox<EncodingEnum> combo) {
+		combo.addItem(BINARY);
+		combo.addItem(EBCDIC);
+		combo.addItem(ISO88591);
+		combo.addItem(UTF8);
+		combo.addItem(HEXA);
 	}
 }

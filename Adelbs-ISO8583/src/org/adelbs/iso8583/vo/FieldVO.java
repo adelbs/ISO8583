@@ -26,7 +26,10 @@ public class FieldVO extends GenericIsoVO {
 	private String dynaCondition;
 	
 	//Valor a ser populado durante a execução do ISO
-	private String value;
+	private boolean isPresent = false;
+	private String typeValue = "";
+	private String lenValue = "";
+	private String value = "";
 	
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
 
@@ -124,5 +127,128 @@ public class FieldVO extends GenericIsoVO {
 
 	public void setTypeLength(TypeLengthEnum typeLength) {
 		this.typeLength = typeLength;
+	}
+
+	public boolean isPresent() {
+		return isPresent;
+	}
+
+	public void setPresent(boolean isPresent) {
+		this.isPresent = isPresent;
+	}
+
+	public String getTypeValue() {
+		return typeValue;
+	}
+
+	public void setTypeValue(String typeValue) {
+		this.typeValue = typeValue;
+	}
+
+	public String getLenValue() {
+		return lenValue;
+	}
+
+	public void setLenValue(String lenValue) {
+		this.lenValue = lenValue;
+	}
+	
+	//********** runtime
+	
+	public String getPayloadValue() {
+		return getPayloadValue(null);
+	}
+	
+	public String getPayloadValue(FieldVO superFieldVO) {
+		String payload = "";
+
+		String newValue = value;
+		int sizeTypeTLV = 2;
+		
+		if (type != TypeEnum.TLV) {
+			length = (fieldList.size() > 0) ? 0 : length;
+			for (FieldVO fieldVO : fieldList)
+				newValue += fieldVO.getPayloadValue(this);
+		}
+		else if (type == TypeEnum.TLV) {
+			if (superFieldVO == null) {
+				sizeTypeTLV = 2;
+				length = 3;
+			}
+			else {
+				sizeTypeTLV = Integer.parseInt(superFieldVO.getValue().substring(0, 1));
+				length = Integer.parseInt(superFieldVO.getValue().substring(1, 2));
+			}
+		}
+		
+		if (type == TypeEnum.ALPHANUMERIC)
+			payload = getPayloadValue(typeLength, newValue, length);
+		else if (type == TypeEnum.TLV) {
+			String size = getMaxSizeStr(lenValue, length);
+
+			typeValue = (typeValue == null) ? "" : typeValue;
+			payload = getMaxSizeStr(typeValue, sizeTypeTLV);
+			payload += size;
+			payload += getPayloadValue(TypeLengthEnum.FIXED, newValue, Integer.parseInt(size));
+		}
+		
+		if (superFieldVO != null && superFieldVO.getType() != TypeEnum.TLV)
+			superFieldVO.setLength(superFieldVO.getLength().intValue() + payload.length());
+		
+		if (type == TypeEnum.TLV && fieldList.size() > 0) {
+			for (FieldVO fieldVO : fieldList)
+				payload += fieldVO.getPayloadValue(this);
+		}
+		
+		return payload;
+	}
+	
+	private String getPayloadValue(TypeLengthEnum typeLength, String value, int length) {
+		String payload = "";
+		String size;
+		int maxSize = length;
+
+		if (typeLength == TypeLengthEnum.NVAR) {
+			size = getMaxSizeStr(String.valueOf(value.length()), length);
+			payload = size;
+			maxSize = Integer.parseInt(size);
+		}
+		
+		if (type == TypeEnum.TLV)
+			payload += getMaxSizeStr(value, maxSize);
+		else
+			payload += getMaxSpacesValue(value, maxSize);
+		
+		return payload;
+	}
+
+	private String getMaxSizeStr(String value, int numBits) {
+		String maxSize = value;
+		if (maxSize.length() > numBits) {
+			maxSize = "";
+			for (int i = 0; i < numBits; i++)
+				maxSize += "9";
+		}
+		else {
+			while (maxSize.length() < numBits)
+				maxSize = "0" + maxSize;
+		}
+		
+		return maxSize;
+	}
+	
+	private String getMaxSpacesValue(String value, int maxLen) {
+		String result = "";
+		
+		if (value.length() < maxLen) {
+			result = value;
+			for (int i = 0; i < (maxLen - value.length()); i++)
+				result += " ";
+		}
+		else {
+			result = value.substring(0, maxLen);
+		}
+		
+		return result;
 	}
 }

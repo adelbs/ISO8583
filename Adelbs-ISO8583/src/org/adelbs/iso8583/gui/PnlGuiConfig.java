@@ -95,9 +95,10 @@ public class PnlGuiConfig extends JPanel{
 				btnRemove.setBounds(143, scrTreeTypes.getY() + scrTreeTypes.getHeight() + 50, 115, 32);
 				
 				//Paineis de propriedades
-				pnlMessageProperties.setBounds(271, 12, getWidth() - 295, 60);
+				pnlMessageProperties.setBounds(271, 12, getWidth() - 295, 90);
 				pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, getWidth() - 295, 185);
-				pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, getWidth() - 295, getHeight() - pnlFieldProperties.getHeight() - 103);
+				pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, getWidth() - 295, 
+						getHeight() - pnlMessageProperties.getHeight() - pnlFieldProperties.getHeight() - 43);
 			}
 			@Override
 			public void componentMoved(ComponentEvent e) {}
@@ -141,7 +142,7 @@ public class PnlGuiConfig extends JPanel{
 				DefaultMutableTreeNode newNode = Iso8583Helper.getInstance().addField(treeTypes.getLastSelectedPathComponent());
 
 				if (selectedNode.getUserObject() instanceof FieldVO) {
-					disableSuperField();
+					checkFieldsEnablement();
 					Iso8583Helper.getInstance().updateSumField(treeTypes.getLastSelectedPathComponent());
 					loadFieldValues();
 				}
@@ -200,7 +201,7 @@ public class PnlGuiConfig extends JPanel{
 						pnlMessageProperties.setEnabled(false);
 						pnlFieldProperties.setEnabled(true);
 						pnlFieldCondition.setEnabled(true);
-						disableSuperField();
+						checkFieldsEnablement();
 					}
 					else {
 						pnlMessageProperties.setEnabled(!(selectedNode.getUserObject() instanceof String));
@@ -308,7 +309,8 @@ public class PnlGuiConfig extends JPanel{
 				
 				}
 				
-				Iso8583Helper.getInstance().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
+				if (!(selectedNode.getUserObject() instanceof String))
+					Iso8583Helper.getInstance().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
 				SortTreeHelper.sortTree(selectedNodeParent, treeTypes);
 			}
 		}
@@ -339,13 +341,17 @@ public class PnlGuiConfig extends JPanel{
 		pnlMessageProperties.load(messageVo);
 	}
 
-	private void disableSuperField() {
-		if (selectedNode.getChildCount() > 0)
+	private void checkFieldsEnablement() {
+		if (selectedNode.getChildCount() > 0) {
 			pnlFieldProperties.disableSuperField();
-		
-		if (selectedNodeParent.getUserObject() instanceof FieldVO) {
+			pnlFieldCondition.ckDynamicClick();
+		}
+		else if (selectedNodeParent.getUserObject() instanceof FieldVO) {
 			pnlFieldProperties.disableSubField();
-			pnlFieldCondition.disableSubField();
+			pnlFieldCondition.setEnabled(false);
+		}
+		else {
+			pnlFieldCondition.ckDynamicClick();
 		}
 	}
 	

@@ -2,17 +2,21 @@ package org.adelbs.iso8583.vo;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
+import org.adelbs.iso8583.protocol.ISOMessage;
 
 public class GuiPayloadMessageVO {
 
@@ -27,7 +31,7 @@ public class GuiPayloadMessageVO {
 	public GuiPayloadMessageVO(MessageVO messageVO, JPanel pnlFields, XmlTextPane xmlText) {
 		this.pnlFields = pnlFields;
 		this.xmlText = xmlText;
-		this.messageVO = messageVO;
+		this.messageVO = new MessageVO(messageVO.getType(), messageVO.getBitmatEncoding(), messageVO.getHeaderEncoding());
 		
 		pnlFields.removeAll();
 		numLines = 0;
@@ -43,12 +47,12 @@ public class GuiPayloadMessageVO {
 	}
 
 	public void addLine(FieldVO fieldVO) {
-		fieldList.add(new GuiPayloadField(fieldVO, false));
+		fieldList.add(new GuiPayloadField(fieldVO, null));
 	}
 
 	public void addSubline(FieldVO fieldVO) {
 		if (fieldList.size() > 0)
-			fieldList.get(fieldList.size() - 1).addSubline(fieldVO);
+			fieldList.get(fieldList.size() - 1).addSubline(fieldVO, fieldList.get(fieldList.size() - 1).getFieldVO());
 	}
 
 	public void updateGUIfromXML() {
@@ -68,8 +72,9 @@ public class GuiPayloadMessageVO {
 		xmlText.setText(xmlMessage.toString());
 	}
 	
-	public void updateRawMessage() {
-		
+	public void updateRawMessage(JTextArea txtRawMessage) {
+		ISOMessage iso = new ISOMessage(messageVO);
+		txtRawMessage.setText(iso.getVisualPayload());
 	}
 	
 	private class GuiPayloadField {
@@ -77,6 +82,7 @@ public class GuiPayloadMessageVO {
 		boolean isSubfield;
 		private int lineNum;
 		private FieldVO fieldVO;
+		private FieldVO superFieldVO;
 		
 		private JCheckBox ckBox;
 		private JTextField txtType;
@@ -90,9 +96,25 @@ public class GuiPayloadMessageVO {
 		
 		private ArrayList<GuiPayloadField> subfieldList;
 
-		private GuiPayloadField(FieldVO fieldVO, boolean isSubfield) {
-			this.fieldVO = fieldVO;
-			this.isSubfield = isSubfield;
+		private KeyListener saveFieldPayloadAction = new KeyListener() {
+			public void keyTyped(KeyEvent e) { }
+			public void keyReleased(KeyEvent e) {
+				saveFieldValue();
+			}
+			public void keyPressed(KeyEvent e) { }
+		};
+
+		private GuiPayloadField(FieldVO fieldVO, FieldVO superfieldVO) {
+
+			this.isSubfield = (superfieldVO != null);
+			this.superFieldVO = superfieldVO;
+			this.fieldVO = new FieldVO(fieldVO.getName(), fieldVO.getSubFieldName(), fieldVO.getBitNum(), fieldVO.getType(), fieldVO.getTypeLength(), 
+					fieldVO.getLength(), fieldVO.getEncoding(), fieldVO.getDynaCondition());
+			
+			if (isSubfield)
+				superFieldVO.getFieldList().add(this.fieldVO);
+			else
+				messageVO.getFieldList().add(this.fieldVO);
 			
 			ckBox = new JCheckBox();
 			txtType = new JTextField();
@@ -135,6 +157,10 @@ public class GuiPayloadMessageVO {
 			pnlFields.add(lblFieldName);
 			pnlFields.add(txtValue);
 			pnlFields.add(lblType);
+
+			txtType.addKeyListener(saveFieldPayloadAction);
+			txtLength.addKeyListener(saveFieldPayloadAction);
+			txtValue.addKeyListener(saveFieldPayloadAction);
 			
 			if (!fieldVO.getDynaCondition().equals("") && !fieldVO.getDynaCondition().equals("true"))
 				pnlFields.add(lblDynamic);
@@ -151,11 +177,19 @@ public class GuiPayloadMessageVO {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						ckBoxClick((JCheckBox) e.getSource());
+						saveFieldValue();
 					}
 				});
 				
 				setEnabled(false);
 			}
+		}
+		
+		private void saveFieldValue() {
+			fieldVO.setPresent(ckBox.isSelected());
+			fieldVO.setTypeValue(txtType.getText());
+			fieldVO.setLenValue(txtLength.getText());
+			fieldVO.setValue(txtValue.getText());
 		}
 		
 		private void ckBoxClick(JCheckBox ckBox) {
@@ -167,10 +201,13 @@ public class GuiPayloadMessageVO {
 			}
 		}
 		
-		private void addSubline(FieldVO fieldVO) {
-			pnlFields.remove(txtValue);
-			pnlFields.remove(lblType);
-			subfieldList.add(new GuiPayloadField(fieldVO, true));
+		private void addSubline(FieldVO fieldVO, FieldVO superfieldVO) {
+			if (superfieldVO != null && superfieldVO.getType() != TypeEnum.TLV) {
+				pnlFields.remove(txtValue);
+				pnlFields.remove(lblType);
+			}
+			
+			subfieldList.add(new GuiPayloadField(fieldVO, superfieldVO));
 		}
 		
 		private void setEnabled(boolean enabled) {
@@ -226,6 +263,10 @@ public class GuiPayloadMessageVO {
 			}
 			
 			return xmlField;
+		}
+		
+		private FieldVO getFieldVO() {
+			return fieldVO;
 		}
 	}
 }

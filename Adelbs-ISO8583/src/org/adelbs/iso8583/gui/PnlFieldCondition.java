@@ -135,17 +135,19 @@ public class PnlFieldCondition extends JPanel {
 
 	}
 	
-	private void ckDynamicClick() {
+	public void ckDynamicClick() {
 		if (ckDynamic.isSelected()) {
 			setEnabled(true);
 			ckDynamic.setEnabled(!txtDynaCondition.getText().equals("true"));
 			
 			FieldVO fieldVO = null;
+			FieldVO selectedFieldVO = (FieldVO) ((DefaultMutableTreeNode) FrmMain.getInstance().getPnlGuiConfig().getSelectedNode()).getUserObject();
 			cmbDynaBit.removeAllItems();
 			cmbDynaBit.addItem(new CmbItemVO("-- BIT --", "-- BIT --"));
 			for (int i = 0; i < FrmMain.getInstance().getPnlGuiConfig().getSelectedNodeParent().getChildCount(); i++) {
 				fieldVO = (FieldVO) ((DefaultMutableTreeNode) FrmMain.getInstance().getPnlGuiConfig().getSelectedNodeParent().getChildAt(i)).getUserObject();
-				cmbDynaBit.addItem(new CmbItemVO("BIT[" + fieldVO.getBitNum() + "] " + fieldVO.getName(), "BIT[" + fieldVO.getBitNum() + "]"));
+				if (fieldVO.getBitNum().intValue() != selectedFieldVO.getBitNum().intValue())
+					cmbDynaBit.addItem(new CmbItemVO("BIT[" + fieldVO.getBitNum() + "] " + fieldVO.getName(), "BIT[" + fieldVO.getBitNum() + "]"));
 			}
 			
 			cmbDynaBit.addActionListener(new AddLogicActionListener(cmbDynaBit));
@@ -153,13 +155,8 @@ public class PnlFieldCondition extends JPanel {
 		else {
 			setEnabled(false);
 			ckDynamic.setEnabled(!txtDynaCondition.getText().equals("true"));
-			clear();
+			if (!txtDynaCondition.getText().equals("true")) clear();
 		}
-	}
-
-	public void disableSubField() {
-		ckDynamic.setSelected(false);
-		ckDynamic.setEnabled(false);
 	}
 
 	public void setMandatory(boolean value) {

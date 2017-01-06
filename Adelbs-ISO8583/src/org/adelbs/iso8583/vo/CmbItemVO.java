@@ -4,9 +4,9 @@ public class CmbItemVO {
 
 	private String display;
 	
-	private String value;
+	private Object value;
 
-	public CmbItemVO(String display, String value) {
+	public CmbItemVO(String display, Object value) {
 		this.display = display;
 		this.value = value;
 	}
@@ -19,11 +19,11 @@ public class CmbItemVO {
 		this.display = display;
 	}
 
-	public String getValue() {
+	public Object getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 	

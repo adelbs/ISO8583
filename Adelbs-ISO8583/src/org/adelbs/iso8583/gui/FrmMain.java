@@ -193,8 +193,13 @@ public class FrmMain extends JFrame {
 			Iso8583Helper.getInstance().openFile(this, txtFilePath.getText());
 			Iso8583Helper.getInstance().parseXmlToConfig();
 			
+
 			pnlGuiConfig.updateTree();
 			pnlGuiConfig.expandAllNodes();
+			
+		//	Iso8583Helper.getInstance().validateAllNodes();
+			
+			pnlGuiConfig.updateTree();
 		}
 	}
 	
@@ -202,7 +207,11 @@ public class FrmMain extends JFrame {
 		
 		boolean fileSaved = false;
 		
-		Iso8583Helper.getInstance().parseXmlToConfig();
+		if (tabbedPane.getSelectedIndex() == 0)
+			Iso8583Helper.getInstance().parseConfigToXML();
+		else 
+			Iso8583Helper.getInstance().parseXmlToConfig();
+		
 		if (txtFilePath.getText().equals("")) {
 			JFileChooser file = new JFileChooser();
 			file.setAcceptAllFileFilterUsed(false);

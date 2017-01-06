@@ -54,8 +54,6 @@ public class PnlFieldProperties extends JPanel {
 		lblSubfield.setHorizontalAlignment(SwingConstants.RIGHT);
 		txtSubField.setColumns(10);
 		txtSubField.addKeyListener(saveKeyListener);
-		lblSubfield.setEnabled(false);
-		txtSubField.setEnabled(false);
 
 		lblNum.setBounds(12, 92, 83, 16);
 		lblNum.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -144,6 +142,8 @@ public class PnlFieldProperties extends JPanel {
 		super.setEnabled(value);
 		lblName.setEnabled(value);
 		txtName.setEnabled(value);
+		lblSubfield.setEnabled(false);
+		txtSubField.setEnabled(false);
 		lblNum.setEnabled(value);
 		txtNum.setEnabled(value);
 		lblType.setEnabled(value);
@@ -155,22 +155,18 @@ public class PnlFieldProperties extends JPanel {
 		lblEncoding.setEnabled(value);
 		cmbEncoding.setEnabled(value);
 		chckbxMandatory.setEnabled(value);
+		
+		lblNum.setText("Bit Num");
 	}
 	
 	public void disableSuperField() {
-		cmbType.setSelectedIndex(0);
-		lblType.setEnabled(false);
-		cmbType.setEnabled(false);
-		lblLenght.setEnabled(false);
-		lblLenValue.setEnabled(false);
-		txtLength.setEnabled(false);
-		cmbLength.setEnabled(false);
-		lblEncoding.setEnabled(false);
-		cmbEncoding.setEnabled(false);
-		
 		lblSubfield.setEnabled(false);
 		txtSubField.setEnabled(false);
-
+		lblLenght.setEnabled(false);
+		cmbLength.setEnabled(false);
+		lblLenValue.setEnabled(false);
+		txtLength.setEnabled(false);
+		
 		lblNum.setText("Bit Num");
 	}
 
@@ -182,6 +178,10 @@ public class PnlFieldProperties extends JPanel {
 		
 		lblSubfield.setEnabled(true);
 		txtSubField.setEnabled(true);
+		lblLenght.setEnabled(true);
+		cmbLength.setEnabled(true);
+		lblLenValue.setEnabled(true);
+		txtLength.setEnabled(true);
 
 		lblNum.setText("Order");
 	}

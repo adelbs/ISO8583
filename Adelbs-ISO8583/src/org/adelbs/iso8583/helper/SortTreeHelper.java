@@ -9,6 +9,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 
+import org.adelbs.iso8583.gui.FrmMain;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
@@ -35,6 +36,8 @@ public class SortTreeHelper {
 				treeTypes.setSelectionPath(treePath);
 				updateTree = false;
 			}
+
+			FrmMain.getInstance().getPnlGuiConfig().getPnlFieldCondition().ckDynamicClick();
 		}
 	}
 	

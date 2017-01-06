@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -57,6 +58,8 @@ public class PnlGuiPayload extends JPanel {
 	private XmlTextPane xmlText = new XmlTextPane();
 	
 	private JPanel pnlRawMessage = new JPanel();
+	private JScrollPane scrRawMessage = new JScrollPane();
+	private JTextArea txtRawMessage = new JTextArea();
 	
 	public PnlGuiPayload(boolean server, boolean request) {
 		setLayout(null);
@@ -183,6 +186,9 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.addTab("XML", pnlXML);
 		
 		tabbedPane.addTab("Raw message", pnlRawMessage);
+		scrRawMessage.setViewportView(txtRawMessage);
+		pnlRawMessage.setLayout(new BorderLayout(0, 0));
+		pnlRawMessage.add(scrRawMessage);
 		
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
@@ -191,7 +197,7 @@ public class PnlGuiPayload extends JPanel {
 				else if (tabbedPane.getSelectedIndex() == 1)
 					guiPayloadMessage.updateXMLfromGUI();
 				
-				guiPayloadMessage.updateRawMessage();
+				guiPayloadMessage.updateRawMessage(txtRawMessage);
 			}
 		});
 	}

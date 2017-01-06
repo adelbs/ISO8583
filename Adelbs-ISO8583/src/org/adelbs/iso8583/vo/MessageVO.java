@@ -10,10 +10,12 @@ public class MessageVO extends GenericIsoVO {
 
 	private String type;
 	private EncodingEnum bitmatEncoding;
-
-	public MessageVO(String type, EncodingEnum bitmatEncoding) {
+	private EncodingEnum headerEncoding;
+	
+	public MessageVO(String type, EncodingEnum bitmatEncoding, EncodingEnum headerEncoding) {
 		this.type = type;
 		this.bitmatEncoding = bitmatEncoding;
+		this.headerEncoding = headerEncoding;
 	}
 	
 	public ArrayList<FieldVO> getFieldList() {
@@ -42,5 +44,13 @@ public class MessageVO extends GenericIsoVO {
 
 	public void setBitmatEncoding(EncodingEnum bitmatEncoding) {
 		this.bitmatEncoding = bitmatEncoding;
+	}
+
+	public EncodingEnum getHeaderEncoding() {
+		return headerEncoding;
+	}
+
+	public void setHeaderEncoding(EncodingEnum headerEncoding) {
+		this.headerEncoding = headerEncoding;
 	}
 }
