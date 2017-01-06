@@ -3,6 +3,9 @@ package org.adelbs.iso8583.protocol;
 import java.util.HashMap;
 
 import org.adelbs.iso8583.constants.EncodingEnum;
+import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.constants.TypeLengthEnum;
+import org.adelbs.iso8583.util.Converter;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
@@ -15,6 +18,57 @@ public class Bitmap {
 	
 	private String payloadBitmap;
 	
+	public Bitmap(byte[] payload, MessageVO messageVO) {
+		
+		String tempBitmap1 = "";
+		String tempBitmap2 = "";
+		int headerSize = 4;
+		int bitmapSize = 0;
+		
+		if (messageVO.getBitmatEncoding() == EncodingEnum.BINARY)
+			bitmapSize = 64;
+		else if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
+			bitmapSize = 16;
+		
+		for (int i = headerSize; i < (headerSize + bitmapSize); i++)
+			tempBitmap1 += String.valueOf(payload[i]);
+		
+		if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
+			tempBitmap1 = Converter.hexToBin(tempBitmap1);
+		
+		if (tempBitmap1.substring(0, 1).equals("1")) {
+			for (int i = headerSize; i < (headerSize + (bitmapSize * 2)); i++)
+				tempBitmap2 += String.valueOf(payload[i]);
+			
+			if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
+				tempBitmap2 = Converter.hexToBin(tempBitmap2);
+		}
+		
+		binaryBitmap = tempBitmap1 + tempBitmap2;
+		for (int i = 0; i < binaryBitmap.length(); i++) {
+			if (binaryBitmap.substring(i, i + 1).equals("1")) {
+				FieldVO foundFieldVO = null;
+				for (FieldVO fieldVO : messageVO.getFieldList()) {
+					if (fieldVO.getBitNum().intValue() == (i+ 1)) {
+						foundFieldVO = fieldVO;
+						break;
+					}
+				}
+				
+				if (foundFieldVO == null) {
+					//TODO Throw exceptionn
+				}
+				else {
+					//TODO parse field value
+					
+					
+					bitmap.put(foundFieldVO.getBitNum(), foundFieldVO);
+				}
+			}
+		}
+		
+	}
+	
 	public Bitmap(MessageVO messageVO) {
 		for (FieldVO fieldVO : messageVO.getFieldList())
 			if (fieldVO.isPresent())
@@ -26,22 +80,33 @@ public class Bitmap {
 			if (bitmap.get(i) != null) lastBit = i;
 		}
 		
-		if (lastBit <= 64) {
-			totalBits = 64;
-			binaryBitmap = binaryBitmap.substring(0, 64);
+		totalBits = lastBit;
+		
+		if (lastBit > 64) {
+			FieldVO secondBitmap = new FieldVO("Bitmap", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 16, messageVO.getBitmatEncoding(), "true");
+			binaryBitmap = "1".concat(binaryBitmap.substring(1));
+			secondBitmap.setValue(getHexa(binaryBitmap.substring(64, 128)));
+			bitmap.put(1, secondBitmap);
+			binaryBitmap.substring(0, 64);
 		}
 		
-		int decimal;
-		for (int i = 4; i <= totalBits; i = i + 4) {
-			decimal = Integer.parseInt(binaryBitmap.substring((i - 4), i), 2);
-			hexaBitmap = hexaBitmap.concat(Integer.toString(decimal, 16)).toUpperCase();
-		}
+		hexaBitmap = getHexa(binaryBitmap.substring(0, 64));
 		
 		if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
 			payloadBitmap = hexaBitmap;
 		else
 			payloadBitmap = binaryBitmap;
 		
+	}
+
+	private String getHexa(String binaryValue) {
+		String result = "";
+		int decimal;
+		for (int i = 4; i <= 64; i = i + 4) {
+			decimal = Integer.parseInt(binaryValue.substring((i - 4), i), 2);
+			result = result.concat(Integer.toString(decimal, 16)).toUpperCase();
+		}
+		return result;
 	}
 	
 	public int getSize() {

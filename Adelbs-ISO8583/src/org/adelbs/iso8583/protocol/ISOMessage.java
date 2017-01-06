@@ -14,7 +14,10 @@ public class ISOMessage {
 	}
 	
 	public ISOMessage(byte[] payload, MessageVO messageVO) {
-		bitmap = new Bitmap(messageVO);
+		if (payload != null)
+			bitmap = new Bitmap(payload, messageVO);
+		else
+			bitmap = new Bitmap(messageVO);
 		
 		StringBuilder strMessage = new StringBuilder();
 		strMessage.append(messageVO.getType());
@@ -23,14 +26,16 @@ public class ISOMessage {
 		visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
 		visualPayload.append("Bitmap: [").append(bitmap.getPayloadBitmap()).append("]\n\n");
 		
-		for (int i = 0; i < bitmap.getSize(); i++) {
+		for (int i = 0; i <= bitmap.getSize(); i++) {
 			if (bitmap.getBit(i) != null) {
 				strMessage.append(bitmap.getBit(i).getPayloadValue());
 				visualPayload.append("Bit").append(i).append(": [").append(bitmap.getBit(i).getPayloadValue()).append("]\n");
 			}
 		}
 		
-		payload = strMessage.toString().getBytes();
+		visualPayload.append("\nEntire message: [").append(strMessage).append("]\n");
+		
+		this.payload = strMessage.toString().getBytes();
 	}
 	
 	public String getVisualPayload() {

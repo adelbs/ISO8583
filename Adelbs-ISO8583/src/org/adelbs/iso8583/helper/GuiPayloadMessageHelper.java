@@ -1,4 +1,4 @@
-package org.adelbs.iso8583.vo;
+package org.adelbs.iso8583.helper;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,8 +17,10 @@ import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.protocol.ISOMessage;
+import org.adelbs.iso8583.vo.FieldVO;
+import org.adelbs.iso8583.vo.MessageVO;
 
-public class GuiPayloadMessageVO {
+public class GuiPayloadMessageHelper {
 
 	private MessageVO messageVO;
 	
@@ -27,8 +29,10 @@ public class GuiPayloadMessageVO {
 	private int numLines;
 	private JPanel pnlFields;
 	private XmlTextPane xmlText;
+
+	private ISOMessage isoMessage;
 	
-	public GuiPayloadMessageVO(MessageVO messageVO, JPanel pnlFields, XmlTextPane xmlText) {
+	public GuiPayloadMessageHelper(MessageVO messageVO, JPanel pnlFields, XmlTextPane xmlText) {
 		this.pnlFields = pnlFields;
 		this.xmlText = xmlText;
 		this.messageVO = new MessageVO(messageVO.getType(), messageVO.getBitmatEncoding(), messageVO.getHeaderEncoding());
@@ -56,6 +60,13 @@ public class GuiPayloadMessageVO {
 	}
 
 	public void updateGUIfromXML() {
+		//TODO
+	}
+	
+	public void updateFromPayload(byte[] bytes) {
+		isoMessage = new ISOMessage(bytes, messageVO);
+		
+		//TODO get the messageVO fields value to update the screen fields value
 		
 	}
 	
@@ -73,8 +84,12 @@ public class GuiPayloadMessageVO {
 	}
 	
 	public void updateRawMessage(JTextArea txtRawMessage) {
-		ISOMessage iso = new ISOMessage(messageVO);
-		txtRawMessage.setText(iso.getVisualPayload());
+		isoMessage = new ISOMessage(messageVO);
+		txtRawMessage.setText(isoMessage.getVisualPayload());
+	}
+	
+	public ISOMessage getIsoMessage() {
+		return isoMessage;
 	}
 	
 	private class GuiPayloadField {

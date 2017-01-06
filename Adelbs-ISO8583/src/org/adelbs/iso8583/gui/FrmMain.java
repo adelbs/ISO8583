@@ -193,7 +193,7 @@ public class FrmMain extends JFrame {
 			Iso8583Helper.getInstance().openFile(this, txtFilePath.getText());
 			Iso8583Helper.getInstance().parseXmlToConfig();
 			
-
+ 
 			pnlGuiConfig.updateTree();
 			pnlGuiConfig.expandAllNodes();
 			

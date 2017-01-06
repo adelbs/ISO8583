@@ -198,7 +198,11 @@ public class FieldVO extends GenericIsoVO {
 		if (type == TypeEnum.TLV && fieldList.size() > 0) {
 			for (FieldVO fieldVO : fieldList)
 				payload += fieldVO.getPayloadValue(this);
+			
+			if (superFieldVO == null)
+				payload = getMaxSizeStr(String.valueOf(payload.length()), 3) + payload;
 		}
+		
 		
 		return payload;
 	}

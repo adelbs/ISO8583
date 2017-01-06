@@ -7,10 +7,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -20,20 +26,21 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
+import org.adelbs.iso8583.helper.GuiPayloadMessageHelper;
 import org.adelbs.iso8583.helper.Iso8583Helper;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
-import org.adelbs.iso8583.vo.GuiPayloadMessageVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiPayload extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private GuiPayloadMessageVO guiPayloadMessage;
+	private GuiPayloadMessageHelper guiPayloadMessageHelper;
 	
 	private JLabel lblMessageType = new JLabel("Message Type");
 	private JComboBox<MessageVO> cmbMessageType = new JComboBox<MessageVO>();
@@ -104,7 +111,7 @@ public class PnlGuiPayload extends JPanel {
 		btnUpdate.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				updateCmbMessage();				
+				updateCmbMessage();
 			}
 		});
 		
@@ -190,14 +197,102 @@ public class PnlGuiPayload extends JPanel {
 		pnlRawMessage.setLayout(new BorderLayout(0, 0));
 		pnlRawMessage.add(scrRawMessage);
 		
+		btnSavePayload.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (guiPayloadMessageHelper.getIsoMessage() == null) {
+					JOptionPane.showMessageDialog(FrmMain.getInstance(), "There is no data to save.");
+				}
+				else {
+					String filePath;
+					JFileChooser fileChooser = new JFileChooser();
+					fileChooser.setAcceptAllFileFilterUsed(false);
+					fileChooser.setFileFilter(new FileNameExtensionFilter("ISO-8583 files (*.iso8583)", "iso8583"));
+					if (fileChooser.showSaveDialog(FrmMain.getInstance()) == JFileChooser.APPROVE_OPTION) {
+						filePath = fileChooser.getSelectedFile().getAbsolutePath();
+						if (filePath.indexOf(".iso8583") < 0) filePath = filePath + ".iso8583";
+						
+						FileOutputStream fos = null;
+						try {
+							if (filePath != null && !filePath.equals("")) {
+								File file = new File(filePath);
+								if (!file.exists())
+									file.createNewFile();
+								
+								fos = new FileOutputStream(filePath);
+								fos.write(guiPayloadMessageHelper.getIsoMessage().getPayload());
+								
+								JOptionPane.showMessageDialog(FrmMain.getInstance(), "Payload saved!");
+							}
+						} 
+						catch (Exception x) {
+							x.printStackTrace();
+							JOptionPane.showMessageDialog(FrmMain.getInstance(), "Error saving the Payload file. See the log.\n\n"+ x.getMessage());
+						}
+						finally {
+							if (fos != null) {
+								try {
+									fos.close();
+								}
+								catch (Exception x) {
+									x.printStackTrace();
+								}
+							}
+						}
+					}
+				}
+			}
+		});
+		
+		btnOpenPayload.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser file = new JFileChooser();
+				file.setAcceptAllFileFilterUsed(false);
+				file.setFileFilter(new FileNameExtensionFilter("ISO-8583 files (*.iso8583)", "iso8583"));
+				
+				if (file.showOpenDialog(FrmMain.getInstance()) == JFileChooser.APPROVE_OPTION) {
+					updateCmbMessage();
+					
+					try {
+					    Path path = Paths.get(file.getSelectedFile().getAbsolutePath());
+					    byte[] data = Files.readAllBytes(path);
+					    
+						if (data.length > 68) {
+							String messageType = new String(new byte[]{data[0], data[1], data[2], data[3]});
+							MessageVO payloadMessageVO = null;
+							
+							for (int i = 0; i < cmbMessageType.getItemCount(); i++) {
+								if (((MessageVO) cmbMessageType.getItemAt(i)).getType().equals(messageType)) {
+									payloadMessageVO = (MessageVO) cmbMessageType.getItemAt(i);
+									break;
+								}
+							}
+							
+							if (payloadMessageVO == null) {
+								//TODO error message
+							}
+							else {
+								cmbMessageType.setSelectedItem(payloadMessageVO);
+								guiPayloadMessageHelper.updateFromPayload(data);
+							}
+						}
+					} 
+					catch (Exception x) {
+						JOptionPane.showMessageDialog(FrmMain.getInstance(), "It was not possible to read the file. See the log.\n\n"+ x.getMessage());
+					}
+				}
+			}
+		});
+		
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				if (tabbedPane.getSelectedIndex() == 0)
-					guiPayloadMessage.updateGUIfromXML();
+					guiPayloadMessageHelper.updateGUIfromXML();
 				else if (tabbedPane.getSelectedIndex() == 1)
-					guiPayloadMessage.updateXMLfromGUI();
+					guiPayloadMessageHelper.updateXMLfromGUI();
 				
-				guiPayloadMessage.updateRawMessage(txtRawMessage);
+				guiPayloadMessageHelper.updateRawMessage(txtRawMessage);
 			}
 		});
 	}
@@ -215,19 +310,19 @@ public class PnlGuiPayload extends JPanel {
 				tabbedPane.setEnabled(true);
 				
 				DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) Iso8583Helper.getInstance().getConfigTreeNode().getChildAt(cmbMessageType.getSelectedIndex());
-				guiPayloadMessage = new GuiPayloadMessageVO((MessageVO) cmbMessageType.getSelectedItem(), pnlFields, xmlText);
+				guiPayloadMessageHelper = new GuiPayloadMessageHelper((MessageVO) cmbMessageType.getSelectedItem(), pnlFields, xmlText);
 				
 				FieldVO fieldVO;
 				int line = 0;
 				for (int i = 0; i < treeNode.getChildCount(); i++) {
 				
 					fieldVO = (FieldVO) ((DefaultMutableTreeNode) treeNode.getChildAt(i)).getUserObject();
-					guiPayloadMessage.addLine(fieldVO);
+					guiPayloadMessageHelper.addLine(fieldVO);
 					line++;
 					
 					for (int j = 0; j < treeNode.getChildAt(i).getChildCount(); j++) {
 						fieldVO = (FieldVO) ((DefaultMutableTreeNode) treeNode.getChildAt(i).getChildAt(j)).getUserObject();	
-						guiPayloadMessage.addSubline(fieldVO);
+						guiPayloadMessageHelper.addSubline(fieldVO);
 						line++;
 					}
 				}
