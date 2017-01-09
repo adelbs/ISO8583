@@ -1,6 +1,8 @@
 package org.adelbs.iso8583.gui;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 
@@ -11,6 +13,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.adelbs.iso8583.clientserver.CallbackAction;
+import org.adelbs.iso8583.clientserver.ISOClient;
+import org.adelbs.iso8583.clientserver.ISOServer;
+import org.adelbs.iso8583.util.ISOUtils;
 
 public class PnlGuiMessages extends JPanel {
 
@@ -29,8 +38,12 @@ public class PnlGuiMessages extends JPanel {
 	private JTextArea txtConsole = new JTextArea();
 	private JScrollPane scrConsole = new JScrollPane();
 	
+	private boolean isServer;
+	
 	public PnlGuiMessages(boolean server) {
 		setLayout(null);
+		
+		isServer = server;
 		
 		lblHost = new JLabel(server ? "Host (bind)" : "Host");
 		btnConnect = new JButton(server ? "Open connection" : "Connect and send message");
@@ -58,6 +71,7 @@ public class PnlGuiMessages extends JPanel {
 		tabbedPane.addTab("Console", null, pnlConsole, null);
 		pnlConsole.setLayout(new BorderLayout(0, 0));
 		
+		txtConsole.setEditable(false);
 		pnlConsole.add(scrConsole, BorderLayout.CENTER);
 		scrConsole.setViewportView(txtConsole);
 		
@@ -82,5 +96,87 @@ public class PnlGuiMessages extends JPanel {
 			@Override
 			public void componentHidden(ComponentEvent e) {}
 		}); 
+		
+		tabbedPane.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				tabbedPane.setTitleAt(2, "<html>Console</html>");
+			}
+		});
+		
+		btnConnect.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clientServerAction();
+			}
+		});
+	}
+	
+	private void clientServerAction() {
+		pnlRequest.updateRawMessage();
+		
+		if (isServer) {
+			final ISOServer server = new ISOServer(txtHost.getText(), Integer.parseInt(txtPort.getText()), new Callback(true));
+			
+			if (pnlResponse.getBtnSendResponse().getActionListeners().length > 0) 
+				pnlResponse.getBtnSendResponse().removeActionListener(pnlResponse.getBtnSendResponse().getActionListeners()[0]);
+			pnlResponse.getBtnSendResponse().addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					pnlResponse.setReadOnly();
+					pnlResponse.enablePnl(false);
+					pnlResponse.updateRawMessage();
+					byte[] data = ISOUtils.mergeArray(pnlResponse.getMessageHelper().getIsoMessage().getMessageSize(4).getBytes(), pnlResponse.getMessageHelper().getIsoMessage().getPayload());
+					server.setResponsePayload(data);
+				}
+			});
+			
+			server.start();
+		}
+		else {
+			byte[] data = ISOUtils.mergeArray(pnlRequest.getMessageHelper().getIsoMessage().getMessageSize(4).getBytes(), pnlRequest.getMessageHelper().getIsoMessage().getPayload());
+			ISOClient client = new ISOClient(txtHost.getText(), Integer.parseInt(txtPort.getText()), data, new Callback(false));
+			client.start();
+		}
+		
+		txtHost.setEnabled(false);
+		txtPort.setEnabled(false);
+		btnConnect.setEnabled(false);
+	}
+	
+	private class Callback implements CallbackAction {
+		
+		private boolean isRequest = false;
+		
+		private Callback(boolean isRequest) {
+			this.isRequest = isRequest;
+		}
+		
+		@Override
+		public void dataReceived(byte[] data) {
+			if (isRequest) {
+				pnlRequest.updateCmbMessage(new String(ISOUtils.subArray(data, 0, 4)));
+				pnlRequest.getMessageHelper().updateFromPayload(data);
+				pnlRequest.setReadOnly();
+				pnlResponse.enablePnl(true);
+			}
+			else {
+				pnlResponse.updateCmbMessage(new String(ISOUtils.subArray(data, 0, 4)));
+				pnlResponse.getMessageHelper().updateFromPayload(data);
+				pnlResponse.setReadOnly();
+			}
+		}
+
+		@Override
+		public void log(String log) {
+			tabbedPane.setTitleAt(2, "<html><i>*Console</i></html>");
+			txtConsole.setText(txtConsole.getText() + "\n" + log);
+		}
+
+		@Override
+		public void end() {
+			txtHost.setEnabled(true);
+			txtPort.setEnabled(true);
+			btnConnect.setEnabled(true);
+		}
 	}
 }

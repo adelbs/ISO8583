@@ -83,6 +83,8 @@ public class PnlGuiPayload extends JPanel {
 		if (server) {
 			enablePnl(false);
 			if (request) {
+				add(lblMessageType);
+				add(cmbMessageType);
 				add(btnSavePayload);
 			}
 			else {
@@ -103,6 +105,8 @@ public class PnlGuiPayload extends JPanel {
 				add(btnSavePayload);
 			}
 			else {
+				add(lblMessageType);
+				add(cmbMessageType);
 				add(btnSavePayload);
 				enablePnl(false);
 			}
@@ -111,7 +115,7 @@ public class PnlGuiPayload extends JPanel {
 		btnUpdate.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				updateCmbMessage();
+				updateCmbMessage(null);
 			}
 		});
 		
@@ -193,6 +197,7 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.addTab("XML", pnlXML);
 		
 		tabbedPane.addTab("Raw message", pnlRawMessage);
+		txtRawMessage.setEditable(false);
 		scrRawMessage.setViewportView(txtRawMessage);
 		pnlRawMessage.setLayout(new BorderLayout(0, 0));
 		pnlRawMessage.add(scrRawMessage);
@@ -252,7 +257,7 @@ public class PnlGuiPayload extends JPanel {
 				file.setFileFilter(new FileNameExtensionFilter("ISO-8583 files (*.iso8583)", "iso8583"));
 				
 				if (file.showOpenDialog(FrmMain.getInstance()) == JFileChooser.APPROVE_OPTION) {
-					updateCmbMessage();
+					updateCmbMessage(null);
 					
 					try {
 					    Path path = Paths.get(file.getSelectedFile().getAbsolutePath());
@@ -295,12 +300,17 @@ public class PnlGuiPayload extends JPanel {
 				else if (tabbedPane.getSelectedIndex() == 1)
 					guiPayloadMessageHelper.updateXMLfromGUI();
 				
-				guiPayloadMessageHelper.updateRawMessage(txtRawMessage);
+				updateRawMessage();
 			}
 		});
 	}
 
-	private void cmbClick() {
+	public void updateRawMessage() {
+		if (guiPayloadMessageHelper != null)
+			guiPayloadMessageHelper.updateRawMessage(txtRawMessage);
+	}
+	
+	public void cmbClick() {
 		tabbedPane.setEnabled(false);
 		tabbedPane.setSelectedIndex(0);
 		pnlFields.removeAll();
@@ -337,6 +347,12 @@ public class PnlGuiPayload extends JPanel {
 		}
 	}
 	
+	public void setReadOnly() {
+		enablePnl(true);
+		guiPayloadMessageHelper.setReadOnly();
+		cmbMessageType.setEnabled(false);
+	}
+	
 	public void enablePnl(boolean value) {
 		lblMessageType.setEnabled(value);
 		cmbMessageType.setEnabled(value);
@@ -348,19 +364,31 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.setEnabled(value);
 	}
 	
-	private void updateCmbMessage() {
+	public void updateCmbMessage(String msgType) {
 		cmbMessageType.removeAllItems();
 		int totalMessages = Iso8583Helper.getInstance().getConfigTreeNode().getChildCount();
 		
 		DefaultMutableTreeNode treeNode;
 		MessageVO messageVO;
+		MessageVO selectedMessageVO = null;
 		for (int messageIndex = 0; messageIndex < totalMessages; messageIndex++) {
 			treeNode = (DefaultMutableTreeNode) Iso8583Helper.getInstance().getConfigTreeNode().getChildAt(messageIndex);
 			if (treeNode.getUserObject() instanceof MessageVO) {
 				messageVO = (MessageVO) treeNode.getUserObject();
 				cmbMessageType.addItem(messageVO);
+				
+				if (msgType != null && messageVO.getType().equals(msgType)) selectedMessageVO = messageVO;
 			}
 		}
+		
+		if (selectedMessageVO != null) cmbMessageType.setSelectedItem(selectedMessageVO);
+	}
+	
+	public GuiPayloadMessageHelper getMessageHelper() {
+		return guiPayloadMessageHelper;
 	}
 
+	public JButton getBtnSendResponse() {
+		return btnSendResponse;
+	}
 }

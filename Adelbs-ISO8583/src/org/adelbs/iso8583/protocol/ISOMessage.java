@@ -7,6 +7,7 @@ import groovyjarjarcommonscli.ParseException;
 
 public class ISOMessage {
 
+	private int messageSize;
 	private byte[] payload;
 	private StringBuilder visualPayload = new StringBuilder();
 
@@ -38,6 +39,7 @@ public class ISOMessage {
 		
 		visualPayload.append("\nEntire message: [").append(strMessage).append("]\n");
 		
+		this.messageSize = strMessage.length();
 		this.payload = strMessage.toString().getBytes();
 	}
 	
@@ -51,5 +53,16 @@ public class ISOMessage {
 	
 	public FieldVO getBit(int bit) {
 		return bitmap.getBit(bit);
+	}
+	
+	public int getMessageSize() {
+		return messageSize;
+	}
+	
+	public String getMessageSize(int numChars) {
+		String result = String.valueOf(messageSize);
+		while (result.length() < numChars)
+			result = "0" + result;
+		return result;
 	}
 }

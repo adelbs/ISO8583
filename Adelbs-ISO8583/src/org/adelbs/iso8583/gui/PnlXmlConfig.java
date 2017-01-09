@@ -28,7 +28,7 @@ public class PnlXmlConfig extends JPanel {
 			public void componentShown(ComponentEvent e) {}
 			@Override
 			public void componentResized(ComponentEvent e) {
-				scrollPane.setBounds(0, 0, getWidth(), getHeight());
+				scrollPane.setBounds(0, 0, getWidth() - 15, getHeight());
 			}
 			@Override
 			public void componentMoved(ComponentEvent e) {}

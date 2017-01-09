@@ -68,26 +68,25 @@ public class GuiPayloadMessageHelper {
 	public void updateFromPayload(byte[] bytes) {
 		try {
 			isoMessage = new ISOMessage(bytes, messageVO);
+			
+			for (GuiPayloadField guiPayloadField : fieldList) {
+				if (isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()) != null) {
+					guiPayloadField.setSelected();
+					guiPayloadField.getFieldVO().setPresent(true);
+					guiPayloadField.setTlvType(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getTlvType());
+					guiPayloadField.setTlvLength(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getTlvLength());
+					guiPayloadField.setText(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getValue());
+					for (int i = 0; i < guiPayloadField.subfieldList.size(); i++) {
+						guiPayloadField.subfieldList.get(i).setTlvType(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getTlvType());
+						guiPayloadField.subfieldList.get(i).setTlvLength(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getTlvLength());
+						guiPayloadField.subfieldList.get(i).setText(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getValue());
+					}
+				}
+			}
 		}
 		catch (Exception x) {
 			JOptionPane.showMessageDialog(FrmMain.getInstance(), "It was not possible to parse this payload. Certify that the message structure was not changed.\n" + x.getMessage());
 		}
-		
-		for (GuiPayloadField guiPayloadField : fieldList) {
-			if (isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()) != null) {
-				guiPayloadField.setSelected();
-				guiPayloadField.getFieldVO().setPresent(true);
-				guiPayloadField.setTlvType(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getTlvType());
-				guiPayloadField.setTlvLength(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getTlvLength());
-				guiPayloadField.setText(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getValue());
-				for (int i = 0; i < guiPayloadField.subfieldList.size(); i++) {
-					guiPayloadField.subfieldList.get(i).setTlvType(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getTlvType());
-					guiPayloadField.subfieldList.get(i).setTlvLength(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getTlvLength());
-					guiPayloadField.subfieldList.get(i).setText(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getValue());
-				}
-			}
-		}
-		
 	}
 	
 	public void updateXMLfromGUI() {
@@ -115,6 +114,15 @@ public class GuiPayloadMessageHelper {
 	
 	public ISOMessage getIsoMessage() {
 		return isoMessage;
+	}
+	
+	public void setReadOnly() {
+		for (GuiPayloadField field : fieldList) {
+			field.setReadOnly();
+			for (GuiPayloadField field2 : field.subfieldList) {
+				field2.setReadOnly();	
+			}
+		}
 	}
 	
 	private class GuiPayloadField {
@@ -253,6 +261,19 @@ public class GuiPayloadMessageHelper {
 			}
 			
 			subfieldList.add(new GuiPayloadField(fieldVO, superfieldVO));
+		}
+		
+		private void setReadOnly() {
+			setEnabled(false);
+			ckBox.setEnabled(false);
+			
+			txtType.setEnabled(true);
+			txtLength.setEnabled(true);
+			txtValue.setEnabled(true);
+			
+			txtType.setEditable(false);
+			txtLength.setEditable(false);
+			txtValue.setEditable(false);
 		}
 		
 		private void setEnabled(boolean enabled) {

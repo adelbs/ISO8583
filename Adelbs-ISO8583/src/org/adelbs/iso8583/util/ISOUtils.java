@@ -29,5 +29,16 @@ public class ISOUtils {
 
 	  return result;
   }
-  
+
+  public static byte[] mergeArray(byte[] arr1, byte[] arr2) {
+	  byte[] result = new byte[arr1.length + arr2.length];
+	  
+	  for (int i = 0; i < arr1.length; i++)
+		  result[i] = arr1[i];
+	  
+	  for (int i = 0; i < arr2.length; i++)
+		  result[i + arr1.length] = arr2[i];
+	  
+	  return result;
+  }
 }
