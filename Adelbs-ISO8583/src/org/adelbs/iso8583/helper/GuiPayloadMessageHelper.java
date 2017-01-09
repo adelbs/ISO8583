@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.gui.FrmMain;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.protocol.ISOMessage;
@@ -64,9 +66,27 @@ public class GuiPayloadMessageHelper {
 	}
 	
 	public void updateFromPayload(byte[] bytes) {
-		isoMessage = new ISOMessage(bytes, messageVO);
+		try {
+			isoMessage = new ISOMessage(bytes, messageVO);
+		}
+		catch (Exception x) {
+			JOptionPane.showMessageDialog(FrmMain.getInstance(), "It was not possible to parse this payload. Certify that the message structure was not changed.\n" + x.getMessage());
+		}
 		
-		//TODO get the messageVO fields value to update the screen fields value
+		for (GuiPayloadField guiPayloadField : fieldList) {
+			if (isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()) != null) {
+				guiPayloadField.setSelected();
+				guiPayloadField.getFieldVO().setPresent(true);
+				guiPayloadField.setTlvType(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getTlvType());
+				guiPayloadField.setTlvLength(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getTlvLength());
+				guiPayloadField.setText(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getValue());
+				for (int i = 0; i < guiPayloadField.subfieldList.size(); i++) {
+					guiPayloadField.subfieldList.get(i).setTlvType(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getTlvType());
+					guiPayloadField.subfieldList.get(i).setTlvLength(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getTlvLength());
+					guiPayloadField.subfieldList.get(i).setText(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i).getValue());
+				}
+			}
+		}
 		
 	}
 	
@@ -84,8 +104,13 @@ public class GuiPayloadMessageHelper {
 	}
 	
 	public void updateRawMessage(JTextArea txtRawMessage) {
-		isoMessage = new ISOMessage(messageVO);
-		txtRawMessage.setText(isoMessage.getVisualPayload());
+		try {
+			isoMessage = new ISOMessage(messageVO);
+			txtRawMessage.setText(isoMessage.getVisualPayload());
+		}
+		catch (Exception x) {
+			JOptionPane.showMessageDialog(FrmMain.getInstance(), "Error building the raw message.\n" + x.getMessage());
+		}
 	}
 	
 	public ISOMessage getIsoMessage() {
@@ -202,9 +227,14 @@ public class GuiPayloadMessageHelper {
 		
 		private void saveFieldValue() {
 			fieldVO.setPresent(ckBox.isSelected());
-			fieldVO.setTypeValue(txtType.getText());
-			fieldVO.setLenValue(txtLength.getText());
+			fieldVO.setTlvType(txtType.getText());
+			fieldVO.setTlvLength(txtLength.getText());
 			fieldVO.setValue(txtValue.getText());
+		}
+		
+		private void setSelected() {
+			ckBox.setSelected(true);
+			ckBoxClick(ckBox);
 		}
 		
 		private void ckBoxClick(JCheckBox ckBox) {
@@ -233,6 +263,14 @@ public class GuiPayloadMessageHelper {
 			lblFieldName.setEnabled(enabled);
 			lblType.setEnabled(enabled);
 			lblDynamic.setEnabled(enabled);
+		}
+		
+		private void setTlvType(String value) {
+			txtType.setText(value);
+		}
+		
+		private void setTlvLength(String value) {
+			txtLength.setText(value);
 		}
 		
 		private void setText(String text) {

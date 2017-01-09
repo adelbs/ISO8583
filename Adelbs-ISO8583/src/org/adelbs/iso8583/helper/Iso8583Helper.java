@@ -75,7 +75,7 @@ public class Iso8583Helper {
 				!(((DefaultMutableTreeNode) ((DefaultMutableTreeNode) node).getParent()).getUserObject() instanceof FieldVO));
 		
 		if (add) {
-			newNode = new DefaultMutableTreeNode(new FieldVO("NewField", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 1, EncodingEnum.UTF8, ""));
+			newNode = new DefaultMutableTreeNode(new FieldVO("NewField", "", 2, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 1, EncodingEnum.UTF8, ""));
 			((DefaultMutableTreeNode) node).add(newNode);
 		}
 		
@@ -376,6 +376,11 @@ public class Iso8583Helper {
 	
 	public boolean validateNode(GenericIsoVO isoVO, DefaultMutableTreeNode selectedNodeParent) {
 		if (isoVO instanceof FieldVO) {
+			if (selectedNodeParent == null && ((FieldVO) isoVO).getBitNum().intValue() == 1)
+				isoVO.addValidationError(NodeValidationError.RESERVED_BIT_NUMBER);
+			else
+				isoVO.removeValidationError(NodeValidationError.RESERVED_BIT_NUMBER);
+				
 			if (!"".equals(validateCondition((FieldVO) isoVO)))
 				isoVO.addValidationError(NodeValidationError.INVALID_CONDITION);
 			else

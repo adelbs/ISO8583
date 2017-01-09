@@ -1,6 +1,9 @@
 package org.adelbs.iso8583.protocol;
 
+import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
+
+import groovyjarjarcommonscli.ParseException;
 
 public class ISOMessage {
 
@@ -9,11 +12,11 @@ public class ISOMessage {
 
 	private Bitmap bitmap;
 	
-	public ISOMessage(MessageVO messageVO) {
+	public ISOMessage(MessageVO messageVO) throws ParseException {
 		this(null, messageVO);
 	}
 	
-	public ISOMessage(byte[] payload, MessageVO messageVO) {
+	public ISOMessage(byte[] payload, MessageVO messageVO) throws ParseException {
 		if (payload != null)
 			bitmap = new Bitmap(payload, messageVO);
 		else
@@ -46,4 +49,7 @@ public class ISOMessage {
 		return payload;
 	}
 	
+	public FieldVO getBit(int bit) {
+		return bitmap.getBit(bit);
+	}
 }

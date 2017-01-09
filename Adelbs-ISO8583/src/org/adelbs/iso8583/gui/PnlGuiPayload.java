@@ -258,7 +258,7 @@ public class PnlGuiPayload extends JPanel {
 					    Path path = Paths.get(file.getSelectedFile().getAbsolutePath());
 					    byte[] data = Files.readAllBytes(path);
 					    
-						if (data.length > 68) {
+						if (data.length > 20) {
 							String messageType = new String(new byte[]{data[0], data[1], data[2], data[3]});
 							MessageVO payloadMessageVO = null;
 							
@@ -270,12 +270,15 @@ public class PnlGuiPayload extends JPanel {
 							}
 							
 							if (payloadMessageVO == null) {
-								//TODO error message
+								JOptionPane.showMessageDialog(FrmMain.getInstance(), "It was not possible to parse this payload. Certify that the message structure was not changed.");
 							}
 							else {
 								cmbMessageType.setSelectedItem(payloadMessageVO);
 								guiPayloadMessageHelper.updateFromPayload(data);
 							}
+						}
+						else {
+							JOptionPane.showMessageDialog(FrmMain.getInstance(), "Invalid file.");							
 						}
 					} 
 					catch (Exception x) {

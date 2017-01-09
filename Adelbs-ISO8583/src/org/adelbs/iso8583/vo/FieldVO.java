@@ -6,6 +6,7 @@ import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.gui.FrmMain;
+import org.adelbs.iso8583.util.ISOUtils;
 
 public class FieldVO extends GenericIsoVO {
 
@@ -27,8 +28,8 @@ public class FieldVO extends GenericIsoVO {
 	
 	//Valor a ser populado durante a execução do ISO
 	private boolean isPresent = false;
-	private String typeValue = "";
-	private String lenValue = "";
+	private String tlvType = "";
+	private String tlvLength = "";
 	private String value = "";
 	
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
@@ -137,20 +138,20 @@ public class FieldVO extends GenericIsoVO {
 		this.isPresent = isPresent;
 	}
 
-	public String getTypeValue() {
-		return typeValue;
+	public String getTlvType() {
+		return tlvType;
 	}
 
-	public void setTypeValue(String typeValue) {
-		this.typeValue = typeValue;
+	public void setTlvType(String tlvType) {
+		this.tlvType = tlvType;
 	}
 
-	public String getLenValue() {
-		return lenValue;
+	public String getTlvLength() {
+		return tlvLength;
 	}
 
-	public void setLenValue(String lenValue) {
-		this.lenValue = lenValue;
+	public void setTlvLength(String tlvLength) {
+		this.tlvLength = tlvLength;
 	}
 	
 	//********** runtime
@@ -184,10 +185,10 @@ public class FieldVO extends GenericIsoVO {
 		if (type == TypeEnum.ALPHANUMERIC)
 			payload = getPayloadValue(typeLength, newValue, length);
 		else if (type == TypeEnum.TLV) {
-			String size = getMaxSizeStr(lenValue, length);
+			String size = getMaxSizeStr(tlvLength, length);
 
-			typeValue = (typeValue == null) ? "" : typeValue;
-			payload = getMaxSizeStr(typeValue, sizeTypeTLV);
+			tlvType = (tlvType == null) ? "" : tlvType;
+			payload = getMaxSizeStr(tlvType, sizeTypeTLV);
 			payload += size;
 			payload += getPayloadValue(TypeLengthEnum.FIXED, newValue, Integer.parseInt(size));
 		}
@@ -254,5 +255,60 @@ public class FieldVO extends GenericIsoVO {
 		}
 		
 		return result;
+	}
+	
+	
+	public int setValueFromPayload(byte[] payload, int startPosition) {
+		int endPosition = startPosition;
+		String newContent = "";
+		
+		if (type != TypeEnum.TLV && fieldList.size() > 0) {
+			for (FieldVO fieldVO : fieldList)
+				endPosition = fieldVO.setValueFromPayload(payload, endPosition);
+		}
+		else {
+			if (type == TypeEnum.ALPHANUMERIC) {
+				if (typeLength == TypeLengthEnum.FIXED) {
+					endPosition = startPosition + length;
+					newContent = new String(ISOUtils.subArray(payload, startPosition, endPosition));
+				}
+				else if (typeLength == TypeLengthEnum.NVAR) {
+					String strVarValue = new String(ISOUtils.subArray(payload, startPosition, startPosition + length));
+					int nVarValue = Integer.valueOf(strVarValue);
+					endPosition = startPosition + strVarValue.length() + nVarValue;
+	
+					newContent = new String(ISOUtils.subArray(payload, startPosition, endPosition));
+					newContent = newContent.substring(String.valueOf(nVarValue).length());
+				}
+				
+				value = newContent;
+			}
+			else if (type == TypeEnum.TLV) {
+				endPosition = populateTLVFromPayload(2, 3, payload, startPosition + 3);
+				for (FieldVO fieldVO : fieldList) {
+					if (fieldVO.getType() == TypeEnum.TLV) {
+						endPosition = fieldVO.populateTLVFromPayload(Integer.parseInt(value.substring(0, 1)), Integer.parseInt(value.substring(1, 2)), payload, endPosition);
+					}
+					else {
+						endPosition = fieldVO.setValueFromPayload(payload, endPosition);
+					}
+				}
+			}
+		}
+		
+		return endPosition;
+	}
+	
+	public int populateTLVFromPayload(int lenType, int lenLen, byte[] payload, int startPosition) {
+		int endPosition = startPosition + lenType;
+		tlvType = new String(ISOUtils.subArray(payload, startPosition, endPosition));
+		
+		endPosition = endPosition + lenLen;
+		tlvLength = new String(ISOUtils.subArray(payload, startPosition + lenType, endPosition));
+
+		endPosition = endPosition + Integer.parseInt(tlvLength);
+		value = new String(ISOUtils.subArray(payload, startPosition + lenType + lenLen, endPosition));
+		
+		return endPosition;
 	}
 }
