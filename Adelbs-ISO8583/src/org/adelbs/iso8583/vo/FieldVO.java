@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
-import org.adelbs.iso8583.gui.FrmMain;
+import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.util.ISOUtils;
 
 public class FieldVO extends GenericIsoVO {
@@ -34,7 +34,9 @@ public class FieldVO extends GenericIsoVO {
 	
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
 
-	public FieldVO(String name, String subFieldName, Integer bitNum, TypeEnum type, TypeLengthEnum typeLength, Integer length, EncodingEnum encoding, String dynaCondition) {
+	private PnlMain pnlMain;
+	
+	public FieldVO(PnlMain pnlMain, String name, String subFieldName, Integer bitNum, TypeEnum type, TypeLengthEnum typeLength, Integer length, EncodingEnum encoding, String dynaCondition) {
 		this.name = name;
 		this.subFieldName = subFieldName;
 		this.bitNum = bitNum;
@@ -43,6 +45,21 @@ public class FieldVO extends GenericIsoVO {
 		this.typeLength = typeLength;
 		this.encoding = encoding;
 		this.dynaCondition = dynaCondition;
+		this.pnlMain = pnlMain;
+	}
+	
+	public FieldVO getInstanceCopy() {
+		FieldVO newFieldVO = new FieldVO(pnlMain, name, subFieldName, bitNum, type, typeLength, length, encoding, dynaCondition);
+		newFieldVO.setPresent(isPresent);
+		newFieldVO.setTlvType(tlvType);
+		newFieldVO.setTlvLength(tlvLength);
+		newFieldVO.setValue(value);
+
+		newFieldVO.setFieldList(new ArrayList<FieldVO>());
+		for (FieldVO fieldVO : fieldList)
+			newFieldVO.getFieldList().add(fieldVO.getInstanceCopy());
+		
+		return newFieldVO;
 	}
 	
 	public String getName() {
@@ -87,7 +104,7 @@ public class FieldVO extends GenericIsoVO {
 	
 	public String toString() {
 		String fieldName = (subFieldName != null && !subFieldName.equals("")) ? subFieldName: name;
-		return (FrmMain.getInstance().getPnlGuiConfig().isShowBitNum() ? "[" + bitNum + "] " : "") + fieldName + getValidationMessage();
+		return (pnlMain != null && pnlMain.getPnlGuiConfig().isShowBitNum() ? "[" + bitNum + "] " : "") + fieldName + getValidationMessage();
 	}
 
 	public Integer getLength() {
@@ -177,8 +194,8 @@ public class FieldVO extends GenericIsoVO {
 				length = 3;
 			}
 			else {
-				sizeTypeTLV = Integer.parseInt(superFieldVO.getValue().substring(0, 1));
-				length = Integer.parseInt(superFieldVO.getValue().substring(1, 2));
+				sizeTypeTLV = (superFieldVO.getValue().equals("") ? 0 : Integer.parseInt(superFieldVO.getValue().substring(0, 1)));
+				length = (superFieldVO.getValue().equals("") ? 0 : Integer.parseInt(superFieldVO.getValue().substring(1, 2)));
 			}
 		}
 		
@@ -190,7 +207,7 @@ public class FieldVO extends GenericIsoVO {
 			tlvType = (tlvType == null) ? "" : tlvType;
 			payload = getMaxSizeStr(tlvType, sizeTypeTLV);
 			payload += size;
-			payload += getPayloadValue(TypeLengthEnum.FIXED, newValue, Integer.parseInt(size));
+			payload += getPayloadValue(TypeLengthEnum.FIXED, newValue, (size.equals("") ? 0 : Integer.parseInt(size)));
 		}
 		
 		if (superFieldVO != null && superFieldVO.getType() != TypeEnum.TLV)

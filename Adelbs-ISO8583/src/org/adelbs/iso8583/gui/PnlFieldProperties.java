@@ -40,7 +40,7 @@ public class PnlFieldProperties extends JPanel {
 	private JLabel lblLenValue = new JLabel("Length value");
 	private JComboBox<TypeLengthEnum> cmbLength = new JComboBox<TypeLengthEnum>();
 
-	public PnlFieldProperties(KeyListener saveKeyListener) {
+	public PnlFieldProperties(final PnlGuiConfig pnlGuiConfig, KeyListener saveKeyListener) {
 
 		setLayout(null);
 		setBorder(new TitledBorder(null, "Field Properties", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -96,7 +96,7 @@ public class PnlFieldProperties extends JPanel {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				FrmMain.getInstance().getPnlGuiConfig().getPnlFieldCondition().setMandatory(chckbxMandatory.isSelected());
+				pnlGuiConfig.getPnlFieldCondition().setMandatory(chckbxMandatory.isSelected());
 			}
 		});
 		

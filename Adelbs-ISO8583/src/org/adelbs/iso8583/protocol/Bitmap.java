@@ -54,7 +54,7 @@ public class Bitmap {
 				FieldVO foundFieldVO = null;
 				for (FieldVO fieldVO : messageVO.getFieldList()) {
 					if (fieldVO.getBitNum().intValue() == (i + 1)) {
-						foundFieldVO = fieldVO;
+						foundFieldVO = fieldVO.getInstanceCopy();
 						break;
 					}
 				}
@@ -64,17 +64,21 @@ public class Bitmap {
 				}
 				else {
 					startPosition = foundFieldVO.setValueFromPayload(payload, startPosition);
-					bitmap.put(foundFieldVO.getBitNum(), foundFieldVO);
+					bitmap.put(foundFieldVO.getBitNum(), foundFieldVO.getInstanceCopy());
+					bitmap.get(foundFieldVO.getBitNum()).setPresent(true);
 				}
 			}
 		}
 		
+		calculateBitmapEncoding(messageVO);
 	}
 	
 	public Bitmap(MessageVO messageVO) {
 		for (FieldVO fieldVO : messageVO.getFieldList())
-			if (fieldVO.isPresent())
-				bitmap.put(fieldVO.getBitNum(), fieldVO);
+			if (fieldVO.isPresent()) {
+				bitmap.put(fieldVO.getBitNum(), fieldVO.getInstanceCopy());
+				bitmap.get(fieldVO.getBitNum()).setPresent(true);
+			}
 		
 		int lastBit = 0;
 		for (int i = 1; i <= 128; i++) {
@@ -85,22 +89,27 @@ public class Bitmap {
 		totalBits = lastBit;
 		
 		if (lastBit > 64) {
-			FieldVO secondBitmap = new FieldVO("Bitmap", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 16, messageVO.getBitmatEncoding(), "true");
+			FieldVO secondBitmap = new FieldVO(null, "Bitmap", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 16, messageVO.getBitmatEncoding(), "true");
 			binaryBitmap = "1".concat(binaryBitmap.substring(1));
 			secondBitmap.setValue(getHexa(binaryBitmap.substring(64, 128)));
+			secondBitmap.setPresent(true);
 			bitmap.put(1, secondBitmap);
 			binaryBitmap.substring(0, 64);
 		}
 		
+		calculateBitmapEncoding(messageVO);
+	}
+
+	private void calculateBitmapEncoding(MessageVO messageVO) {
 		hexaBitmap = getHexa(binaryBitmap.substring(0, 64));
 		
 		if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
 			payloadBitmap = hexaBitmap;
 		else
 			payloadBitmap = binaryBitmap;
-		
-	}
 
+	}
+	
 	private String getHexa(String binaryValue) {
 		String result = "";
 		int decimal;

@@ -9,7 +9,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import org.adelbs.iso8583.gui.FrmMain;
+import org.adelbs.iso8583.gui.PnlGuiConfig;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
@@ -18,7 +18,7 @@ public class SortTreeHelper {
 	private static boolean updateTree = false;
 	
 	@SuppressWarnings("rawtypes")
-	public static void sortTree(DefaultMutableTreeNode root, JTree treeTypes) {
+	public static void sortTree(PnlGuiConfig pnlGuiConfig, DefaultMutableTreeNode root, JTree treeTypes) {
 		if (root != null) {
 			Enumeration e = root.depthFirstEnumeration();
 			while (e.hasMoreElements()) {
@@ -37,7 +37,7 @@ public class SortTreeHelper {
 				updateTree = false;
 			}
 
-			FrmMain.getInstance().getPnlGuiConfig().getPnlFieldCondition().ckDynamicClick();
+			pnlGuiConfig.getPnlFieldCondition().ckDynamicClick();
 		}
 	}
 	

@@ -21,7 +21,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.adelbs.iso8583.constants.OperatorEnum;
-import org.adelbs.iso8583.helper.Iso8583Helper;
 import org.adelbs.iso8583.vo.CmbItemVO;
 import org.adelbs.iso8583.vo.FieldVO;
 
@@ -39,7 +38,11 @@ public class PnlFieldCondition extends JPanel {
 	private JTextArea txtDynaCondition = new JTextArea();
 	private JScrollPane scrDynaCondition = new JScrollPane();
 
-	public PnlFieldCondition() {
+	private PnlMain pnlMain;
+	
+	public PnlFieldCondition(final PnlMain pnlMain) {
+		
+		this.pnlMain = pnlMain;
 		
 		setLayout(null);
 		setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Condition", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -98,8 +101,8 @@ public class PnlFieldCondition extends JPanel {
 					txtDynaCondition.setText(txtDynaCondition.getText() + " " + txtDynaValue.getText());
 					txtDynaValue.setText("");
 					
-					FrmMain.getInstance().getPnlGuiConfig().save();
-					FrmMain.getInstance().getPnlGuiConfig().getTree().updateUI();
+					pnlMain.getPnlGuiConfig().save(pnlMain);
+					pnlMain.getPnlGuiConfig().getTree().updateUI();
 				}
 			}
 		});
@@ -107,12 +110,12 @@ public class PnlFieldCondition extends JPanel {
 		btnDynaValidate.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				FrmMain.getInstance().getPnlGuiConfig().save();
-				String validationError = Iso8583Helper.getInstance().validateCondition((FieldVO) FrmMain.getInstance().getPnlGuiConfig().getSelectedNode().getUserObject());
+				pnlMain.getPnlGuiConfig().save(pnlMain);
+				String validationError = pnlMain.getIsoHelper().validateCondition((FieldVO) pnlMain.getPnlGuiConfig().getSelectedNode().getUserObject());
 				if (!"".equals(validationError))
-					JOptionPane.showMessageDialog(FrmMain.getInstance(), "Invalid expression!\n\n" + validationError);
+					JOptionPane.showMessageDialog(pnlMain.getPnlGuiConfig(), "Invalid expression!\n\n" + validationError);
 				else
-					JOptionPane.showMessageDialog(FrmMain.getInstance(), "The expression looks good!");
+					JOptionPane.showMessageDialog(pnlMain.getPnlGuiConfig(), "The expression looks good!");
 			}
 		});
 		
@@ -141,11 +144,11 @@ public class PnlFieldCondition extends JPanel {
 			ckDynamic.setEnabled(!txtDynaCondition.getText().equals("true"));
 			
 			FieldVO fieldVO = null;
-			FieldVO selectedFieldVO = (FieldVO) ((DefaultMutableTreeNode) FrmMain.getInstance().getPnlGuiConfig().getSelectedNode()).getUserObject();
+			FieldVO selectedFieldVO = (FieldVO) ((DefaultMutableTreeNode) pnlMain.getPnlGuiConfig().getSelectedNode()).getUserObject();
 			cmbDynaBit.removeAllItems();
 			cmbDynaBit.addItem(new CmbItemVO("-- BIT --", "-- BIT --"));
-			for (int i = 0; i < FrmMain.getInstance().getPnlGuiConfig().getSelectedNodeParent().getChildCount(); i++) {
-				fieldVO = (FieldVO) ((DefaultMutableTreeNode) FrmMain.getInstance().getPnlGuiConfig().getSelectedNodeParent().getChildAt(i)).getUserObject();
+			for (int i = 0; i < pnlMain.getPnlGuiConfig().getSelectedNodeParent().getChildCount(); i++) {
+				fieldVO = (FieldVO) ((DefaultMutableTreeNode) pnlMain.getPnlGuiConfig().getSelectedNodeParent().getChildAt(i)).getUserObject();
 				if (fieldVO.getBitNum().intValue() != selectedFieldVO.getBitNum().intValue())
 					cmbDynaBit.addItem(new CmbItemVO("BIT[" + fieldVO.getBitNum() + "] " + fieldVO.getName(), "BIT[" + fieldVO.getBitNum() + "]"));
 			}
@@ -203,7 +206,7 @@ public class PnlFieldCondition extends JPanel {
 		cmbDynaBit.removeAllItems();
 		cmbDynaOperator.setSelectedIndex(0);
 		txtDynaValue.setText("");
-		txtDynaCondition.setText(FrmMain.getInstance().getPnlGuiConfig().getPnlFieldProperties().getChckbxMandatory().isSelected() ? "true" : "");
+		txtDynaCondition.setText(pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxMandatory().isSelected() ? "true" : "");
 	}
 
 	private class AddLogicActionListener implements ActionListener {
@@ -219,8 +222,8 @@ public class PnlFieldCondition extends JPanel {
 				txtDynaCondition.setText(txtDynaCondition.getText() + " " + ((CmbItemVO) cmbObject.getSelectedItem()).getValue());
 				cmbObject.setSelectedIndex(0);
 				
-				FrmMain.getInstance().getPnlGuiConfig().save();
-				FrmMain.getInstance().getPnlGuiConfig().getTree().updateUI();
+				pnlMain.getPnlGuiConfig().save(pnlMain);
+				pnlMain.getPnlGuiConfig().getTree().updateUI();
 			}
 		}
 	}

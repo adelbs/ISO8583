@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project VideoRecorder">
+<project default="create_run_jar" name="Create Runnable Jar for Project ISO8583">
     <target name="create_run_jar">
-        <jar destfile="build/ISO8583Config.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="build/Abs-ISO8583_0.12.jar" filesetmanifest="mergewithoutmain">
             <manifest>
-                <attribute name="Main-Class" value="com.ca.extensions.iso8583.Main"/>
+                <attribute name="Main-Class" value="org.adelbs.iso8583.Main"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="bin"/>

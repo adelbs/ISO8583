@@ -1,11 +1,11 @@
 package org.adelbs.iso8583.clientserver;
 
-public interface CallbackAction {
+public abstract class CallbackAction {
 
-	void dataReceived(byte[] data);
+	public abstract void dataReceived(byte[] data) throws Exception ;
 	
-	void log(String log);
+	public abstract void log(String log);
 	
-	void end();
+	public abstract void end();
 	
 }

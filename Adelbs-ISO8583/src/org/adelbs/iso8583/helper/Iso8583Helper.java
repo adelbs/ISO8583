@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 import javax.swing.JOptionPane;
@@ -18,8 +19,9 @@ import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
-import org.adelbs.iso8583.gui.FrmMain;
+import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
+import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
 import org.adelbs.iso8583.vo.MessageVO;
@@ -32,7 +34,7 @@ import groovy.util.Eval;
 
 public class Iso8583Helper {
 	
-	public static final String VERSION = "0.1";
+	public static final String VERSION = "0.5";
 	
 	private DefaultMutableTreeNode configTreeNode;
 	private XmlTextPane xmlText = new XmlTextPane();
@@ -40,15 +42,13 @@ public class Iso8583Helper {
 	//Arquivo de configuração carregado
 	private String xmlFilePath = null;
 	
-	private static Iso8583Helper instance;
-	
-	public static Iso8583Helper getInstance() {
-		if (instance == null)
-			instance = new Iso8583Helper();
-		return instance;
+	public Iso8583Helper(String fileName) {
+		this();
+		openFile(null, fileName);
+		parseXmlToConfig(null);
 	}
 	
-	private Iso8583Helper() {
+	public Iso8583Helper() {
 		configTreeNode = new DefaultMutableTreeNode("ISO8583");
 	}
 	
@@ -67,7 +67,7 @@ public class Iso8583Helper {
 		return newNode;
 	}
 
-	public DefaultMutableTreeNode addField(Object node) {
+	public DefaultMutableTreeNode addField(PnlMain pnlMain, Object node) {
 		DefaultMutableTreeNode newNode = null;
 		
 		boolean add = ((DefaultMutableTreeNode) node).getUserObject() instanceof MessageVO;
@@ -75,7 +75,7 @@ public class Iso8583Helper {
 				!(((DefaultMutableTreeNode) ((DefaultMutableTreeNode) node).getParent()).getUserObject() instanceof FieldVO));
 		
 		if (add) {
-			newNode = new DefaultMutableTreeNode(new FieldVO("NewField", "", 2, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 1, EncodingEnum.UTF8, ""));
+			newNode = new DefaultMutableTreeNode(new FieldVO(pnlMain, "NewField", "", 2, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 1, EncodingEnum.UTF8, ""));
 			((DefaultMutableTreeNode) node).add(newNode);
 		}
 		
@@ -165,7 +165,7 @@ public class Iso8583Helper {
 	
 	private void appendFieldVO(StringBuilder xmlISO, FieldVO fieldVo, boolean hasChild, boolean subField) {
 		xmlISO.append("\n").append(subField ? "\t\t\t" : "\t\t").append("<field ").
-			append("name=\"").append(fieldVo.getName()).append("\" ").		
+			append("name=\"").append((subField ? fieldVo.getSubFieldName() : fieldVo.getName())).append("\" ").		
 			append("bitnum=\"").append(fieldVo.getBitNum()).append("\" ").
 			append("condition=\"").append(fieldVo.getDynaCondition()).append("\" ").
 			append("length-type=\"").append(fieldVo.getTypeLength().toPlainString()).append("\" ").
@@ -176,7 +176,7 @@ public class Iso8583Helper {
 		if (!hasChild) xmlISO.append("/>");
 	}
 	
-	public void parseXmlToConfig() {
+	public void parseXmlToConfig(PnlMain pnlMain) {
 		try {
 			if (!xmlText.getText().trim().equals("")) {
 				configTreeNode.removeAllChildren();
@@ -198,22 +198,61 @@ public class Iso8583Helper {
 					if ("message".equalsIgnoreCase(node.getNodeName())) {
 						lastParseNode = addType();
 						
-						((MessageVO) lastParseNode.getUserObject()).setType(getAttr(node, "type", "0000"));;
-						((MessageVO) lastParseNode.getUserObject()).setHeaderEncoding(EncodingEnum.getEncoding(getAttr(node, "header-encoding", "")));
-						((MessageVO) lastParseNode.getUserObject()).setBitmatEncoding(EncodingEnum.getEncoding(getAttr(node, "bitmap-encoding", "")));
+						((MessageVO) lastParseNode.getUserObject()).setType(ISOUtils.getAttr(node, "type", "0000"));;
+						((MessageVO) lastParseNode.getUserObject()).setHeaderEncoding(EncodingEnum.getEncoding(ISOUtils.getAttr(node, "header-encoding", "")));
+						((MessageVO) lastParseNode.getUserObject()).setBitmatEncoding(EncodingEnum.getEncoding(ISOUtils.getAttr(node, "bitmap-encoding", "")));
 						
-						addFieldsToTree(node, lastParseNode);
+						addFieldsToTree(pnlMain, node, lastParseNode);
 					}
 				}
 			}
 		}
 		catch (Exception x) {
 			x.printStackTrace();
-			JOptionPane.showMessageDialog(FrmMain.getInstance(), "Invalid XML! See the log file.\n\n" + x.getMessage());
+			JOptionPane.showMessageDialog(pnlMain, "Invalid XML! See the log file.\n\n" + x.getMessage());
 		}
 	}
 
-	private void addFieldsToTree(Node node, DefaultMutableTreeNode lastParseNode) {
+	public MessageVO getMessageVOAtTree(String type) {
+		
+		DefaultMutableTreeNode messageNode = null;
+		MessageVO messageVO;
+		MessageVO newMessageVO = null;
+		FieldVO fieldVO;
+		FieldVO newFieldVO;
+		FieldVO newSubfieldVO;
+		
+		for (int i = 0; i < configTreeNode.getChildCount(); i++) {
+			messageNode = (DefaultMutableTreeNode) configTreeNode.getChildAt(i);
+			messageVO = (MessageVO) messageNode.getUserObject();
+			if (messageVO.getType().equals(type)) {
+				newMessageVO = messageVO.getInstanceCopy();
+				break;
+			}
+		}
+		
+		if (newMessageVO != null) {
+			newMessageVO.setFieldList(new ArrayList<FieldVO>());
+			for (int i = 0; i < messageNode.getChildCount(); i++) {
+				fieldVO = (FieldVO) ((DefaultMutableTreeNode) messageNode.getChildAt(i)).getUserObject();
+				newFieldVO = fieldVO.getInstanceCopy();
+				
+				newMessageVO.getFieldList().add(newFieldVO);
+				
+				newFieldVO.setFieldList(new ArrayList<FieldVO>());
+				for (int j = 0; j < messageNode.getChildAt(i).getChildCount(); j++) {
+					fieldVO = (FieldVO) ((DefaultMutableTreeNode) messageNode.getChildAt(i).getChildAt(j)).getUserObject();	
+					newSubfieldVO = fieldVO.getInstanceCopy();
+
+					newFieldVO.getFieldList().add(newSubfieldVO);
+				}
+			}
+		}
+		
+		return newMessageVO;
+	}
+	
+	private void addFieldsToTree(PnlMain pnlMain, Node node, DefaultMutableTreeNode lastParseNode) {
 		NodeList fieldList = node.getChildNodes();
 		NodeList subFieldList;
 
@@ -225,7 +264,7 @@ public class Iso8583Helper {
 			node = fieldList.item(j);
 			
 			if ("field".equalsIgnoreCase(node.getNodeName())) {
-				newNode = addField(lastParseNode);
+				newNode = addField(pnlMain, lastParseNode);
 				fieldVo = (FieldVO) newNode.getUserObject();
 				populateField(node, fieldVo, newNode, lastParseNode, false);
 				
@@ -236,7 +275,7 @@ public class Iso8583Helper {
 						node = subFieldList.item(w);
 						
 						if ("field".equalsIgnoreCase(node.getNodeName())) {
-							newNode = addField(lastFieldNode);
+							newNode = addField(pnlMain, lastFieldNode);
 							fieldVo = (FieldVO) newNode.getUserObject();
 							populateField(node, fieldVo, newNode, lastParseNode, true);
 						}
@@ -249,27 +288,19 @@ public class Iso8583Helper {
 	
 	private void populateField(Node node, FieldVO fieldVo, DefaultMutableTreeNode newNode, DefaultMutableTreeNode lastParseNode, boolean isSubfield) {
 
-		fieldVo.setName(getAttr(node, "name", ""));
+		fieldVo.setName(ISOUtils.getAttr(node, "name", ""));
 		
 		if (isSubfield)
-			fieldVo.setSubFieldName(getAttr(node, "name", ""));
+			fieldVo.setSubFieldName(ISOUtils.getAttr(node, "name", ""));
 
-		fieldVo.setBitNum(Integer.parseInt(getAttr(node, "bitnum", "0")));
-		fieldVo.setType(TypeEnum.getType(getAttr(node, "type", "")));
-		fieldVo.setTypeLength(TypeLengthEnum.getTypeLength(getAttr(node, "length-type", "")));
-		fieldVo.setLength(Integer.parseInt(getAttr(node, "length", "0")));
-		fieldVo.setEncoding(EncodingEnum.getEncoding(getAttr(node, "encoding", "")));
-		fieldVo.setDynaCondition(getAttr(node, "condition", ""));
+		fieldVo.setBitNum(Integer.parseInt(ISOUtils.getAttr(node, "bitnum", "0")));
+		fieldVo.setType(TypeEnum.getType(ISOUtils.getAttr(node, "type", "")));
+		fieldVo.setTypeLength(TypeLengthEnum.getTypeLength(ISOUtils.getAttr(node, "length-type", "")));
+		fieldVo.setLength(Integer.parseInt(ISOUtils.getAttr(node, "length", "0")));
+		fieldVo.setEncoding(EncodingEnum.getEncoding(ISOUtils.getAttr(node, "encoding", "")));
+		fieldVo.setDynaCondition(ISOUtils.getAttr(node, "condition", ""));
 	}
 	
-	private String getAttr(Node node, String name, String defaultValue) {
-		String result = defaultValue;
-		if (node != null && node.getAttributes() != null && node.getAttributes().getNamedItem(name) != null)
-			result = node.getAttributes().getNamedItem(name).getNodeValue();
-		
-		return result;
-	}
-
 	public void openFile(Component mainFrame, String file) {
 		
 		this.xmlFilePath = file;

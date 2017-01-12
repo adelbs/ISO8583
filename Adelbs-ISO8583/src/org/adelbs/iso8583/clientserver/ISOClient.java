@@ -25,6 +25,17 @@ public class ISOClient extends GenericClientServerThread {
 	
 	public void run() {
 		try {
+			sendData();
+		}
+		catch (Exception x) {
+			x.printStackTrace();
+			callback.log("ERROR:");
+			callback.log(x.getMessage());
+		}
+	}
+	
+	public void sendData() throws Exception {
+		try {
 			callback.log("Oppening connection at " + host + ":" + port + "...");
 			socket = new Socket(host, port);
 			out = socket.getOutputStream();
@@ -56,6 +67,8 @@ public class ISOClient extends GenericClientServerThread {
 			x.printStackTrace();
 			callback.log("ERROR:");
 			callback.log(x.getMessage());
+			
+			throw x;
 		}
 		finally {
 			if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
@@ -65,6 +78,5 @@ public class ISOClient extends GenericClientServerThread {
 			callback.log("Connection closed.");
 			callback.end();
 		}
-		
 	}
 }

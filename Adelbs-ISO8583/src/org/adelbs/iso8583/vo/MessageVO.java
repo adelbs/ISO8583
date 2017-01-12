@@ -17,6 +17,16 @@ public class MessageVO extends GenericIsoVO {
 		this.bitmatEncoding = bitmatEncoding;
 		this.headerEncoding = headerEncoding;
 	}
+
+	public MessageVO getInstanceCopy() {
+		MessageVO newMessageVO = new MessageVO(type, bitmatEncoding, headerEncoding);
+		
+		newMessageVO.setFieldList(new ArrayList<FieldVO>());
+		for (FieldVO fieldVO : fieldList)
+			newMessageVO.getFieldList().add(fieldVO.getInstanceCopy());
+		
+		return newMessageVO;
+	}
 	
 	public ArrayList<FieldVO> getFieldList() {
 		return fieldList;

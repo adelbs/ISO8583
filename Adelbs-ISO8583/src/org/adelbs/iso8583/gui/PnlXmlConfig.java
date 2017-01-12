@@ -7,21 +7,19 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-import org.adelbs.iso8583.helper.Iso8583Helper;
-
 public class PnlXmlConfig extends JPanel {
 	
 	private static final long serialVersionUID = 1L;
 
 	private JScrollPane scrollPane = new JScrollPane();
 	
-	public PnlXmlConfig() {
+	public PnlXmlConfig(PnlMain pnlMain) {
 		
 		setLayout(null);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 		
-		scrollPane.setViewportView(Iso8583Helper.getInstance().getXmlText());
+		scrollPane.setViewportView(pnlMain.getIsoHelper().getXmlText());
 
 		addComponentListener(new ComponentListener() {
 			@Override

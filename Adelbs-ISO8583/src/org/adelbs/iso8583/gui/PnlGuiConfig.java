@@ -26,7 +26,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.adelbs.iso8583.helper.Iso8583Helper;
 import org.adelbs.iso8583.helper.SortTreeHelper;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
@@ -59,13 +58,17 @@ public class PnlGuiConfig extends JPanel{
 
 	private SaveKeyListener saveKeyListener = new SaveKeyListener();
 	
-	public PnlGuiConfig() {
+	private PnlMain pnlMain;
+	
+	public PnlGuiConfig(final PnlMain pnlMain) {
+		this.pnlMain = pnlMain;
+		
 		setLocation(-225, -183);
 		setLayout(null);
 		
 		pnlMessageProperties = new PnlMessageProperties(saveKeyListener);
-		pnlFieldProperties = new PnlFieldProperties(saveKeyListener);
-		pnlFieldCondition = new PnlFieldCondition();
+		pnlFieldProperties = new PnlFieldProperties(this, saveKeyListener);
+		pnlFieldCondition = new PnlFieldCondition(pnlMain);
 		
 		//######### Apenas para visualizacao no WindowBuilder *********************************
 		scrTreeTypes.setBounds(12, 20, 246, 350); //FAKE!!!!!
@@ -127,35 +130,35 @@ public class PnlGuiConfig extends JPanel{
 		//Ações dos botões
 		btnNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				save();
-				DefaultMutableTreeNode newNode = Iso8583Helper.getInstance().addType();
+				save(pnlMain);
+				DefaultMutableTreeNode newNode = pnlMain.getIsoHelper().addType();
 				treeTypes.setSelectionPath(new TreePath(newNode.getPath()));
 				
-				save();
+				save(pnlMain);
 				treeTypes.updateUI();
 				treeTypes.expandRow(0);
 			}
 		});
 		btnNewField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				save();
-				DefaultMutableTreeNode newNode = Iso8583Helper.getInstance().addField(treeTypes.getLastSelectedPathComponent());
+				save(pnlMain);
+				DefaultMutableTreeNode newNode = pnlMain.getIsoHelper().addField(pnlMain, treeTypes.getLastSelectedPathComponent());
 
 				if (selectedNode.getUserObject() instanceof FieldVO) {
 					checkFieldsEnablement();
-					Iso8583Helper.getInstance().updateSumField(treeTypes.getLastSelectedPathComponent());
+					pnlMain.getIsoHelper().updateSumField(treeTypes.getLastSelectedPathComponent());
 					loadFieldValues();
 				}
 				
 				treeTypes.setSelectionPath(new TreePath(newNode.getPath()));
 				
-				save();
+				save(pnlMain);
 				treeTypes.updateUI();
 			}
 		});
 		btnRemove.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				save();
+				save(pnlMain);
 				removeNode(treeTypes.getLastSelectedPathComponent());
 				treeTypes.updateUI();
 				treeTypes.expandRow(0);
@@ -177,14 +180,14 @@ public class PnlGuiConfig extends JPanel{
 		add(pnlFieldCondition);
 
 		//TabbedPane e Tree
-		treeTypes = new JTree(Iso8583Helper.getInstance().getConfigTreeNode());
+		treeTypes = new JTree(pnlMain.getIsoHelper().getConfigTreeNode());
 		treeTypes.setCellRenderer(new ISOTreeRenderer());
 		treeTypes.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		
 		//Ao selecionar um no da arvore
 		treeTypes.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent e) {
-				save();
+				save(pnlMain);
 				
 				selectedNode = (DefaultMutableTreeNode) treeTypes.getLastSelectedPathComponent();
 				selectedNodeParent = (selectedNode == null || selectedNode.getParent() == null ? null : (DefaultMutableTreeNode) selectedNode.getParent());
@@ -292,7 +295,7 @@ public class PnlGuiConfig extends JPanel{
 		pnlFieldCondition.setEnabled(false);
 	}
 	
-	public void save() {
+	public void save(PnlMain pnlMain) {
 		try {
 			if (selectedNode != null) {
 				if (selectedNode.getUserObject() instanceof MessageVO) {
@@ -303,15 +306,15 @@ public class PnlGuiConfig extends JPanel{
 					pnlFieldCondition.save((FieldVO) selectedNode.getUserObject());
 					
 					if (selectedNodeParent.getUserObject() instanceof FieldVO)
-						Iso8583Helper.getInstance().updateSumField(selectedNodeParent);
+						pnlMain.getIsoHelper().updateSumField(selectedNodeParent);
 					else
-						Iso8583Helper.getInstance().updateSumField(selectedNode);
+						pnlMain.getIsoHelper().updateSumField(selectedNode);
 				
 				}
 				
 				if (!(selectedNode.getUserObject() instanceof String))
-					Iso8583Helper.getInstance().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
-				SortTreeHelper.sortTree(selectedNodeParent, treeTypes);
+					pnlMain.getIsoHelper().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
+				SortTreeHelper.sortTree(this, selectedNodeParent, treeTypes);
 			}
 		}
 		catch (Exception ex) {
@@ -409,7 +412,7 @@ public class PnlGuiConfig extends JPanel{
 	private class SaveKeyListener implements KeyListener {
 		public void keyTyped(KeyEvent e) { }
 		public void keyReleased(KeyEvent e) {
-			save();
+			save(pnlMain);
 			treeTypes.updateUI();
 		}
 		public void keyPressed(KeyEvent e) { }
