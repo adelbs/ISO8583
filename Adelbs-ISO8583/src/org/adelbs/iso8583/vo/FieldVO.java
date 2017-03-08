@@ -301,14 +301,20 @@ public class FieldVO extends GenericIsoVO {
 				value = newContent;
 			}
 			else if (type == TypeEnum.TLV) {
+				String strVarValue = new String(ISOUtils.subArray(payload, startPosition, startPosition + 3));
+				int nVarValue = Integer.valueOf(strVarValue);
+				int endTlvPosition = startPosition + strVarValue.length() + nVarValue;
+				
 				endPosition = populateTLVFromPayload(2, 3, payload, startPosition + 3);
-				for (FieldVO fieldVO : fieldList) {
-					if (fieldVO.getType() == TypeEnum.TLV) {
-						endPosition = fieldVO.populateTLVFromPayload(Integer.parseInt(value.substring(0, 1)), Integer.parseInt(value.substring(1, 2)), payload, endPosition);
-					}
-					else {
-						endPosition = fieldVO.setValueFromPayload(payload, endPosition);
-					}
+				fieldList = new ArrayList<FieldVO>();
+				FieldVO tlvSubfield;
+				int count = 1;
+				while (endPosition < endTlvPosition) {
+					tlvSubfield = getInstanceCopy();
+					tlvSubfield.setFieldList(new ArrayList<FieldVO>());
+					tlvSubfield.setBitNum(count++);
+					endPosition = tlvSubfield.populateTLVFromPayload(Integer.parseInt(value.substring(0, 1)), Integer.parseInt(value.substring(1, 2)), payload, endPosition);
+					fieldList.add(tlvSubfield);
 				}
 			}
 		}

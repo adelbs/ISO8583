@@ -8,6 +8,8 @@ public class ISOTestVO {
 	
 	private String port;
 
+	private boolean sync;
+	
 	public String getHost() {
 		return host;
 	}
@@ -30,6 +32,14 @@ public class ISOTestVO {
 
 	public void setConfigFile(String configFile) {
 		this.configFile = configFile;
+	}
+
+	public boolean isSync() {
+		return sync;
+	}
+
+	public void setSync(boolean sync) {
+		this.sync = sync;
 	}
 	
 }

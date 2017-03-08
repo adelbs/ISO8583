@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
@@ -290,6 +292,7 @@ public class PnlGuiPayload extends JPanel {
 							else {
 								cmbMessageType.setSelectedItem(payloadMessageVO);
 								payloadMessageHelper.updateFromPayload(pnlMain, data);
+								updateScrFields();
 							}
 						}
 						else {
@@ -322,14 +325,45 @@ public class PnlGuiPayload extends JPanel {
 				}
 			}
 		});
+		
+		xmlText.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			@Override
+			public void keyReleased(KeyEvent e) {
+				checkAdvancedTag();
+			}
+			@Override
+			public void keyPressed(KeyEvent e) {}
+		});
 	}
 
+	public void checkAdvancedTag() {
+		if (xmlText.getText().indexOf("<%") > -1 || xmlText.getText().indexOf("%>") > -1) {
+			enablePnl(false);
+			
+			tabbedPane.setEnabled(true);
+			tabbedPane.setEnabledAt(0, false);
+			tabbedPane.setEnabledAt(1, true);
+			tabbedPane.setEnabledAt(2, false);
+		}
+		else {
+			enablePnl(true);
+			tabbedPane.setEnabledAt(0, true);
+			tabbedPane.setEnabledAt(2, true);
+		}
+	}
+	
 	public void updateRawMessage(PnlMain pnlMain) {
 		if (payloadMessageHelper != null)
 			payloadMessageHelper.updateRawMessage(pnlMain, txtRawMessage);
 	}
 	
 	public void cmbClick(PnlMain pnlMain) {
+		
+		tabbedPane.setEnabledAt(0, true);
+		tabbedPane.setEnabledAt(2, true);
+		
 		tabbedPane.setEnabled(false);
 		tabbedPane.setSelectedIndex(0);
 		pnlFields.removeAll();
@@ -342,12 +376,16 @@ public class PnlGuiPayload extends JPanel {
 				tabbedPane.setEnabled(true);
 				
 				payloadMessageHelper.setMessageVO(pnlMain.getIsoHelper().getMessageVOAtTree(((MessageVO) cmbMessageType.getSelectedItem()).getType()));
-				
-				scrFields.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-				scrFields.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-				pnlFields.setPreferredSize(new Dimension(500, (payloadMessageHelper.getNumLines() * 25) + 20));
+				updateScrFields();
 			}
 		}
+	}
+	
+	private void updateScrFields() {
+		scrFields.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scrFields.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		pnlFields.setPreferredSize(new Dimension(500, (payloadMessageHelper.getNumLines() * 25) + 20));
+		scrFields.getVerticalScrollBar().setUnitIncrement(10);
 	}
 	
 	public void setReadOnly() {
@@ -397,5 +435,13 @@ public class PnlGuiPayload extends JPanel {
 
 	public JButton getBtnSendResponse() {
 		return btnSendResponse;
+	}
+	
+	public JTabbedPane getTabbedPane() {
+		return tabbedPane;
+	}
+	
+	public XmlTextPane getXmlText() {
+		return xmlText;
 	}
 }

@@ -16,6 +16,7 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.adelbs.iso8583.bsparser.Parser;
 import org.adelbs.iso8583.clientserver.CallbackAction;
 import org.adelbs.iso8583.clientserver.ISOClient;
 import org.adelbs.iso8583.clientserver.ISOServer;
@@ -24,6 +25,7 @@ import org.adelbs.iso8583.vo.ISOTestVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
 import groovyjarjarcommonscli.ParseException;
+import javax.swing.JCheckBox;
 
 public class PnlGuiMessages extends JPanel {
 
@@ -34,7 +36,8 @@ public class PnlGuiMessages extends JPanel {
 	private JTextField txtHost = new JTextField();
 	private JTextField txtPort = new JTextField();
 	private JButton btnConnect;
-
+	private JCheckBox ckSynchronous = new JCheckBox("Synchronous");
+	
 	private JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 	private PnlGuiPayload pnlRequest;
 	private PnlGuiPayload pnlResponse;
@@ -63,12 +66,16 @@ public class PnlGuiMessages extends JPanel {
 		txtPort.setColumns(10);
 		btnConnect.setBounds(411, 12, 220, 25);
 
+		ckSynchronous.setSelected(true);
+		ckSynchronous.setBounds(631, 12, 113, 25);
+		
 		add(lblHost);
 		add(txtHost);
 		add(lblPort);
 		add(txtPort);
 		add(btnConnect);
 		add(tabbedPane);
+		if (!server) add(ckSynchronous);
 		
 		tabbedPane.addTab("Request", null, pnlRequest, null);
 		tabbedPane.addTab("Response", null, pnlResponse, null);
@@ -110,12 +117,18 @@ public class PnlGuiMessages extends JPanel {
 		btnConnect.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				clientServerAction(pnlMain);
+				try {
+					clientServerAction(pnlMain);
+				} catch (ParseException e1) {
+					
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 	}
 	
-	private void clientServerAction(final PnlMain pnlMain) {
+	private void clientServerAction(final PnlMain pnlMain) throws ParseException {
 		pnlRequest.updateRawMessage(pnlMain);
 		
 		if (isServer) {
@@ -137,6 +150,8 @@ public class PnlGuiMessages extends JPanel {
 			server.start();
 		}
 		else {
+			if (pnlRequest.getTabbedPane().getSelectedIndex() == 1)
+				pnlRequest.getMessageHelper().setMessageVO(pnlRequest.getMessageHelper().getMessageVOFromXML(pnlRequest.getXmlText().getText()));
 			byte[] data = ISOUtils.mergeArray(pnlRequest.getMessageHelper().getIsoMessage().getMessageSize(4).getBytes(), pnlRequest.getMessageHelper().getIsoMessage().getPayload());
 			ISOClient client = new ISOClient(txtHost.getText(), Integer.parseInt(txtPort.getText()), data, new Callback(pnlMain, false));
 			client.start();
@@ -196,7 +211,9 @@ public class PnlGuiMessages extends JPanel {
 		}
 	}
 	
-	public void setXmlRequest(PnlMain pnlMain, String xml) throws ParseException {
+	public void setXmlRequest(PnlMain pnlMain, String xmlToParse) throws ParseException {
+		String xml = new Parser().parseText(xmlToParse);
+		
 		ISOTestVO testVO = pnlRequest.getMessageHelper().getISOTestVOFromXML(xml);
 
 		//Carregando arquivo de configuracao
@@ -211,10 +228,22 @@ public class PnlGuiMessages extends JPanel {
 
 		txtHost.setText(testVO.getHost());
 		txtPort.setText(testVO.getPort());
+		ckSynchronous.setSelected(testVO.isSync());
 		
-		MessageVO messageVO = pnlRequest.getMessageHelper().getMessageVOFromXML(xml);
-		pnlRequest.updateCmbMessage(pnlMain.getIsoHelper(), messageVO.getType());
-		pnlRequest.getMessageHelper().setMessageVO(messageVO);;
+		if (xmlToParse.indexOf("<%") == -1 && xmlToParse.indexOf("%>") == -1) {
+			MessageVO messageVO = pnlRequest.getMessageHelper().getMessageVOFromXML(xml);
+			pnlRequest.updateCmbMessage(pnlMain.getIsoHelper(), messageVO.getType());
+			pnlRequest.getMessageHelper().setMessageVO(messageVO);;
+		}
+		else {
+			pnlRequest.getTabbedPane().setSelectedIndex(1);
+			pnlRequest.getXmlText().setText(xmlToParse);
+			pnlRequest.checkAdvancedTag();
+		}
+	}
+
+	public JCheckBox getCkSynchronous() {
+		return ckSynchronous;
 	}
 	
 	public String getXmlRequest(PnlMain pnlMain) {

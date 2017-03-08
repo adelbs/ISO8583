@@ -27,16 +27,13 @@ public class ISOMessage {
 		strMessage.append(messageVO.getType());
 		strMessage.append(bitmap.getPayloadBitmap());
 		
-		visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
-		visualPayload.append("Bitmap: [").append(bitmap.getPayloadBitmap()).append("]\n\n");
-		
 		for (int i = 0; i <= bitmap.getSize(); i++) {
 			if (bitmap.getBit(i) != null) {
 				strMessage.append(bitmap.getBit(i).getPayloadValue());
-				visualPayload.append("Bit").append(i).append(": [").append(bitmap.getBit(i).getPayloadValue()).append("]\n");
 			}
 		}
 		
+		visualPayload.append(bitmap.getVisualPayload());
 		visualPayload.append("\nEntire message: [").append(strMessage).append("]\n");
 		
 		this.messageSize = strMessage.length();
@@ -64,5 +61,9 @@ public class ISOMessage {
 		while (result.length() < numChars)
 			result = "0" + result;
 		return result;
+	}
+	
+	public MessageVO getMessageVO() {
+		return bitmap.getMessageVO();
 	}
 }

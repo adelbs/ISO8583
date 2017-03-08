@@ -25,7 +25,7 @@ public class ISOClient extends GenericClientServerThread {
 	
 	public void run() {
 		try {
-			sendData();
+			sendData(true);
 		}
 		catch (Exception x) {
 			x.printStackTrace();
@@ -34,7 +34,7 @@ public class ISOClient extends GenericClientServerThread {
 		}
 	}
 	
-	public void sendData() throws Exception {
+	public void sendData(boolean sync) throws Exception {
 		try {
 			callback.log("Oppening connection at " + host + ":" + port + "...");
 			socket = new Socket(host, port);
@@ -43,25 +43,27 @@ public class ISOClient extends GenericClientServerThread {
 			callback.log("Sending the payload...");
 	        out.write(payload);
 	        out.flush();
-	        
-	        callback.log("Payload sent! Waiting the response...");
-	        
-	        //Lendo o retorno
-	        input = socket.getInputStream();
-	        
-			byte[] data = new byte[4];
-			while (input.read(data) < 4);
-			
-			callback.log("Receiving bytes...");
-			
-			int messageSize = Integer.parseInt(new String(data));
-			data = new byte[messageSize];
-			while (input.read(data) < messageSize);
-			
-			callback.log("Bytes received: " + bytesToConsole(data));
-			callback.log("Parsing bytes...");
-			
-			callback.dataReceived(data);
+
+	        if (sync) {
+		        callback.log("Payload sent! Waiting the response...");
+		        
+		        //Lendo o retorno
+		        input = socket.getInputStream();
+		        
+				byte[] data = new byte[4];
+				while (input.read(data) < 4);
+				
+				callback.log("Receiving bytes...");
+				
+				int messageSize = Integer.parseInt(new String(data));
+				data = new byte[messageSize];
+				while (input.read(data) < messageSize);
+				
+				callback.log("Bytes received: " + bytesToConsole(data));
+				callback.log("Parsing bytes...");
+				
+				callback.dataReceived(data);
+	        }
 		}
 		catch (Exception x) {
 			x.printStackTrace();

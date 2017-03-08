@@ -17,6 +17,7 @@ import javax.swing.JTextField;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.adelbs.iso8583.bsparser.Parser;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.PnlMain;
@@ -65,21 +66,23 @@ public class PayloadMessageHelper {
 	}
 	
 	public void setMessageVO(MessageVO messageVO) {
-		this.messageVO = messageVO.getInstanceCopy();
-		this.messageVO.setFieldList(new ArrayList<FieldVO>());
-		
-		pnlFields.removeAll();
-		numLines = 0;
-		fieldList = new ArrayList<GuiPayloadField>();
-		
-		GuiPayloadField payloadField;
-		
-		for (FieldVO fieldVO : messageVO.getFieldList()) {
-			payloadField = addLine(fieldVO);
-			payloadField.setValues(fieldVO);
-			for (FieldVO subFieldVO : fieldVO.getFieldList()) {
-				payloadField = addSubline(subFieldVO);
-				payloadField.setValues(subFieldVO);
+		if (messageVO != null) {
+			this.messageVO = messageVO.getInstanceCopy();
+			this.messageVO.setFieldList(new ArrayList<FieldVO>());
+			
+			pnlFields.removeAll();
+			numLines = 0;
+			fieldList = new ArrayList<GuiPayloadField>();
+			
+			GuiPayloadField payloadField;
+			
+			for (FieldVO fieldVO : messageVO.getFieldList()) {
+				payloadField = addLine(fieldVO);
+				payloadField.setValues(fieldVO);
+				for (FieldVO subFieldVO : fieldVO.getFieldList()) {
+					payloadField = addSubline(subFieldVO);
+					payloadField.setValues(subFieldVO);
+				}
 			}
 		}
 	}
@@ -98,12 +101,14 @@ public class PayloadMessageHelper {
 		if (pnlMain != null) {
 			xmlMessage.append("<test-iso config-file=\"").append(pnlMain.getTxtFilePath().getText()).append("\" ").
 						append("host=\"").append(pnlMain.getPnlGuiMessagesClient().getTxtHost().getText()).append("\" ").
-						append("port=\"").append(pnlMain.getPnlGuiMessagesClient().getTxtPort().getText()).append("\"/>\n\n");
+						append("port=\"").append(pnlMain.getPnlGuiMessagesClient().getTxtPort().getText()).append("\" ").
+						append("sync=\"").append(pnlMain.getPnlGuiMessagesClient().getCkSynchronous().isSelected() ? true : false).append("\"/>\n\n");
 		}
 		else if (isoTest != null) {
 			xmlMessage.append("<test-iso config-file=\"").append(isoTest.getConfigFile()).append("\" ").
 						append("host=\"").append(isoTest.getHost()).append("\" ").
-						append("port=\"").append(isoTest.getPort()).append("\"/>\n\n");
+						append("port=\"").append(isoTest.getPort()).append("\" ").
+						append("sync=\"").append(isoTest.isSync() ? "true" : "false").append("\"/>\n\n");
 		}
 
 		if (messageVO != null) {
@@ -134,10 +139,16 @@ public class PayloadMessageHelper {
 		return isoTest != null ? Integer.parseInt(isoTest.getPort()) : 0;
 	}
 	
-	public MessageVO getMessageVOFromXML(String xml) throws ParseException {
+	public boolean isSync() {
+		return isoTest != null ? isoTest.isSync() : false;
+	}
+	
+	public MessageVO getMessageVOFromXML(String xmlToParse) throws ParseException {
 		MessageVO newMessageVO = null;
 		
 		try {
+			String xml = new Parser().parseText(xmlToParse);
+			
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 		    InputSource is = new InputSource(new StringReader(xml));
@@ -177,7 +188,7 @@ public class PayloadMessageHelper {
 			}
 		}
 		catch (Exception x) {
-			throw new ParseException("Error parsing the XML.\n\n" + x.getMessage());
+			x.printStackTrace();
 		}
 		
 		return newMessageVO;
@@ -200,10 +211,12 @@ public class PayloadMessageHelper {
 		return newPayloadField;
 	}
 	
-	public ISOTestVO getISOTestVOFromXML(String xml) throws ParseException {
+	public ISOTestVO getISOTestVOFromXML(String xmlToParse) throws ParseException {
 		ISOTestVO testVO = new ISOTestVO();
 		
 		try {
+			String xml = new Parser().parseText(xmlToParse);
+			
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 		    InputSource is = new InputSource(new StringReader(xml));
@@ -220,6 +233,7 @@ public class PayloadMessageHelper {
 					testVO.setConfigFile(ISOUtils.getAttr(node, "config-file", ""));
 					testVO.setHost(ISOUtils.getAttr(node, "host", ""));
 					testVO.setPort(ISOUtils.getAttr(node, "port", ""));
+					testVO.setSync(ISOUtils.getAttr(node, "sync", "false").equals("true"));
 					
 				}
 			}
@@ -284,8 +298,8 @@ public class PayloadMessageHelper {
 	public void updateFromPayload(PnlMain pnlMain, byte[] bytes) throws Exception {
 		try {
 			isoMessage = new ISOMessage(bytes, messageVO);
-			
-			for (GuiPayloadField guiPayloadField : fieldList) {
+			setMessageVO(isoMessage.getMessageVO());
+		/*	for (GuiPayloadField guiPayloadField : fieldList) {
 				if (isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()) != null) {
 					guiPayloadField.setValues(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()));
 					
@@ -293,7 +307,7 @@ public class PayloadMessageHelper {
 						guiPayloadField.subfieldList.get(i).setValues(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i));
 					}
 				}
-			}
+			}*/
 		}
 		catch (Exception x) {
 			x.printStackTrace();

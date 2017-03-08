@@ -69,9 +69,9 @@ public class PnlMain extends JPanel {
 		
 		//*** Adicionando as Abas ***
 		add(tabbedPane);
+		tabbedPane.addTab("ISO-8583 Request", null, pnlGuiMessagesClient, null);
+		tabbedPane.addTab("ISO-8583 Server", null, pnlGuiMessagesServer, null);
 		tabbedPane.addTab("ISO Configure", null, pnlGuiConfig, null);
-		tabbedPane.addTab("Test ISO Messages (Client)", null, pnlGuiMessagesClient, null);
-		tabbedPane.addTab("Test ISO Messages (Server)", null, pnlGuiMessagesServer, null);
 		tabbedPane.addTab("XML", null, pnlXmlConfig, null);
 		
 		txtFilePath = new JTextField(isoHelper.getXmlFilePath());
@@ -118,7 +118,7 @@ public class PnlMain extends JPanel {
 	
 	private void parseXML() {
 		pnlGuiConfig.save(this);
-		if (tabbedPane.getSelectedIndex() == 0)
+		if (tabbedPane.getSelectedComponent().equals(pnlGuiConfig))
 			isoHelper.parseXmlToConfig(this);
 		else 
 			isoHelper.parseConfigToXML();

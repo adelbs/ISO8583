@@ -11,7 +11,7 @@ public class XmlTextPane extends JTextPane {
     public XmlTextPane() {
          
         // Set editor kit
-        this.setEditorKitForContentType("text/xml", new XmlEditorKit());
+    	this.setEditorKitForContentType("text/xml", new XmlEditorKit());
         this.setContentType("text/xml");
         
         this.setFont(new Font("Arial", Font.PLAIN, 14));

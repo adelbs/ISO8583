@@ -53,51 +53,57 @@ public class XmlView extends PlainView {
  
         Document doc = getDocument();
         String text = doc.getText(p0, p1 - p0);
- 
-        Segment segment = getLineBuffer();
- 
-        SortedMap<Integer, Integer> startMap = new TreeMap<Integer, Integer>();
-        SortedMap<Integer, Color> colorMap = new TreeMap<Integer, Color>();
- 
-        // Match all regexes on this snippet, store positions
-        for (Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
- 
-            Matcher matcher = entry.getKey().matcher(text);
- 
-            while (matcher.find()) {
-                startMap.put(matcher.start(1), matcher.end());
-                colorMap.put(matcher.start(1), entry.getValue());
-            }
+
+        if (doc.getText(0, doc.getLength()).indexOf("<%") == -1 && doc.getText(0, doc.getLength()).indexOf("%>") == -1) {
+        
+	        Segment segment = getLineBuffer();
+	 
+	        SortedMap<Integer, Integer> startMap = new TreeMap<Integer, Integer>();
+	        SortedMap<Integer, Color> colorMap = new TreeMap<Integer, Color>();
+	 
+	        // Match all regexes on this snippet, store positions
+	        for (Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
+	 
+	            Matcher matcher = entry.getKey().matcher(text);
+	 
+	            while (matcher.find()) {
+	                startMap.put(matcher.start(1), matcher.end());
+	                colorMap.put(matcher.start(1), entry.getValue());
+	            }
+	        }
+	 
+	        // TODO: check the map for overlapping parts
+	         
+	        int i = 0;
+	 
+	        // Colour the parts
+	        for (Map.Entry<Integer, Integer> entry : startMap.entrySet()) {
+	            int start = entry.getKey();
+	            int end = entry.getValue();
+	 
+	            if (i < start) {
+	                graphics.setColor(Color.black);
+	                doc.getText(p0 + i, start - i, segment);
+	                x = Utilities.drawTabbedText(segment, x, y, graphics, this, i);
+	            }
+	 
+	            graphics.setColor(colorMap.get(start));
+	            i = end;
+	            doc.getText(p0 + start, i - start, segment);
+	            x = Utilities.drawTabbedText(segment, x, y, graphics, this, start);
+	        }
+	 
+	        // Paint possible remaining text black
+	        if (i < text.length()) {
+	            graphics.setColor(Color.black);
+	            doc.getText(p0 + i, text.length() - i, segment);
+	            x = Utilities.drawTabbedText(segment, x, y, graphics, this, i);
+	        }
         }
- 
-        // TODO: check the map for overlapping parts
-         
-        int i = 0;
- 
-        // Colour the parts
-        for (Map.Entry<Integer, Integer> entry : startMap.entrySet()) {
-            int start = entry.getKey();
-            int end = entry.getValue();
- 
-            if (i < start) {
-                graphics.setColor(Color.black);
-                doc.getText(p0 + i, start - i, segment);
-                x = Utilities.drawTabbedText(segment, x, y, graphics, this, i);
-            }
- 
-            graphics.setColor(colorMap.get(start));
-            i = end;
-            doc.getText(p0 + start, i - start, segment);
-            x = Utilities.drawTabbedText(segment, x, y, graphics, this, start);
+        else {
+        	super.drawUnselectedText(graphics, x, y, p0, p1);
         }
- 
-        // Paint possible remaining text black
-        if (i < text.length()) {
-            graphics.setColor(Color.black);
-            doc.getText(p0 + i, text.length() - i, segment);
-            x = Utilities.drawTabbedText(segment, x, y, graphics, this, i);
-        }
- 
+        
         return x;
     }
  
