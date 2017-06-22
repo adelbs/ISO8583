@@ -1,4 +1,5 @@
 package org.adelbs.iso8583.util;
+import java.util.List;
 
 import org.w3c.dom.Node;
 
@@ -23,6 +24,17 @@ public class ISOUtils {
 		return bin;
 	}
 
+	public static String binToHex(String bin) {
+		String result = "";
+		int decimal;
+		for (int i = 4; (i <= 64 && i <= bin.length()); i = i + 4) {
+			decimal = Integer.parseInt(bin.substring((i - 4), i), 2);
+			result = result.concat(Integer.toString(decimal, 16)).toUpperCase();
+		}
+
+		return result;
+	}
+	
 	public static byte[] subArray(byte[] data, int start, int end) {
 		byte[] result = new byte[end - start];
 	  
@@ -52,4 +64,10 @@ public class ISOUtils {
 		return result;
 	}
 
+	public static byte[] listToArray(List<Byte> bytes) {
+		byte[] data = new byte[bytes.size()];
+		for (int i = 0; i < bytes.size(); i++)
+			data[i] = bytes.get(i).byteValue();
+		return data;
+	}
 }

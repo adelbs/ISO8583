@@ -19,7 +19,7 @@ public class PnlXmlConfig extends JPanel {
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 		
-		scrollPane.setViewportView(pnlMain.getIsoHelper().getXmlText());
+		scrollPane.setViewportView(pnlMain.getIso8583Config().getXmlText());
 
 		addComponentListener(new ComponentListener() {
 			@Override

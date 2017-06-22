@@ -3,29 +3,9 @@ package org.adelbs.iso8583.vo;
 public class ISOTestVO {
 
 	private String configFile;
+	private boolean isRequestSync;
+	private boolean isResponseSync;
 	
-	private String host;
-	
-	private String port;
-
-	private boolean sync;
-	
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public String getPort() {
-		return port;
-	}
-
-	public void setPort(String port) {
-		this.port = port;
-	}
-
 	public String getConfigFile() {
 		return configFile;
 	}
@@ -34,12 +14,20 @@ public class ISOTestVO {
 		this.configFile = configFile;
 	}
 
-	public boolean isSync() {
-		return sync;
+	public boolean isRequestSync() {
+		return isRequestSync;
 	}
 
-	public void setSync(boolean sync) {
-		this.sync = sync;
+	public void setRequestSync(boolean isRequestSync) {
+		this.isRequestSync = isRequestSync;
 	}
-	
+
+	public boolean isResponseSync() {
+		return isResponseSync;
+	}
+
+	public void setResponseSync(boolean isResponseSync) {
+		this.isResponseSync = isResponseSync;
+	}
+
 }

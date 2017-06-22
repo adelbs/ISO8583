@@ -17,7 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.adelbs.iso8583.helper.Iso8583Helper;
+import org.adelbs.iso8583.helper.Iso8583Config;
 
 public class PnlMain extends JPanel {
 
@@ -35,13 +35,13 @@ public class PnlMain extends JPanel {
 	private JButton btnOpen;
 	private JButton btnNew;
 
-	private Iso8583Helper isoHelper;
+	private Iso8583Config isoConfig;
 	
 	private File lastCurrentDirectory = null;
 	
 	public PnlMain() {
 		
-		isoHelper = new Iso8583Helper();
+		isoConfig = new Iso8583Config();
 		
 		//Painel principal
 		setLayout(null);
@@ -74,7 +74,7 @@ public class PnlMain extends JPanel {
 		tabbedPane.addTab("ISO Configure", null, pnlGuiConfig, null);
 		tabbedPane.addTab("XML", null, pnlXmlConfig, null);
 		
-		txtFilePath = new JTextField(isoHelper.getXmlFilePath());
+		txtFilePath = new JTextField(isoConfig.getXmlFilePath());
 		txtFilePath.setEditable(false);
 		add(txtFilePath);
 		txtFilePath.setColumns(10);
@@ -114,23 +114,27 @@ public class PnlMain extends JPanel {
 				parseXML();
 			}
 		});
+		
+	//TODO: Check if here is the best place to autoopen the xml file.
+		//txtFilePath.setText("C:\\Users\\Administrator\\Documents\\ItauPrePago.xml");
+		//openXML();
 	}
 	
 	private void parseXML() {
 		pnlGuiConfig.save(this);
 		if (tabbedPane.getSelectedComponent().equals(pnlGuiConfig))
-			isoHelper.parseXmlToConfig(this);
+			isoConfig.parseXmlToConfig(this);
 		else 
-			isoHelper.parseConfigToXML();
+			isoConfig.parseConfigToXML();
 		
 		pnlGuiConfig.updateTree();
 		pnlGuiConfig.expandAllNodes();
 	}
 	
 	private void newFile() {
-		if (isoHelper.newFile(this)) {
+		if (isoConfig.newFile(this)) {
 			txtFilePath.setText("");
-			isoHelper.parseXmlToConfig(this);
+			isoConfig.parseXmlToConfig(this);
 			
 			pnlGuiConfig.updateTree();
 		}
@@ -146,14 +150,19 @@ public class PnlMain extends JPanel {
 		
 		if (file.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			txtFilePath.setText(file.getSelectedFile().getAbsolutePath());
-			isoHelper.openFile(this, txtFilePath.getText());
-			isoHelper.parseXmlToConfig(this);
 			lastCurrentDirectory = file.getSelectedFile();			
- 
+
+			openXML();
+		}
+	}
+	
+	private void openXML(){
+		if(!txtFilePath.getText().equals("")){
+			isoConfig.openFile(this, txtFilePath.getText());
+			isoConfig.parseXmlToConfig(this);
+			
 			pnlGuiConfig.updateTree();
 			pnlGuiConfig.expandAllNodes();
-			
-		//	isoHelper.validateAllNodes();
 			
 			pnlGuiConfig.updateTree();
 		}
@@ -164,9 +173,9 @@ public class PnlMain extends JPanel {
 		boolean fileSaved = false;
 		
 		if (tabbedPane.getSelectedIndex() == 0)
-			isoHelper.parseConfigToXML();
+			isoConfig.parseConfigToXML();
 		else 
-			isoHelper.parseXmlToConfig(this);
+			isoConfig.parseXmlToConfig(this);
 		
 		if (txtFilePath.getText().equals("")) {
 			JFileChooser file = new JFileChooser();
@@ -183,8 +192,8 @@ public class PnlMain extends JPanel {
 			}
 		}
 
-		isoHelper.saveFile(this, txtFilePath.getText());
-		fileSaved = (isoHelper.getXmlFilePath() != null);
+		isoConfig.saveFile(this, txtFilePath.getText());
+		fileSaved = (isoConfig.getXmlFilePath() != null);
 		
 		if (!fileSaved)
 			JOptionPane.showMessageDialog(this, "You must inform a file to save.");
@@ -196,8 +205,8 @@ public class PnlMain extends JPanel {
 		return pnlGuiConfig;
 	}
 
-	public Iso8583Helper getIsoHelper() {
-		return isoHelper;
+	public Iso8583Config getIso8583Config() {
+		return isoConfig;
 	}
 	
 	public JTextField getTxtFilePath() {

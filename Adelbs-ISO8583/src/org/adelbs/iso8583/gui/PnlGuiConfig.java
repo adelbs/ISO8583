@@ -39,6 +39,7 @@ public class PnlGuiConfig extends JPanel{
 	private JLabel lblCollapse = new JLabel("[Collapse All]");
 	private JCheckBox chckbxShowBitNum = new JCheckBox("Show bit #");
 	
+	private PnlISOProperties pnlISOProperties;
 	private PnlMessageProperties pnlMessageProperties;
 	private PnlFieldProperties pnlFieldProperties;
 	private PnlFieldCondition pnlFieldCondition;
@@ -66,12 +67,16 @@ public class PnlGuiConfig extends JPanel{
 		setLocation(-225, -183);
 		setLayout(null);
 		
+		pnlISOProperties = new PnlISOProperties(pnlMain.getIso8583Config());
 		pnlMessageProperties = new PnlMessageProperties(saveKeyListener);
 		pnlFieldProperties = new PnlFieldProperties(this, saveKeyListener);
 		pnlFieldCondition = new PnlFieldCondition(pnlMain);
 		
+		pnlISOProperties.setVisible(false);
+		
 		//######### Apenas para visualizacao no WindowBuilder *********************************
 		scrTreeTypes.setBounds(12, 20, 246, 350); //FAKE!!!!!
+		pnlISOProperties.setBounds(271, 12, 450, 200);
 		pnlMessageProperties.setBounds(271, 12, 450, 60); //FAKE!!!!
 		pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, 450, 185); //FAKE!!!!!
 		pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, 450, 200); //FAKE!!!!!
@@ -99,6 +104,7 @@ public class PnlGuiConfig extends JPanel{
 				
 				//Paineis de propriedades
 				pnlMessageProperties.setBounds(271, 12, getWidth() - 295, 90);
+				pnlISOProperties.setBounds(271, 12, getWidth() - 295, 200);
 				pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, getWidth() - 295, 185);
 				pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, getWidth() - 295, 
 						getHeight() - pnlMessageProperties.getHeight() - pnlFieldProperties.getHeight() - 43);
@@ -131,7 +137,7 @@ public class PnlGuiConfig extends JPanel{
 		btnNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				save(pnlMain);
-				DefaultMutableTreeNode newNode = pnlMain.getIsoHelper().addType();
+				DefaultMutableTreeNode newNode = pnlMain.getIso8583Config().addType();
 				treeTypes.setSelectionPath(new TreePath(newNode.getPath()));
 				
 				save(pnlMain);
@@ -142,11 +148,11 @@ public class PnlGuiConfig extends JPanel{
 		btnNewField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				save(pnlMain);
-				DefaultMutableTreeNode newNode = pnlMain.getIsoHelper().addField(pnlMain, treeTypes.getLastSelectedPathComponent());
+				DefaultMutableTreeNode newNode = pnlMain.getIso8583Config().addField(pnlMain, treeTypes.getLastSelectedPathComponent());
 
 				if (selectedNode.getUserObject() instanceof FieldVO) {
 					checkFieldsEnablement();
-					pnlMain.getIsoHelper().updateSumField(treeTypes.getLastSelectedPathComponent());
+					pnlMain.getIso8583Config().updateSumField(treeTypes.getLastSelectedPathComponent());
 					loadFieldValues();
 				}
 				
@@ -175,12 +181,13 @@ public class PnlGuiConfig extends JPanel{
 			}
 		});
 		
+		add(pnlISOProperties);
 		add(pnlMessageProperties);
 		add(pnlFieldProperties);
 		add(pnlFieldCondition);
 
 		//TabbedPane e Tree
-		treeTypes = new JTree(pnlMain.getIsoHelper().getConfigTreeNode());
+		treeTypes = new JTree(pnlMain.getIso8583Config().getConfigTreeNode());
 		treeTypes.setCellRenderer(new ISOTreeRenderer());
 		treeTypes.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		
@@ -200,6 +207,13 @@ public class PnlGuiConfig extends JPanel{
 					loadFieldValues();
 					
 					//Habilitando os campos
+					pnlISOProperties.setVisible(selectedNode.isRoot());
+					pnlMessageProperties.setVisible(!selectedNode.isRoot());
+					pnlFieldProperties.setVisible(!selectedNode.isRoot());
+					pnlFieldCondition.setVisible(!selectedNode.isRoot());
+					
+					pnlISOProperties.load(pnlMain.getIso8583Config());
+					
 					if (selectedNode.getUserObject() instanceof FieldVO) {
 						pnlMessageProperties.setEnabled(false);
 						pnlFieldProperties.setEnabled(true);
@@ -298,7 +312,11 @@ public class PnlGuiConfig extends JPanel{
 	public void save(PnlMain pnlMain) {
 		try {
 			if (selectedNode != null) {
-				if (selectedNode.getUserObject() instanceof MessageVO) {
+				
+				if (selectedNode.isRoot()) {
+					pnlISOProperties.save(pnlMain.getIso8583Config());
+				}
+				else if (selectedNode.getUserObject() instanceof MessageVO) {
 					pnlMessageProperties.save((MessageVO) selectedNode.getUserObject());
 				}
 				else if (selectedNode.getUserObject() instanceof FieldVO) {
@@ -306,14 +324,13 @@ public class PnlGuiConfig extends JPanel{
 					pnlFieldCondition.save((FieldVO) selectedNode.getUserObject());
 					
 					if (selectedNodeParent.getUserObject() instanceof FieldVO)
-						pnlMain.getIsoHelper().updateSumField(selectedNodeParent);
+						pnlMain.getIso8583Config().updateSumField(selectedNodeParent);
 					else
-						pnlMain.getIsoHelper().updateSumField(selectedNode);
-				
+						pnlMain.getIso8583Config().updateSumField(selectedNode);
 				}
 				
 				if (!(selectedNode.getUserObject() instanceof String))
-					pnlMain.getIsoHelper().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
+					pnlMain.getIso8583Config().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
 				SortTreeHelper.sortTree(this, selectedNodeParent, treeTypes);
 			}
 		}

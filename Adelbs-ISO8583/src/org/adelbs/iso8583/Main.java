@@ -11,7 +11,6 @@ import javax.swing.JFrame;
 
 import org.adelbs.iso8583.gui.PnlGuiConfig;
 import org.adelbs.iso8583.gui.PnlMain;
-import org.adelbs.iso8583.helper.Iso8583Helper;
 
 public final class Main extends JFrame {
 
@@ -49,7 +48,7 @@ public final class Main extends JFrame {
 		//*** Configurações da janela principal ***
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/resource/package.png")));
-		setTitle("Adelbs-ISO8583 v."+ Iso8583Helper.VERSION);
+		setTitle("Adelbs-ISO8583");
 		
 		//Tamanho e posição
 		setBounds(0, 0, MIN_WIDTH, MIN_HEIGHT);

@@ -111,7 +111,7 @@ public class PnlFieldCondition extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				pnlMain.getPnlGuiConfig().save(pnlMain);
-				String validationError = pnlMain.getIsoHelper().validateCondition((FieldVO) pnlMain.getPnlGuiConfig().getSelectedNode().getUserObject());
+				String validationError = pnlMain.getIso8583Config().validateCondition((FieldVO) pnlMain.getPnlGuiConfig().getSelectedNode().getUserObject());
 				if (!"".equals(validationError))
 					JOptionPane.showMessageDialog(pnlMain.getPnlGuiConfig(), "Invalid expression!\n\n" + validationError);
 				else

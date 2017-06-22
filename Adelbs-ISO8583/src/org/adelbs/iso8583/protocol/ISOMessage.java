@@ -1,9 +1,10 @@
 package org.adelbs.iso8583.protocol;
 
+import org.adelbs.iso8583.exception.ParseException;
+import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
-import groovyjarjarcommonscli.ParseException;
 
 public class ISOMessage {
 
@@ -22,13 +23,20 @@ public class ISOMessage {
 			bitmap = new Bitmap(payload, messageVO);
 		else
 			bitmap = new Bitmap(messageVO);
-		
+				
 		StringBuilder strMessage = new StringBuilder();
 		strMessage.append(messageVO.getType());
 		strMessage.append(bitmap.getPayloadBitmap());
 		
+		this.payload = bitmap.getHeaderEncoding().convert(messageVO.getType());
+		this.payload = ISOUtils.mergeArray(this.payload, bitmap.getPayloadBitmap());
+		
 		for (int i = 0; i <= bitmap.getSize(); i++) {
 			if (bitmap.getBit(i) != null) {
+			/*	System.out.println("---");
+				System.out.println(bitmap.getBit(i).getName());*/
+				
+				this.payload = ISOUtils.mergeArray(this.payload, bitmap.getBit(i).getPayloadValue());
 				strMessage.append(bitmap.getBit(i).getPayloadValue());
 			}
 		}
@@ -37,7 +45,7 @@ public class ISOMessage {
 		visualPayload.append("\nEntire message: [").append(strMessage).append("]\n");
 		
 		this.messageSize = strMessage.length();
-		this.payload = strMessage.toString().getBytes();
+		//this.payload = strMessage.toString().getBytes();
 	}
 	
 	public String getVisualPayload() {

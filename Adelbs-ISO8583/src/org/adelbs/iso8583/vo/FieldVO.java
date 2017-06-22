@@ -31,6 +31,7 @@ public class FieldVO extends GenericIsoVO {
 	private String tlvType = "";
 	private String tlvLength = "";
 	private String value = "";
+	private byte[] payloadValue = null;
 	
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
 
@@ -172,21 +173,27 @@ public class FieldVO extends GenericIsoVO {
 	}
 	
 	//********** runtime
-	
-	public String getPayloadValue() {
-		return getPayloadValue(null);
+
+	public void setPayloadValue(byte[] payloadValue) {
+		this.payloadValue = payloadValue;
 	}
 	
-	public String getPayloadValue(FieldVO superFieldVO) {
-		String payload = "";
+	public byte[] getPayloadValue() {
+		if (payloadValue == null)
+			payloadValue = getPayloadValue(null);
+		return payloadValue;
+	}
+	
+	private byte[] getPayloadValue(FieldVO superFieldVO) {
+		byte[] payload = encoding.convert("");
 
-		String newValue = value;
+		byte[] newValue = encoding.convert(value);
 		int sizeTypeTLV = 2;
 		
 		if (type != TypeEnum.TLV) {
 			length = (fieldList.size() > 0) ? 0 : length;
 			for (FieldVO fieldVO : fieldList)
-				newValue += fieldVO.getPayloadValue(this);
+				ISOUtils.mergeArray(newValue, fieldVO.getPayloadValue(this));
 		}
 		else if (type == TypeEnum.TLV) {
 			if (superFieldVO == null) {
@@ -205,41 +212,40 @@ public class FieldVO extends GenericIsoVO {
 			String size = getMaxSizeStr(tlvLength, length);
 
 			tlvType = (tlvType == null) ? "" : tlvType;
-			payload = getMaxSizeStr(tlvType, sizeTypeTLV);
-			payload += size;
-			payload += getPayloadValue(TypeLengthEnum.FIXED, newValue, (size.equals("") ? 0 : Integer.parseInt(size)));
+			payload = encoding.convert(getMaxSizeStr(tlvType, sizeTypeTLV));
+			payload = ISOUtils.mergeArray(payload, encoding.convert(size));
+			payload = ISOUtils.mergeArray(payload, getPayloadValue(TypeLengthEnum.FIXED, newValue, (size.equals("") ? 0 : Integer.parseInt(size))));
 		}
 		
 		if (superFieldVO != null && superFieldVO.getType() != TypeEnum.TLV)
-			superFieldVO.setLength(superFieldVO.getLength().intValue() + payload.length());
+			superFieldVO.setLength(superFieldVO.getLength().intValue() + payload.length);
 		
 		if (type == TypeEnum.TLV && fieldList.size() > 0) {
 			for (FieldVO fieldVO : fieldList)
-				payload += fieldVO.getPayloadValue(this);
+				payload = ISOUtils.mergeArray(payload, fieldVO.getPayloadValue(this));
 			
 			if (superFieldVO == null)
-				payload = getMaxSizeStr(String.valueOf(payload.length()), 3) + payload;
+				payload = ISOUtils.mergeArray(encoding.convert(getMaxSizeStr(String.valueOf(payload.length), 3)), payload);
 		}
-		
 		
 		return payload;
 	}
 	
-	private String getPayloadValue(TypeLengthEnum typeLength, String value, int length) {
-		String payload = "";
+	private byte[] getPayloadValue(TypeLengthEnum typeLength, byte[] value, int length) {
+		byte[] payload = new byte[]{};
 		String size;
 		int maxSize = length;
 
 		if (typeLength == TypeLengthEnum.NVAR) {
-			size = getMaxSizeStr(String.valueOf(value.length()), length);
-			payload = size;
+			size = getMaxSizeStr(String.valueOf(value.length), length);
+			payload = encoding.convert(size);
 			maxSize = Integer.parseInt(size);
 		}
 		
 		if (type == TypeEnum.TLV)
-			payload += getMaxSizeStr(value, maxSize);
+			payload = ISOUtils.mergeArray(payload, encoding.convert(getMaxSizeStr(encoding.convert(value), maxSize)));
 		else
-			payload += getMaxSpacesValue(value, maxSize);
+			payload = ISOUtils.mergeArray(payload, encoding.convert(getMaxSpacesValue(encoding.convert(value), maxSize)));
 		
 		return payload;
 	}
@@ -287,15 +293,15 @@ public class FieldVO extends GenericIsoVO {
 			if (type == TypeEnum.ALPHANUMERIC) {
 				if (typeLength == TypeLengthEnum.FIXED) {
 					endPosition = startPosition + length;
-					newContent = new String(ISOUtils.subArray(payload, startPosition, endPosition));
+					newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
 				}
 				else if (typeLength == TypeLengthEnum.NVAR) {
-					String strVarValue = new String(ISOUtils.subArray(payload, startPosition, startPosition + length));
+					String strVarValue = encoding.convert(ISOUtils.subArray(payload, startPosition, startPosition + length));
 					int nVarValue = Integer.valueOf(strVarValue);
 					endPosition = startPosition + strVarValue.length() + nVarValue;
 	
-					newContent = new String(ISOUtils.subArray(payload, startPosition, endPosition));
-					newContent = newContent.substring(String.valueOf(nVarValue).length());
+					newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
+					newContent = newContent.substring(strVarValue.length());
 				}
 				
 				value = newContent;

@@ -32,8 +32,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
-import org.adelbs.iso8583.helper.Iso8583Helper;
-import org.adelbs.iso8583.helper.PayloadMessageHelper;
+import org.adelbs.iso8583.helper.Iso8583Config;
+import org.adelbs.iso8583.helper.PayloadMessageConfig;
 import org.adelbs.iso8583.vo.GenericIsoVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
@@ -41,11 +41,12 @@ public class PnlGuiPayload extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private PayloadMessageHelper payloadMessageHelper;
+	private PayloadMessageConfig payloadMessageConfig;
 	
 	private JLabel lblMessageType = new JLabel("Message Type");
 	private JComboBox<MessageVO> cmbMessageType = new JComboBox<MessageVO>();
 	private JButton btnUpdate = new JButton();
+	private JButton btnSendRequest = new JButton("Send");
 	private JButton btnSendResponse = new JButton("Send Response");
 	private JButton btnOpenPayload = new JButton("Open Payload");
 	private JButton btnSavePayload = new JButton("Save Payload");
@@ -72,12 +73,13 @@ public class PnlGuiPayload extends JPanel {
 	public PnlGuiPayload(final PnlMain pnlMain, boolean server, boolean request) {
 		setLayout(null);
 		
-		payloadMessageHelper = new PayloadMessageHelper(pnlMain.getIsoHelper(), pnlFields);
+		payloadMessageConfig = new PayloadMessageConfig(pnlMain.getIso8583Config(), pnlFields);
 		
 		lblMessageType.setBounds(12, 13, 90, 16);
 		cmbMessageType.setBounds(114, 10, 178, 22);
 		btnUpdate.setBounds(295, 10, 22, 22);
 		btnUpdate.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/update.png")));
+		btnSendRequest.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/enter.png")));
 		btnSendResponse.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/enter.png")));
 		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/openFile.png")));
 		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/saveFile.png")));
@@ -104,6 +106,7 @@ public class PnlGuiPayload extends JPanel {
 				add(lblMessageType);
 				add(cmbMessageType);
 				add(btnUpdate);
+				add(btnSendRequest);
 				add(btnOpenPayload);
 				add(btnSavePayload);
 			}
@@ -118,7 +121,7 @@ public class PnlGuiPayload extends JPanel {
 		btnUpdate.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				updateCmbMessage(pnlMain.getIsoHelper(), null);
+				updateCmbMessage(pnlMain.getIso8583Config(), null);
 			}
 		});
 		
@@ -146,6 +149,7 @@ public class PnlGuiPayload extends JPanel {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				
+				btnSendRequest.setBounds(getWidth() - 402, 9, 85, 25);
 				btnSendResponse.setBounds(getWidth() - 160, 9, 143, 25);
 				btnOpenPayload.setBounds(getWidth() - 310, 9, 143, 25);
 				btnSavePayload.setBounds(getWidth() - 160, 9, 143, 25);
@@ -208,7 +212,7 @@ public class PnlGuiPayload extends JPanel {
 		btnSavePayload.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (payloadMessageHelper.getIsoMessage() == null) {
+				if (payloadMessageConfig.getIsoMessage() == null) {
 					JOptionPane.showMessageDialog(pnlMain, "There is no data to save.");
 				}
 				else {
@@ -233,7 +237,7 @@ public class PnlGuiPayload extends JPanel {
 									file.createNewFile();
 								
 								fos = new FileOutputStream(filePath);
-								fos.write(payloadMessageHelper.getIsoMessage().getPayload());
+								fos.write(payloadMessageConfig.getIsoMessage().getPayload());
 								
 								JOptionPane.showMessageDialog(pnlMain, "Payload saved!");
 							}
@@ -269,29 +273,21 @@ public class PnlGuiPayload extends JPanel {
 				
 				if (file.showOpenDialog(pnlMain) == JFileChooser.APPROVE_OPTION) {
 					pnlMain.setLastCurrentDirectory(file.getSelectedFile());
-					updateCmbMessage(pnlMain.getIsoHelper(), null);
+					updateCmbMessage(pnlMain.getIso8583Config(), null);
 					
 					try {
 					    Path path = Paths.get(file.getSelectedFile().getAbsolutePath());
 					    byte[] data = Files.readAllBytes(path);
 					    
 						if (data.length > 20) {
-							String messageType = new String(new byte[]{data[0], data[1], data[2], data[3]});
-							MessageVO payloadMessageVO = null;
-							
-							for (int i = 0; i < cmbMessageType.getItemCount(); i++) {
-								if (((MessageVO) cmbMessageType.getItemAt(i)).getType().equals(messageType)) {
-									payloadMessageVO = (MessageVO) cmbMessageType.getItemAt(i);
-									break;
-								}
-							}
+							MessageVO payloadMessageVO = pnlMain.getIso8583Config().findMessageVOByPayload(data);
 							
 							if (payloadMessageVO == null) {
 								JOptionPane.showMessageDialog(pnlMain, "It was not possible to parse this payload. Certify that the message structure was not changed.");
 							}
 							else {
 								cmbMessageType.setSelectedItem(payloadMessageVO);
-								payloadMessageHelper.updateFromPayload(pnlMain, data);
+								payloadMessageConfig.updateFromPayload(pnlMain, data);
 								updateScrFields();
 							}
 						}
@@ -310,14 +306,14 @@ public class PnlGuiPayload extends JPanel {
 			public void stateChanged(ChangeEvent e) {
 				try {
 					if (tabbedPane.getSelectedIndex() == 0) {
-						payloadMessageHelper.setMessageVO(payloadMessageHelper.getMessageVOFromXML(xmlText.getText()));
+						payloadMessageConfig.setMessageVO(payloadMessageConfig.getMessageVOFromXML(xmlText.getText()));
 					}
 					else if (tabbedPane.getSelectedIndex() == 1) {
-						xmlText.setText(payloadMessageHelper.getXML(pnlMain));
+						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
 					}
 					else {
 						updateRawMessage(pnlMain);
-						xmlText.setText(payloadMessageHelper.getXML(pnlMain));
+						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
 					}
 				}
 				catch (Exception x) {
@@ -355,8 +351,8 @@ public class PnlGuiPayload extends JPanel {
 	}
 	
 	public void updateRawMessage(PnlMain pnlMain) {
-		if (payloadMessageHelper != null)
-			payloadMessageHelper.updateRawMessage(pnlMain, txtRawMessage);
+		if (payloadMessageConfig != null)
+			payloadMessageConfig.updateRawMessage(pnlMain, txtRawMessage);
 	}
 	
 	public void cmbClick(PnlMain pnlMain) {
@@ -375,7 +371,7 @@ public class PnlGuiPayload extends JPanel {
 			else {
 				tabbedPane.setEnabled(true);
 				
-				payloadMessageHelper.setMessageVO(pnlMain.getIsoHelper().getMessageVOAtTree(((MessageVO) cmbMessageType.getSelectedItem()).getType()));
+				payloadMessageConfig.setMessageVO(pnlMain.getIso8583Config().getMessageVOAtTree(((MessageVO) cmbMessageType.getSelectedItem()).getType()));
 				updateScrFields();
 			}
 		}
@@ -384,13 +380,13 @@ public class PnlGuiPayload extends JPanel {
 	private void updateScrFields() {
 		scrFields.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrFields.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		pnlFields.setPreferredSize(new Dimension(500, (payloadMessageHelper.getNumLines() * 25) + 20));
+		pnlFields.setPreferredSize(new Dimension(500, (payloadMessageConfig.getNumLines() * 25) + 20));
 		scrFields.getVerticalScrollBar().setUnitIncrement(10);
 	}
 	
 	public void setReadOnly() {
 		enablePnl(true);
-		payloadMessageHelper.setReadOnly();
+		payloadMessageConfig.setReadOnly();
 		cmbMessageType.setEnabled(false);
 	}
 	
@@ -405,15 +401,15 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.setEnabled(value);
 	}
 	
-	public void updateCmbMessage(Iso8583Helper isoHelper, String msgType) {
+	public void updateCmbMessage(Iso8583Config isoConfig, String msgType) {
 		cmbMessageType.removeAllItems();
-		int totalMessages = isoHelper.getConfigTreeNode().getChildCount();
+		int totalMessages = isoConfig.getConfigTreeNode().getChildCount();
 		
 		DefaultMutableTreeNode treeNode;
 		MessageVO messageVO;
 		MessageVO selectedMessageVO = null;
 		for (int messageIndex = 0; messageIndex < totalMessages; messageIndex++) {
-			treeNode = (DefaultMutableTreeNode) isoHelper.getConfigTreeNode().getChildAt(messageIndex);
+			treeNode = (DefaultMutableTreeNode) isoConfig.getConfigTreeNode().getChildAt(messageIndex);
 			if (treeNode.getUserObject() instanceof MessageVO) {
 				messageVO = (MessageVO) treeNode.getUserObject();
 				cmbMessageType.addItem(messageVO);
@@ -429,10 +425,14 @@ public class PnlGuiPayload extends JPanel {
 		return cmbMessageType;
 	}
 	
-	public PayloadMessageHelper getMessageHelper() {
-		return payloadMessageHelper;
+	public PayloadMessageConfig getPayloadMessageConfig() {
+		return payloadMessageConfig;
 	}
 
+	public JButton getBtnSendRequest() {
+		return btnSendRequest;
+	}
+	
 	public JButton getBtnSendResponse() {
 		return btnSendResponse;
 	}

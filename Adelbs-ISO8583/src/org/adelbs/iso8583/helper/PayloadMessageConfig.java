@@ -19,6 +19,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.adelbs.iso8583.bsparser.Parser;
 import org.adelbs.iso8583.constants.TypeEnum;
+import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.protocol.ISOMessage;
@@ -31,9 +32,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import groovyjarjarcommonscli.ParseException;
 
-public class PayloadMessageHelper {
+public class PayloadMessageConfig {
 
 	private MessageVO messageVO;
 	
@@ -45,24 +45,29 @@ public class PayloadMessageHelper {
 	private ISOMessage isoMessage;
 	
 	//runtime
-	private Iso8583Helper isoHelper;
+	private Iso8583Config isoConfig;
 	private ISOTestVO isoTest;
 	private String runTimeXML;
 	
-	public PayloadMessageHelper(String xml) throws ParseException {
+	public PayloadMessageConfig(String xml) throws ParseException {
 		this.runTimeXML = xml;
 		this.isoTest = getISOTestVOFromXML(xml);
-		this.isoHelper = new Iso8583Helper(isoTest.getConfigFile());
+		this.isoConfig = new Iso8583Config(isoTest.getConfigFile());
 		this.pnlFields = new JPanel();
 	}
 	
-	public PayloadMessageHelper(Iso8583Helper isoHelper, JPanel pnlFields) {
+	public PayloadMessageConfig(Iso8583Config isoConfig) {
+		this.pnlFields = new JPanel();
+		this.isoConfig = isoConfig;
+	}
+	
+	public PayloadMessageConfig(Iso8583Config isoConfig, JPanel pnlFields) {
 		this.pnlFields = pnlFields;
-		this.isoHelper = isoHelper;
+		this.isoConfig = isoConfig;
 	}
 
 	public void setMessageVO(String messageType) {
-		setMessageVO(isoHelper.getMessageVOAtTree(messageType));
+		setMessageVO(isoConfig.getMessageVOAtTree(messageType));
 	}
 	
 	public void setMessageVO(MessageVO messageVO) {
@@ -100,15 +105,17 @@ public class PayloadMessageHelper {
 		
 		if (pnlMain != null) {
 			xmlMessage.append("<test-iso config-file=\"").append(pnlMain.getTxtFilePath().getText()).append("\" ").
-						append("host=\"").append(pnlMain.getPnlGuiMessagesClient().getTxtHost().getText()).append("\" ").
-						append("port=\"").append(pnlMain.getPnlGuiMessagesClient().getTxtPort().getText()).append("\" ").
-						append("sync=\"").append(pnlMain.getPnlGuiMessagesClient().getCkSynchronous().isSelected() ? true : false).append("\"/>\n\n");
+						append("request-sync=\"").
+						append(pnlMain.getPnlGuiMessagesClient().getCkRequestSync().isSelected() ? "true" : "false").append("\" ").
+						append("response-sync=\"").
+						append(pnlMain.getPnlGuiMessagesClient().getCkResponseSync().isSelected() ? "true" : "false").append("\"/>\n\n");
 		}
 		else if (isoTest != null) {
 			xmlMessage.append("<test-iso config-file=\"").append(isoTest.getConfigFile()).append("\" ").
-						append("host=\"").append(isoTest.getHost()).append("\" ").
-						append("port=\"").append(isoTest.getPort()).append("\" ").
-						append("sync=\"").append(isoTest.isSync() ? "true" : "false").append("\"/>\n\n");
+						append("request-sync=\"").
+						append(isoTest.isRequestSync() ? "true" : "false").append("\" ").
+						append("response-sync=\"").
+						append(isoTest.isResponseSync() ? "true" : "false").append("\"/>\n\n");
 		}
 
 		if (messageVO != null) {
@@ -129,18 +136,6 @@ public class PayloadMessageHelper {
 		MessageVO messageVO = getMessageVOFromXML(runTimeXML);
 		setMessageVO(messageVO);
 		return messageVO;
-	}
-	
-	public String getHost() {
-		return isoTest != null ? isoTest.getHost() : "";
-	}
-	
-	public Integer getPort() {
-		return isoTest != null ? Integer.parseInt(isoTest.getPort()) : 0;
-	}
-	
-	public boolean isSync() {
-		return isoTest != null ? isoTest.isSync() : false;
 	}
 	
 	public MessageVO getMessageVOFromXML(String xmlToParse) throws ParseException {
@@ -166,7 +161,7 @@ public class PayloadMessageHelper {
 				
 				if ("message".equalsIgnoreCase(node.getNodeName())) {
 
-					newMessageVO = isoHelper.getMessageVOAtTree(ISOUtils.getAttr(node, "type", "")).getInstanceCopy();
+					newMessageVO = isoConfig.getMessageVOAtTree(ISOUtils.getAttr(node, "type", "")).getInstanceCopy();
 					fieldsFromXML = getFieldsFromXML(node.getChildNodes(), newMessageVO.getFieldList());
 					
 					//Carregando o valor dos campos
@@ -211,6 +206,10 @@ public class PayloadMessageHelper {
 		return newPayloadField;
 	}
 	
+	public ISOTestVO getISOTestVO() {
+		return isoTest;
+	}
+	
 	public ISOTestVO getISOTestVOFromXML(String xmlToParse) throws ParseException {
 		ISOTestVO testVO = new ISOTestVO();
 		
@@ -229,12 +228,9 @@ public class PayloadMessageHelper {
 				node = nodeList.item(i);
 				
 				if ("test-iso".equalsIgnoreCase(node.getNodeName())) {
-
 					testVO.setConfigFile(ISOUtils.getAttr(node, "config-file", ""));
-					testVO.setHost(ISOUtils.getAttr(node, "host", ""));
-					testVO.setPort(ISOUtils.getAttr(node, "port", ""));
-					testVO.setSync(ISOUtils.getAttr(node, "sync", "false").equals("true"));
-					
+					testVO.setRequestSync(ISOUtils.getAttr(node, "request-sync", "false").equals("true"));
+					testVO.setResponseSync(ISOUtils.getAttr(node, "response-sync", "false").equals("true"));
 				}
 			}
 		}
@@ -290,26 +286,17 @@ public class PayloadMessageHelper {
 		return fieldList;
 	}
 	
-	public void updateFromPayload(byte[] bytes) throws Exception {
-		setMessageVO(new String(ISOUtils.subArray(bytes, 0, 4)));
+	public void updateFromPayload(byte[] bytes) throws ParseException {
+		setMessageVO(isoConfig.findMessageVOByPayload(bytes).getType());
 		updateFromPayload(null, bytes);
 	}
 	
-	public void updateFromPayload(PnlMain pnlMain, byte[] bytes) throws Exception {
+	public void updateFromPayload(PnlMain pnlMain, byte[] bytes) throws ParseException {
 		try {
 			isoMessage = new ISOMessage(bytes, messageVO);
 			setMessageVO(isoMessage.getMessageVO());
-		/*	for (GuiPayloadField guiPayloadField : fieldList) {
-				if (isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()) != null) {
-					guiPayloadField.setValues(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()));
-					
-					for (int i = 0; i < guiPayloadField.subfieldList.size(); i++) {
-						guiPayloadField.subfieldList.get(i).setValues(isoMessage.getBit(guiPayloadField.getFieldVO().getBitNum()).getFieldList().get(i));
-					}
-				}
-			}*/
 		}
-		catch (Exception x) {
+		catch (ParseException x) {
 			x.printStackTrace();
 			if (pnlMain != null)
 				JOptionPane.showMessageDialog(pnlMain, "It was not possible to parse this payload. Certify that the message structure was not changed.\n" + x.getMessage());
@@ -590,5 +577,9 @@ public class PayloadMessageHelper {
 			updateFieldVO();
 			return fieldVO;
 		}
+	}
+	
+	public Iso8583Config getIsoConfig() {
+		return isoConfig;
 	}
 }

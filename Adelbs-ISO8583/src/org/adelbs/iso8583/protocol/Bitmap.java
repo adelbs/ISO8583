@@ -3,23 +3,22 @@ package org.adelbs.iso8583.protocol;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
+import org.adelbs.iso8583.exception.ParseException;
+import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
-import groovyjarjarcommonscli.ParseException;
 
 public class Bitmap {
 
 	private HashMap<Integer, FieldVO> bitmap = new HashMap<Integer, FieldVO>();
 	private String binaryBitmap = "";
-	private String hexaBitmap = "";
 	private int totalBits = 128;
 	
-	private String payloadBitmap;
+	private byte[] payloadBitmap;
 	
 	private MessageVO messageVO;
 	private StringBuilder visualPayload = new StringBuilder();
@@ -36,31 +35,18 @@ public class Bitmap {
 		try {
 			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
 			
-			if (messageVO.getBitmatEncoding() == EncodingEnum.BINARY)
-				bitmapSize = 64;
-			else if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
-				bitmapSize = 16;
-			
-			tempBitmap1 = new String(ISOUtils.subArray(payload, headerSize, headerSize + bitmapSize));
-			
-			if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
-				tempBitmap1 = ISOUtils.hexToBin(tempBitmap1);
+			bitmapSize = messageVO.getBitmatEncoding().getMinBitmapSize();
+			tempBitmap1 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerSize, headerSize + bitmapSize));
 			
 			if (tempBitmap1.substring(0, 1).equals("1")) {
-				
-				tempBitmap2 = new String(ISOUtils.subArray(payload, headerSize + bitmapSize, headerSize + (bitmapSize * 2)));
-				
-				if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
-					tempBitmap2 = ISOUtils.hexToBin(tempBitmap2);
-				
+				tempBitmap2 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerSize + bitmapSize, headerSize + (bitmapSize * 2)));
 				bitmapSize = bitmapSize * 2;
 			}
 			
 			binaryBitmap = tempBitmap1 + tempBitmap2;
 	
-			calculateBitmapEncoding(messageVO);
-			
-			visualPayload.append("Bitmap: [").append(payloadBitmap).append("]\n\n");
+			payloadBitmap = messageVO.getBitmatEncoding().convert(binaryBitmap.substring(0, 64));
+			visualPayload.append("Bitmap: [").append(new String(payloadBitmap)).append("]\n\n");
 		}
 		catch (Exception x) {
 			throw new ParseException("Error parsing the bitmap.\n" + x.getMessage() + "\n" + visualPayload);
@@ -121,44 +107,25 @@ public class Bitmap {
 		
 		totalBits = lastBit;
 		
-		calculateBitmapEncoding(messageVO);
-		visualPayload.append("Bitmap: [").append(payloadBitmap).append("]\n\n");
+		payloadBitmap = messageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(0, 64));
+		visualPayload.append("Bitmap: [").append(new String(payloadBitmap)).append("]\n\n");
 		
 		if (lastBit > 64) {
 			FieldVO secondBitmap = new FieldVO(null, "Bitmap", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 16, messageVO.getBitmatEncoding(), "true");
 			binaryBitmap = "1".concat(binaryBitmap.substring(1));
-			secondBitmap.setValue(getHexa(binaryBitmap.substring(64, 128)));
+			payloadBitmap = messageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(0, 64));
+			secondBitmap.setPayloadValue(messageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(64, 128)));
 			secondBitmap.setPresent(true);
 			bitmap.put(1, secondBitmap);
 			binaryBitmap.substring(0, 64);
 		}
 	}
 
-	private void calculateBitmapEncoding(MessageVO messageVO) {
-		hexaBitmap = getHexa(binaryBitmap.substring(0, 64));
-		
-		if (messageVO.getBitmatEncoding() == EncodingEnum.HEXA)
-			payloadBitmap = hexaBitmap;
-		else
-			payloadBitmap = binaryBitmap;
-
-	}
-	
-	private String getHexa(String binaryValue) {
-		String result = "";
-		int decimal;
-		for (int i = 4; i <= 64; i = i + 4) {
-			decimal = Integer.parseInt(binaryValue.substring((i - 4), i), 2);
-			result = result.concat(Integer.toString(decimal, 16)).toUpperCase();
-		}
-		return result;
-	}
-	
 	public int getSize() {
 		return totalBits;
 	}
 	
-	public String getPayloadBitmap() {
+	public byte[] getPayloadBitmap() {
 		return payloadBitmap;
 	}
 	
@@ -172,5 +139,13 @@ public class Bitmap {
 	
 	public MessageVO getMessageVO() {
 		return messageVO;
+	}
+
+	public Encoding getHeaderEncoding() {
+		return messageVO.getHeaderEncoding();
+	}
+	
+	public Encoding getBitmapEncoding() {
+		return messageVO.getBitmatEncoding();
 	}
 }

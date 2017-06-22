@@ -5,9 +5,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.io.IOException;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -18,14 +21,12 @@ import javax.swing.event.ChangeListener;
 
 import org.adelbs.iso8583.bsparser.Parser;
 import org.adelbs.iso8583.clientserver.CallbackAction;
-import org.adelbs.iso8583.clientserver.ISOClient;
-import org.adelbs.iso8583.clientserver.ISOServer;
-import org.adelbs.iso8583.util.ISOUtils;
+import org.adelbs.iso8583.clientserver.ISOConnection;
+import org.adelbs.iso8583.exception.ConnectionException;
+import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.vo.ISOTestVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
-import groovyjarjarcommonscli.ParseException;
-import javax.swing.JCheckBox;
 
 public class PnlGuiMessages extends JPanel {
 
@@ -33,12 +34,16 @@ public class PnlGuiMessages extends JPanel {
 	
 	private JLabel lblHost;
 	private JLabel lblPort = new JLabel("Port");
-	private JTextField txtHost = new JTextField();
-	private JTextField txtPort = new JTextField();
+	private JLabel lblTimeout = new JLabel("Timeout (sec)");
+	private JTextField txtHost = new JTextField("localhost");
+	private JTextField txtPort = new JTextField("9980");
+	private JTextField txtTimeout = new JTextField("520");
+	private JCheckBox ckRequestSync = new JCheckBox("Synchronized request");
+	private JCheckBox ckResponseSync = new JCheckBox("Synchronized response");
 	private JButton btnConnect;
-	private JCheckBox ckSynchronous = new JCheckBox("Synchronous");
 	
 	private JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+	private JPanel pnlConnection = new JPanel();
 	private PnlGuiPayload pnlRequest;
 	private PnlGuiPayload pnlResponse;
 	private JPanel pnlConsole = new JPanel();
@@ -46,6 +51,8 @@ public class PnlGuiMessages extends JPanel {
 	private JScrollPane scrConsole = new JScrollPane();
 	
 	private boolean isServer;
+	private ISOConnection isoClient = null;
+	private ISOConnection isoServer = null;
 	
 	public PnlGuiMessages(final PnlMain pnlMain, boolean server) {
 		setLayout(null);
@@ -53,30 +60,49 @@ public class PnlGuiMessages extends JPanel {
 		isServer = server;
 		
 		lblHost = new JLabel(server ? "Host (bind)" : "Host");
-		btnConnect = new JButton(server ? "Open connection" : "Connect and send message");
+		btnConnect = new JButton("Connect");
 		pnlRequest = new PnlGuiPayload(pnlMain, server, true);
 		pnlResponse = new PnlGuiPayload(pnlMain, server, false);
 		
-		lblHost.setBounds(12, 16, 78, 16);
-		txtHost.setBounds(80, 13, 226, 22);
+		pnlRequest.getBtnSendRequest().setEnabled(false);
+		
+		lblHost.setBounds(12, 43, 78, 16);
+		txtHost.setBounds(80, 40, 226, 22);
 		txtHost.setColumns(10);
 
-		lblPort.setBounds(318, 16, 37, 16);
-		txtPort.setBounds(349, 13, 50, 22);
+		lblPort.setBounds(318, 43, 37, 16);
+		txtPort.setBounds(348, 40, 50, 22);
 		txtPort.setColumns(10);
-		btnConnect.setBounds(411, 12, 220, 25);
-
-		ckSynchronous.setSelected(true);
-		ckSynchronous.setBounds(631, 12, 113, 25);
+		btnConnect.setBounds(411, 40, 91, 25);
 		
-		add(lblHost);
-		add(txtHost);
-		add(lblPort);
-		add(txtPort);
-		add(btnConnect);
+		lblTimeout.setBounds(259, 72, 100, 16);
+		txtTimeout.setBounds(348, 69, 50, 22);
+		txtTimeout.setColumns(10);
+		
+		ckRequestSync.setBounds(80, 72, 170, 22);
+		ckResponseSync.setBounds(80, 99, 170, 22);
+		
+		if (!server) {
+			ckRequestSync.setSelected(true);
+			ckResponseSync.setSelected(true);
+		}
+		
+		pnlConnection.setLayout(null);
+		pnlConnection.add(lblHost);
+		pnlConnection.add(txtHost);
+		pnlConnection.add(lblPort);
+		pnlConnection.add(txtPort);
+		pnlConnection.add(lblTimeout);
+		pnlConnection.add(txtTimeout);
+		pnlConnection.add(btnConnect);
+		
+		if (!server) {
+			pnlConnection.add(ckRequestSync);
+			pnlConnection.add(ckResponseSync);
+		}
+		
 		add(tabbedPane);
-		if (!server) add(ckSynchronous);
-		
+		tabbedPane.addTab("Connection", null, pnlConnection, null);
 		tabbedPane.addTab("Request", null, pnlRequest, null);
 		tabbedPane.addTab("Response", null, pnlResponse, null);
 		tabbedPane.addTab("Console", null, pnlConsole, null);
@@ -99,7 +125,7 @@ public class PnlGuiMessages extends JPanel {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				
-				tabbedPane.setBounds(12, 45, getWidth() - 25, getHeight() - 55);
+				tabbedPane.setBounds(10, 10, getWidth() - 35, getHeight() - 20);
 				
 			}
 			@Override
@@ -110,7 +136,7 @@ public class PnlGuiMessages extends JPanel {
 		
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				tabbedPane.setTitleAt(2, "<html>Console</html>");
+				tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html>Console</html>");
 			}
 		});
 		
@@ -118,21 +144,45 @@ public class PnlGuiMessages extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					clientServerAction(pnlMain);
-				} catch (ParseException e1) {
+					connectAction(pnlMain);
 					
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				} 
+				catch (Exception x) {
+					x.printStackTrace();
+					JOptionPane.showMessageDialog(pnlMain, "Error trying to connect\n" + x.getMessage());
+				}
+			}
+		});
+		
+		pnlRequest.getBtnSendRequest().addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					sendMessageAction(pnlMain);
+				} 
+				catch (Exception x) {
+					x.printStackTrace();
+					JOptionPane.showMessageDialog(pnlMain, "Error trying to send the message\n" + x.getMessage());
 				}
 			}
 		});
 	}
-	
-	private void clientServerAction(final PnlMain pnlMain) throws ParseException {
-		pnlRequest.updateRawMessage(pnlMain);
-		
+
+	private void connectAction(final PnlMain pnlMain) throws ParseException, NumberFormatException, IOException, ConnectionException {
 		if (isServer) {
-			final ISOServer server = new ISOServer(txtHost.getText(), Integer.parseInt(txtPort.getText()), new Callback(pnlMain, true));
+			if (isoServer == null) {
+				try{
+					isoServer = new ISOConnection(true, txtHost.getText(), Integer.parseInt(txtPort.getText()), Integer.parseInt(txtTimeout.getText()));
+					isoServer.setIsoConfig(pnlMain.getIso8583Config());
+					isoServer.setCallback(new Callback(pnlMain, true));
+					isoServer.connect();
+					System.out.println("Server connected.");
+					
+				}catch(Exception ex){
+					isoServer=null;
+					throw ex;
+				}
+			}
 			
 			if (pnlResponse.getBtnSendResponse().getActionListeners().length > 0) 
 				pnlResponse.getBtnSendResponse().removeActionListener(pnlResponse.getBtnSendResponse().getActionListeners()[0]);
@@ -142,30 +192,70 @@ public class PnlGuiMessages extends JPanel {
 					pnlResponse.setReadOnly();
 					pnlResponse.enablePnl(false);
 					pnlResponse.updateRawMessage(pnlMain);
-					byte[] data = ISOUtils.mergeArray(pnlResponse.getMessageHelper().getIsoMessage().getMessageSize(4).getBytes(), pnlResponse.getMessageHelper().getIsoMessage().getPayload());
-					server.setResponsePayload(data);
+					
+					try {
+						isoServer.sendBytes(
+								pnlMain.getIso8583Config().getDelimiter().preparePayload(pnlResponse.getPayloadMessageConfig().getIsoMessage(), pnlMain.getIso8583Config()), 
+								ckRequestSync.isSelected(), ckResponseSync.isSelected());
+					}
+					catch (Exception x) {
+						x.printStackTrace();
+						JOptionPane.showMessageDialog(pnlMain, "Error trying to send the bytes\n" + x.getMessage());
+					}
 				}
 			});
-			
-			server.start();
 		}
 		else {
-			if (pnlRequest.getTabbedPane().getSelectedIndex() == 1)
-				pnlRequest.getMessageHelper().setMessageVO(pnlRequest.getMessageHelper().getMessageVOFromXML(pnlRequest.getXmlText().getText()));
-			byte[] data = ISOUtils.mergeArray(pnlRequest.getMessageHelper().getIsoMessage().getMessageSize(4).getBytes(), pnlRequest.getMessageHelper().getIsoMessage().getPayload());
-			ISOClient client = new ISOClient(txtHost.getText(), Integer.parseInt(txtPort.getText()), data, new Callback(pnlMain, false));
-			client.start();
+			if (isoClient == null) {
+				try{
+					isoClient = new ISOConnection(false, txtHost.getText(), Integer.parseInt(txtPort.getText()), Integer.parseInt(txtTimeout.getText()));
+					isoClient.setIsoConfig(pnlMain.getIso8583Config());
+					isoClient.setCallback(new Callback(pnlMain, false));
+					isoClient.connect();
+					System.out.println("Client connected.");
+					//TODO: Send handshake message to start the communication
+					sendHandshake();
+				}catch(Exception ex){
+					isoClient=null;
+					throw ex;
+				}
+			}
 		}
 		
 		txtHost.setEnabled(false);
 		txtPort.setEnabled(false);
+		txtTimeout.setEnabled(false);
 		btnConnect.setEnabled(false);
+		pnlRequest.getBtnSendRequest().setEnabled(true);
+	}
+	
+	private void sendHandshake(){
+		//TODO: Implement a communication between Client and Server to start the messaging
+		/*try{
+			isoClient.sendBytes(
+					"ping".getBytes(),  
+					ckRequestSync.isSelected(), ckResponseSync.isSelected());
+		}
+		catch(Exception  ex){
+			ex.printStackTrace();
+		}*/
+	}
+	
+	private void sendMessageAction(final PnlMain pnlMain) throws ParseException, NumberFormatException, IOException, InterruptedException {
+		pnlRequest.updateRawMessage(pnlMain);
+		
+		if (pnlRequest.getTabbedPane().getSelectedIndex() == 1)
+			pnlRequest.getPayloadMessageConfig().setMessageVO(pnlRequest.getPayloadMessageConfig().getMessageVOFromXML(pnlRequest.getXmlText().getText()));
+		
+		isoClient.sendBytes(
+				pnlMain.getIso8583Config().getDelimiter().preparePayload(pnlRequest.getPayloadMessageConfig().getIsoMessage(), pnlMain.getIso8583Config()), 
+				ckRequestSync.isSelected(), ckResponseSync.isSelected());
 	}
 
 	public PnlGuiPayload getPnlRequest() {
 		return pnlRequest;
 	}
-	
+
 	public JTextField getTxtHost() {
 		return txtHost;
 	}
@@ -185,55 +275,61 @@ public class PnlGuiMessages extends JPanel {
 			this.isRequest = isRequest;
 		}
 		
-		public void dataReceived(byte[] data) throws Exception {
+		public void dataReceived(byte[] data) throws ParseException {
+			PnlGuiPayload pnlGui;
+			
 			if (isRequest) {
-				pnlRequest.updateCmbMessage(pnlMain.getIsoHelper(), new String(ISOUtils.subArray(data, 0, 4)));
-				pnlRequest.getMessageHelper().updateFromPayload(pnlMain, data);
-				pnlRequest.setReadOnly();
+				pnlGui = pnlRequest;
 				pnlResponse.enablePnl(true);
 			}
 			else {
-				pnlResponse.updateCmbMessage(pnlMain.getIsoHelper(), new String(ISOUtils.subArray(data, 0, 4)));
-				pnlResponse.getMessageHelper().updateFromPayload(pnlMain, data);
-				pnlResponse.setReadOnly();
+				pnlGui = pnlResponse;
 			}
+			
+			pnlGui.updateCmbMessage(pnlMain.getIso8583Config(), pnlMain.getIso8583Config().findMessageVOByPayload(data).getType());
+			pnlGui.getPayloadMessageConfig().updateFromPayload(pnlMain, data);
+			pnlGui.setReadOnly();
+			
 		}
 
 		public void log(String log) {
-			tabbedPane.setTitleAt(2, "<html><i>*Console</i></html>");
+			tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html><i>*Console</i></html>");
 			txtConsole.setText(txtConsole.getText() + "\n" + log);
 		}
 
 		public void end() {
 			txtHost.setEnabled(true);
 			txtPort.setEnabled(true);
+			txtTimeout.setEnabled(true);
 			btnConnect.setEnabled(true);
+			pnlRequest.getBtnSendRequest().setEnabled(false);
 		}
 	}
 	
 	public void setXmlRequest(PnlMain pnlMain, String xmlToParse) throws ParseException {
 		String xml = new Parser().parseText(xmlToParse);
 		
-		ISOTestVO testVO = pnlRequest.getMessageHelper().getISOTestVOFromXML(xml);
+		ISOTestVO testVO = pnlRequest.getPayloadMessageConfig().getISOTestVOFromXML(xml);
 
 		//Carregando arquivo de configuracao
 		if (pnlMain.getTxtFilePath().getText() != "" && !testVO.getConfigFile().equals(pnlMain.getTxtFilePath().getText())) {
 			pnlMain.getTxtFilePath().setText(testVO.getConfigFile());
-			pnlMain.getIsoHelper().openFile(pnlMain, pnlMain.getTxtFilePath().getText());
-			pnlMain.getIsoHelper().parseXmlToConfig(pnlMain);
+			pnlMain.getIso8583Config().openFile(pnlMain, pnlMain.getTxtFilePath().getText());
+			pnlMain.getIso8583Config().parseXmlToConfig(pnlMain);
 			pnlMain.getPnlGuiConfig().updateTree();
 			pnlMain.getPnlGuiConfig().expandAllNodes();
 			pnlMain.getPnlGuiConfig().updateTree();
 		}
 
-		txtHost.setText(testVO.getHost());
-		txtPort.setText(testVO.getPort());
-		ckSynchronous.setSelected(testVO.isSync());
+		ckRequestSync.setSelected(testVO.isRequestSync());
+		ckResponseSync.setSelected(testVO.isResponseSync());
 		
 		if (xmlToParse.indexOf("<%") == -1 && xmlToParse.indexOf("%>") == -1) {
-			MessageVO messageVO = pnlRequest.getMessageHelper().getMessageVOFromXML(xml);
-			pnlRequest.updateCmbMessage(pnlMain.getIsoHelper(), messageVO.getType());
-			pnlRequest.getMessageHelper().setMessageVO(messageVO);;
+			MessageVO messageVO = pnlRequest.getPayloadMessageConfig().getMessageVOFromXML(xml);
+			if (messageVO != null) {
+				pnlRequest.updateCmbMessage(pnlMain.getIso8583Config(), messageVO.getType());
+				pnlRequest.getPayloadMessageConfig().setMessageVO(messageVO);;
+			}
 		}
 		else {
 			pnlRequest.getTabbedPane().setSelectedIndex(1);
@@ -242,15 +338,28 @@ public class PnlGuiMessages extends JPanel {
 		}
 	}
 
-	public JCheckBox getCkSynchronous() {
-		return ckSynchronous;
-	}
-	
 	public String getXmlRequest(PnlMain pnlMain) {
-		return pnlRequest.getMessageHelper().getXML(pnlMain);
+		return pnlRequest.getPayloadMessageConfig().getXML(pnlMain);
 	}
 	
 	public String getXmlResponse(PnlMain pnlMain) {
-		return pnlResponse.getMessageHelper().getXML(pnlMain);
+		return pnlResponse.getPayloadMessageConfig().getXML(pnlMain);
 	}
+	
+	public JPanel getConnectionPanel() {
+		return pnlConnection;
+	}
+	
+	public JCheckBox getCkRequestSync() {
+		return ckRequestSync;
+	}
+	
+	public JCheckBox getCkResponseSync() {
+		return ckResponseSync;
+	}
+
+	public JTabbedPane getTabbedPane() {
+		return tabbedPane;
+	}
+	
 }

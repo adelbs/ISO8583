@@ -15,12 +15,14 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.adelbs.iso8583.constants.DelimiterEnum;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
+import org.adelbs.iso8583.protocol.ISO8583Delimiter;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
@@ -32,23 +34,24 @@ import org.xml.sax.InputSource;
 
 import groovy.util.Eval;
 
-public class Iso8583Helper {
-	
-	public static final String VERSION = "0.5";
+public class Iso8583Config {
 	
 	private DefaultMutableTreeNode configTreeNode;
 	private XmlTextPane xmlText = new XmlTextPane();
 	
+	private DelimiterEnum isoDelimiter;
+	
 	//Arquivo de configuração carregado
 	private String xmlFilePath = null;
 	
-	public Iso8583Helper(String fileName) {
+	public Iso8583Config(String fileName) {
 		this();
 		openFile(null, fileName);
 		parseXmlToConfig(null);
 	}
 	
-	public Iso8583Helper() {
+	public Iso8583Config() {
+		isoDelimiter = DelimiterEnum.getDelimiter("");
 		configTreeNode = new DefaultMutableTreeNode("ISO8583");
 	}
 	
@@ -116,7 +119,7 @@ public class Iso8583Helper {
 		StringBuilder xmlISO = new StringBuilder();
 		
 		xmlISO.append("<?xml version=\"1.0\" ?>\n\n");
-		xmlISO.append("<iso8583>");
+		xmlISO.append("<iso8583 delimiter=\"").append(isoDelimiter.getValue()).append("\">");
 		
 		//Capturando os MessageVO
 		Enumeration<DefaultMutableTreeNode> enuParse = configTreeNode.children();
@@ -188,6 +191,8 @@ public class Iso8583Helper {
 				Document document = builder.parse(is);
 				
 				DefaultMutableTreeNode lastParseNode;
+				
+				setDelimiterEnum(DelimiterEnum.getDelimiter(document.getDocumentElement().getAttribute("delimiter")));
 				
 				NodeList nodeList = document.getDocumentElement().getChildNodes();
 				Node node;
@@ -513,5 +518,30 @@ public class Iso8583Helper {
 	
 	public String getXmlFilePath() {
 		return xmlFilePath;
+	}
+	
+	public DelimiterEnum getDelimiterEnum() {
+		return isoDelimiter;
+	}
+	
+	public void setDelimiterEnum(DelimiterEnum isoDelimiter) {
+		this.isoDelimiter = isoDelimiter;
+	}
+	
+	public ISO8583Delimiter getDelimiter() {
+		return isoDelimiter.getDelimiter();
+	}
+	
+	public MessageVO findMessageVOByPayload(byte[] payload) {
+		MessageVO result = null;
+		for (int i = 0; i < configTreeNode.getChildCount(); i++) {
+			result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
+			if (result.getType().equals(result.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 4))))
+				break;
+			else
+				result = null;
+		}
+		
+		return result;
 	}
 }
