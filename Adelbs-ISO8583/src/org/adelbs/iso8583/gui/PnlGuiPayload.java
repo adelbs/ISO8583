@@ -78,11 +78,11 @@ public class PnlGuiPayload extends JPanel {
 		lblMessageType.setBounds(12, 13, 90, 16);
 		cmbMessageType.setBounds(114, 10, 178, 22);
 		btnUpdate.setBounds(295, 10, 22, 22);
-		btnUpdate.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/update.png")));
-		btnSendRequest.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/enter.png")));
-		btnSendResponse.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/enter.png")));
-		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/openFile.png")));
-		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/saveFile.png")));
+		btnUpdate.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/update.png")));
+		btnSendRequest.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/enter.png")));
+		btnSendResponse.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/enter.png")));
+		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/openFile.png")));
+		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/saveFile.png")));
 
 		tabbedPane.setEnabled(false);
 		if (server) {

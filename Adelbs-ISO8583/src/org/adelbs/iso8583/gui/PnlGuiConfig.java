@@ -116,13 +116,13 @@ public class PnlGuiConfig extends JPanel{
 		}); 
 		
 		//Configurando botões
-		btnNew.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/resource/addType.png")));
+		btnNew.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/addType.png")));
 		btnNew.setText("Add Message Type");
 		btnNew.setToolTipText("Add Message Type");
-		btnNewField.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/resource/addField.png")));
+		btnNewField.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/addField.png")));
 		btnNewField.setText("Add Field");
 		btnNewField.setToolTipText("Add Field");
-		btnRemove.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/resource/remove.png")));
+		btnRemove.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/remove.png")));
 		btnRemove.setText("Remove");
 		btnRemove.setToolTipText("Remove");
 		

@@ -19,13 +19,11 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.adelbs.iso8583.bsparser.Parser;
 import org.adelbs.iso8583.clientserver.CallbackAction;
 import org.adelbs.iso8583.clientserver.ISOConnection;
 import org.adelbs.iso8583.exception.ConnectionException;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.vo.ISOTestVO;
-import org.adelbs.iso8583.vo.MessageVO;
 
 
 public class PnlGuiMessages extends JPanel {
@@ -306,8 +304,7 @@ public class PnlGuiMessages extends JPanel {
 		}
 	}
 	
-	public void setXmlRequest(PnlMain pnlMain, String xmlToParse) throws ParseException {
-		String xml = new Parser().parseText(xmlToParse);
+	public void setXmlRequest(PnlMain pnlMain, String xml) throws ParseException {
 		
 		ISOTestVO testVO = pnlRequest.getPayloadMessageConfig().getISOTestVOFromXML(xml);
 
@@ -324,18 +321,9 @@ public class PnlGuiMessages extends JPanel {
 		ckRequestSync.setSelected(testVO.isRequestSync());
 		ckResponseSync.setSelected(testVO.isResponseSync());
 		
-		if (xmlToParse.indexOf("<%") == -1 && xmlToParse.indexOf("%>") == -1) {
-			MessageVO messageVO = pnlRequest.getPayloadMessageConfig().getMessageVOFromXML(xml);
-			if (messageVO != null) {
-				pnlRequest.updateCmbMessage(pnlMain.getIso8583Config(), messageVO.getType());
-				pnlRequest.getPayloadMessageConfig().setMessageVO(messageVO);;
-			}
-		}
-		else {
-			pnlRequest.getTabbedPane().setSelectedIndex(1);
-			pnlRequest.getXmlText().setText(xmlToParse);
-			pnlRequest.checkAdvancedTag();
-		}
+		pnlRequest.getTabbedPane().setSelectedIndex(1);
+		pnlRequest.getXmlText().setText(xml);
+		pnlRequest.checkAdvancedTag();
 	}
 
 	public String getXmlRequest(PnlMain pnlMain) {

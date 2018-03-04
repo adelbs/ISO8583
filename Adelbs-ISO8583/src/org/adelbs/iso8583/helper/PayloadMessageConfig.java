@@ -17,7 +17,6 @@ import javax.swing.JTextField;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.adelbs.iso8583.bsparser.Parser;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
@@ -138,12 +137,10 @@ public class PayloadMessageConfig {
 		return messageVO;
 	}
 	
-	public MessageVO getMessageVOFromXML(String xmlToParse) throws ParseException {
+	public MessageVO getMessageVOFromXML(String xml) throws ParseException {
 		MessageVO newMessageVO = null;
 		
 		try {
-			String xml = new Parser().parseText(xmlToParse);
-			
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 		    InputSource is = new InputSource(new StringReader(xml));
@@ -210,12 +207,10 @@ public class PayloadMessageConfig {
 		return isoTest;
 	}
 	
-	public ISOTestVO getISOTestVOFromXML(String xmlToParse) throws ParseException {
+	public ISOTestVO getISOTestVOFromXML(String xml) throws ParseException {
 		ISOTestVO testVO = new ISOTestVO();
 		
 		try {
-			String xml = new Parser().parseText(xmlToParse);
-			
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 		    InputSource is = new InputSource(new StringReader(xml));
@@ -379,7 +374,7 @@ public class PayloadMessageConfig {
 			lblFieldName = new JLabel(fieldVO.getName());
 			lblType = new JLabel(fieldVO.getType().toString());
 			lblDynamic = new JLabel();
-			lblDynamic.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/resource/search.png")));
+			lblDynamic.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/search.png")));
 			lblDynamic.setToolTipText(fieldVO.getDynaCondition());
 
 			lineNum = numLines;

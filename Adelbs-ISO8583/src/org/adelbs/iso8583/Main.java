@@ -16,7 +16,7 @@ public final class Main extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	
-	private static int MIN_WIDTH = 755;
+	private static int MIN_WIDTH = 770;
 	private static int MIN_HEIGHT = 570;
 
 	private PnlMain pnlMain;
@@ -34,7 +34,7 @@ public final class Main extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
-			}
+			} 	
 			@Override
 			public void windowDeactivated(WindowEvent e) {}
 			@Override
@@ -47,7 +47,7 @@ public final class Main extends JFrame {
 		
 		//*** Configurações da janela principal ***
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/resource/package.png")));
+		setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/org/adelbs/iso8583/resource/package.png")));
 		setTitle("Adelbs-ISO8583");
 		
 		//Tamanho e posição

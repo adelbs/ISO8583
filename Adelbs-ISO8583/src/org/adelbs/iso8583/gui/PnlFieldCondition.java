@@ -86,12 +86,12 @@ public class PnlFieldCondition extends JPanel {
 		txtDynaValue.setBounds(58, 68, 245, 22);
 		txtDynaValue.setColumns(10);
 
-		btnDynaAdd.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/resource/enter.png")));
+		btnDynaAdd.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/enter.png")));
 		btnDynaAdd.setBounds(305, 68, 40, 22);
 		txtDynaCondition.setLineWrap(true);
 		txtDynaCondition.setFont(new Font("Monospaced", Font.BOLD, 18));
 		scrDynaCondition.setViewportView(txtDynaCondition);
-		btnDynaValidate.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/resource/validate.png")));
+		btnDynaValidate.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/validate.png")));
 		
 		cmbDynaOperator.addActionListener(new AddLogicActionListener(cmbDynaOperator));
 		btnDynaAdd.addActionListener(new ActionListener() {

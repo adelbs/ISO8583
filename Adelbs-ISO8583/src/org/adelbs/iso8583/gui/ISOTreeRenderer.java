@@ -17,11 +17,11 @@ public class ISOTreeRenderer extends DefaultTreeCellRenderer  {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Icon isoIcon = new ImageIcon(PnlGuiConfig.class.getResource("/resource/isoIcon.png"));
-	private static final Icon validMessage = new ImageIcon(PnlGuiConfig.class.getResource("/resource/validMessage.png"));
-	private static final Icon invalidMessage = new ImageIcon(PnlGuiConfig.class.getResource("/resource/invalidMessage.png"));
-	private static final Icon validField = new ImageIcon(PnlGuiConfig.class.getResource("/resource/validField.png"));
-	private static final Icon invalidField = new ImageIcon(PnlGuiConfig.class.getResource("/resource/invalidField.png"));
+	private static final Icon isoIcon = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/isoIcon.png"));
+	private static final Icon validMessage = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/validMessage.png"));
+	private static final Icon invalidMessage = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/invalidMessage.png"));
+	private static final Icon validField = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/validField.png"));
+	private static final Icon invalidField = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/invalidField.png"));
 	
 	@Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean exp, boolean leaf, int row, boolean hasFocus) {

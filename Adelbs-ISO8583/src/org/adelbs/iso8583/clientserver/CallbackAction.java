@@ -9,5 +9,6 @@ public abstract class CallbackAction {
 	public abstract void log(String log);
 	
 	public abstract void end();
-	
+
+	public void keepalive() { }
 }

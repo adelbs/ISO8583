@@ -1,7 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project ISO8583">
-    <target name="create_run_jar">
-        <jar destfile="build/Abs-ISO8583_0.15.jar" filesetmanifest="mergewithoutmain">
+<project default="buildJar" name="Creates Jar">
+	
+	<property name="projectName" value="ABS-ISO8583" />
+	<property name="buildPropertiesFile" value="src/org/adelbs/iso8583/resource/iso8583-version-number" />
+
+    <target name="buildJar">
+		<tstamp>
+			<format property="sysdateMajor" pattern="yy" locale="cn,CN"/>
+			<format property="sysdateMinor" pattern="MM" locale="cn,CN"/>
+			<format property="sysdateBuild" pattern="ddHHmmss" locale="cn,CN"/>
+		</tstamp>
+
+    	<propertyfile file="${buildPropertiesFile}">
+			<entry key="version.major" value="${sysdateMajor}"/>
+			<entry key="version.minor" value="${sysdateMinor}"/>
+			<entry key="build.number" value="${sysdateBuild}"/>
+		</propertyfile>
+
+		<property file="${buildPropertiesFile}"/>
+		<property name="app.version" value="${version.major}.${version.minor}-${build.number}" />
+
+    	<jar destfile="build/${projectName}_${app.version}.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="org.adelbs.iso8583.Main"/>
                 <attribute name="Class-Path" value="."/>

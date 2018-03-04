@@ -126,12 +126,14 @@ public class ISOConnection {
 		else
 			sender.send(data);
 		
-		receiver.waitResponse();
+		receiver.waitResponse(0);
 	}
 	
-	public void waitNextRequest(boolean isResponseSynchronized) throws InterruptedException {
+	private long startOfWaitNextRequest = 0;
+	public void waitNextRequest(boolean isResponseSynchronized, int keepaliveTimeout) throws InterruptedException {
+		startOfWaitNextRequest = System.currentTimeMillis();
 		receiver.setIsSync(isResponseSynchronized);
-		receiver.waitResponse();
+		receiver.waitResponse(keepaliveTimeout);
 	}
 	
 	private void registerActionTimeMilis() {
@@ -216,9 +218,15 @@ public class ISOConnection {
 			}
 		}
 		
-		public void waitResponse() throws InterruptedException {
+		public void waitResponse(int keepaliveTimeout) throws InterruptedException {
 			while (isSync && running) {
 				sleep(SLEEP_TIME);
+				
+				if (keepaliveTimeout > 0 && (System.currentTimeMillis() - startOfWaitNextRequest) > (keepaliveTimeout * 1000)) {
+					startOfWaitNextRequest = System.currentTimeMillis();
+					callback.keepalive();
+				}
+				
 			}
 		}
 		
