@@ -17,7 +17,7 @@ import org.adelbs.iso8583.helper.Iso8583Config;
 
 public class PnlISOProperties extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JLabel lblDelimiter = new JLabel("Delimiter");
 	private JComboBox<DelimiterEnum> cmbDelimiter = new JComboBox<DelimiterEnum>();

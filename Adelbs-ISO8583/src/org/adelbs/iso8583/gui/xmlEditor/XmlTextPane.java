@@ -6,7 +6,7 @@ import javax.swing.JTextPane;
 
 public class XmlTextPane extends JTextPane {
 	 
-    private static final long serialVersionUID = 6270183148379328084L;
+    private static final long serialVersionUID = 6270183148379328085L;
  
     public XmlTextPane() {
          

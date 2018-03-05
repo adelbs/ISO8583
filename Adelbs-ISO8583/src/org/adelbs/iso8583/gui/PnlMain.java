@@ -21,7 +21,7 @@ import org.adelbs.iso8583.helper.Iso8583Config;
 
 public class PnlMain extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM);
 	
@@ -55,7 +55,7 @@ public class PnlMain extends JPanel {
 			public void componentShown(ComponentEvent e) {}
 			@Override
 			public void componentResized(ComponentEvent e) {
-				tabbedPane.setBounds(-2, 25, getWidth(), getHeight() - 72);
+				tabbedPane.setBounds(-2, 25, getWidth(), getHeight() - 82);
 				btnSave.setBounds(getWidth() - 52, 0, 33, 25);
 				btnOpen.setBounds(getWidth() - 87, 0, 33, 25);
 				btnNew.setBounds(getWidth() - 122, 0, 33, 25);
@@ -114,10 +114,6 @@ public class PnlMain extends JPanel {
 				parseXML();
 			}
 		});
-		
-	//TODO: Check if here is the best place to autoopen the xml file.
-		//txtFilePath.setText("C:\\Users\\Administrator\\Documents\\ItauPrePago.xml");
-		//openXML();
 	}
 	
 	private void parseXML() {
@@ -172,7 +168,7 @@ public class PnlMain extends JPanel {
 		
 		boolean fileSaved = false;
 		
-		if (tabbedPane.getSelectedIndex() == 0)
+		if (tabbedPane.getComponent(tabbedPane.getSelectedIndex()) instanceof PnlGuiConfig)
 			isoConfig.parseConfigToXML();
 		else 
 			isoConfig.parseXmlToConfig(this);

@@ -14,7 +14,7 @@ import org.adelbs.iso8583.gui.PnlMain;
 
 public final class Main extends JFrame {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private static int MIN_WIDTH = 770;
 	private static int MIN_HEIGHT = 570;

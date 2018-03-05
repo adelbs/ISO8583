@@ -39,7 +39,7 @@ import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiPayload extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	private PayloadMessageConfig payloadMessageConfig;
 	
@@ -401,6 +401,12 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.setEnabled(value);
 	}
 	
+	/**
+	 * Removes all items of cmb messages and adds all items again, according to the tree.
+	 * In addition it sets the selected item according to the msgType parameter.
+	 * @param isoConfig
+	 * @param msgType
+	 */
 	public void updateCmbMessage(Iso8583Config isoConfig, String msgType) {
 		cmbMessageType.removeAllItems();
 		int totalMessages = isoConfig.getConfigTreeNode().getChildCount();

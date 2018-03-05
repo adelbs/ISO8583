@@ -26,7 +26,7 @@ import org.adelbs.iso8583.vo.FieldVO;
 
 public class PnlFieldCondition extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JCheckBox ckDynamic = new JCheckBox("Dynamic");
 	private JComboBox<CmbItemVO> cmbDynaBit = new JComboBox<CmbItemVO>();

@@ -22,7 +22,7 @@ import org.adelbs.iso8583.vo.FieldVO;
 
 public class PnlFieldProperties extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JLabel lblName = new JLabel("Name");
 	private JTextField txtName = new JTextField();

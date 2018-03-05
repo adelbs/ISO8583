@@ -1,10 +1,10 @@
 package org.adelbs.iso8583.exception;
 
-public class BusinessException extends Exception {
+public class FieldNotFoundException extends ParseException {
 
 	private static final long serialVersionUID = 2L;
 
-	public BusinessException(String message) {
+	public FieldNotFoundException(String message) {
 		super(message);
 	}
 }

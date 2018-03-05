@@ -18,6 +18,10 @@ public class MessageVO extends GenericIsoVO {
 		this.headerEncoding = headerEncoding;
 	}
 
+	/**
+	 * Returns a copy of this instance. It copies all values of all attributes to the new instance (copy).
+	 * @return
+	 */
 	public MessageVO getInstanceCopy() {
 		MessageVO newMessageVO = new MessageVO(type, bitmatEncoding, headerEncoding);
 		

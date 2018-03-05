@@ -33,7 +33,7 @@ import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiConfig extends JPanel{
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JLabel lblExpand = new JLabel("[Expand All]");
 	private JLabel lblCollapse = new JLabel("[Collapse All]");

@@ -20,6 +20,7 @@ import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
+import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.protocol.ISO8583Delimiter;
@@ -532,14 +533,22 @@ public class Iso8583Config {
 		return isoDelimiter.getDelimiter();
 	}
 	
+	/**
+	 * It returns the MessageVO from the loaded tree, according to what comes from the payload
+	 */
 	public MessageVO findMessageVOByPayload(byte[] payload) {
 		MessageVO result = null;
-		for (int i = 0; i < configTreeNode.getChildCount(); i++) {
-			result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
-			if (result.getType().equals(result.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 4))))
-				break;
-			else
-				result = null;
+		try {
+			for (int i = 0; i < configTreeNode.getChildCount(); i++) {
+				result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
+				if (result.getType().equals(result.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 4))))
+					break;
+				else
+					result = null;
+			}
+		}
+		catch (OutOfBoundsException e) {
+			e.printStackTrace();
 		}
 		
 		return result;

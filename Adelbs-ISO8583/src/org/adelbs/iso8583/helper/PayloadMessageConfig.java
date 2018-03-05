@@ -99,23 +99,17 @@ public class PayloadMessageConfig {
 		StringBuilder xmlMessage = new StringBuilder();
 		
 		xmlMessage.append("<?xml version=\"1.0\" ?>\n\n ");
-		
 		xmlMessage.append("<document>\n\n");
 		
 		if (pnlMain != null) {
-			xmlMessage.append("<test-iso config-file=\"").append(pnlMain.getTxtFilePath().getText()).append("\" ").
-						append("request-sync=\"").
-						append(pnlMain.getPnlGuiMessagesClient().getCkRequestSync().isSelected() ? "true" : "false").append("\" ").
-						append("response-sync=\"").
-						append(pnlMain.getPnlGuiMessagesClient().getCkResponseSync().isSelected() ? "true" : "false").append("\"/>\n\n");
+			isoTest = new ISOTestVO(
+					pnlMain.getTxtFilePath().getText(), 
+					pnlMain.getPnlGuiMessagesClient().getCkRequestSync().isSelected(), 
+					pnlMain.getPnlGuiMessagesClient().getCkResponseSync().isSelected());
 		}
-		else if (isoTest != null) {
-			xmlMessage.append("<test-iso config-file=\"").append(isoTest.getConfigFile()).append("\" ").
-						append("request-sync=\"").
-						append(isoTest.isRequestSync() ? "true" : "false").append("\" ").
-						append("response-sync=\"").
-						append(isoTest.isResponseSync() ? "true" : "false").append("\"/>\n\n");
-		}
+
+		if (isoTest != null)
+			xmlMessage.append(isoTest.toXML(false));
 
 		if (messageVO != null) {
 			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\">");
@@ -202,13 +196,17 @@ public class PayloadMessageConfig {
 			newPayloadField = fieldList.get(fieldList.size() - 1).addSubline(fieldVO, fieldList.get(fieldList.size() - 1).getFieldVO());
 		return newPayloadField;
 	}
-	
+
+	public void setISOTestVO(ISOTestVO isoTestVO) {
+		this.isoTest = isoTestVO;
+	}
+
 	public ISOTestVO getISOTestVO() {
 		return isoTest;
 	}
 	
 	public ISOTestVO getISOTestVOFromXML(String xml) throws ParseException {
-		ISOTestVO testVO = new ISOTestVO();
+		ISOTestVO testVO = new ISOTestVO("", true, true);
 		
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

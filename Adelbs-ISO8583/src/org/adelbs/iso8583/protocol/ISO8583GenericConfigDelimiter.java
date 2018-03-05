@@ -2,7 +2,10 @@ package org.adelbs.iso8583.protocol;
 
 import java.util.List;
 
+import org.adelbs.iso8583.exception.ParseException;
+import org.adelbs.iso8583.exception.PayloadIncompleteException;
 import org.adelbs.iso8583.helper.Iso8583Config;
+import org.adelbs.iso8583.util.ISOUtils;
 
 public class ISO8583GenericConfigDelimiter implements ISO8583Delimiter {
 
@@ -19,25 +22,39 @@ public class ISO8583GenericConfigDelimiter implements ISO8583Delimiter {
 
 	@Override
 	public byte[] preparePayload(ISOMessage isoMessage, Iso8583Config isoConfig) {
-		// TODO Auto-generated method stub
-		return null;
+		return isoMessage.getPayload();
 	}
 
 	@Override
 	public boolean isPayloadComplete(List<Byte> bytes, Iso8583Config isoConfig) {
-		// TODO Auto-generated method stub
-		return false;
+		boolean isComplete = false;
+		
+		//The minimum size = first bitmap (64) + message type (4)
+		if (bytes.size() > 68) {
+			try {
+				new Bitmap(ISOUtils.listToArray(bytes), 
+						isoConfig.getMessageVOAtTree(
+								isoConfig.findMessageVOByPayload(ISOUtils.listToArray(bytes)).getType()));
+				isComplete = true;
+			}
+			catch (PayloadIncompleteException x) {
+				isComplete = false;
+			} 
+			catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return isComplete;
 	}
 
 	@Override
 	public byte[] clearPayload(byte[] data, Iso8583Config isoConfig) {
-		// TODO Auto-generated method stub
-		return null;
+		return data;
 	}
 
 	@Override
 	public int getMessageSize(List<Byte> bytes) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 

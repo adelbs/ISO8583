@@ -2,6 +2,7 @@ package org.adelbs.iso8583.protocol;
 
 import java.util.List;
 
+import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.util.ISOUtils;
 
@@ -40,18 +41,31 @@ public class ISO8583Length4DelimiterBeginning implements ISO8583Delimiter {
 
 	@Override
 	public byte[] clearPayload(byte[] data, Iso8583Config isoConfig) {
-		return ISOUtils.subArray(data, 4, data.length);
+		byte[] result = null;
+		try {
+			result = ISOUtils.subArray(data, 4, data.length);
+		}
+		catch (OutOfBoundsException x) {
+			x.printStackTrace();
+		}
+		
+		return result;
 	}
 
 	@Override
 	public int getMessageSize(List<Byte> bytes) {
-		if (bytes.size() > 4) {
-			byte[] data = ISOUtils.listToArray(bytes);
-			int messageSize = Integer.parseInt(new String(ISOUtils.subArray(data, 0, 4)));
-			
-			return messageSize;
+		try {
+			if (bytes.size() > 4) {
+				byte[] data = ISOUtils.listToArray(bytes);
+				int messageSize = Integer.parseInt(new String(ISOUtils.subArray(data, 0, 4)));
+				
+				return messageSize;
+			}
 		}
+		catch (OutOfBoundsException x) {
+			x.printStackTrace();
+		}
+		
 		return -1;
 	}
-
 }

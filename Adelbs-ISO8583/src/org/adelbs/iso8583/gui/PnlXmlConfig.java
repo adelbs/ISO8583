@@ -9,7 +9,7 @@ import javax.swing.ScrollPaneConstants;
 
 public class PnlXmlConfig extends JPanel {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	private JScrollPane scrollPane = new JScrollPane();
 	

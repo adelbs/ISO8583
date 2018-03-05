@@ -72,8 +72,6 @@ public class XmlView extends PlainView {
 	            }
 	        }
 	 
-	        // TODO: check the map for overlapping parts
-	         
 	        int i = 0;
 	 
 	        // Colour the parts

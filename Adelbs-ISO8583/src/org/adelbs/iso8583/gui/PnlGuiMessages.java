@@ -16,8 +16,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.adelbs.iso8583.clientserver.CallbackAction;
 import org.adelbs.iso8583.clientserver.ISOConnection;
@@ -28,7 +26,7 @@ import org.adelbs.iso8583.vo.ISOTestVO;
 
 public class PnlGuiMessages extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JLabel lblHost;
 	private JLabel lblPort = new JLabel("Port");
@@ -132,11 +130,11 @@ public class PnlGuiMessages extends JPanel {
 			public void componentHidden(ComponentEvent e) {}
 		}); 
 		
-		tabbedPane.addChangeListener(new ChangeListener() {
+	/*	tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html>Console</html>");
 			}
-		});
+		});*/
 		
 		btnConnect.addActionListener(new ActionListener() {
 			@Override
@@ -291,7 +289,7 @@ public class PnlGuiMessages extends JPanel {
 		}
 
 		public void log(String log) {
-			tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html><i>*Console</i></html>");
+			//tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html><i>*Console</i></html>");
 			txtConsole.setText(txtConsole.getText() + "\n" + log);
 		}
 

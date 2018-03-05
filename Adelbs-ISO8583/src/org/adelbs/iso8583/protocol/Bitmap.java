@@ -5,7 +5,10 @@ import java.util.HashMap;
 
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
+import org.adelbs.iso8583.exception.FieldNotFoundException;
+import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.exception.ParseException;
+import org.adelbs.iso8583.exception.PayloadIncompleteException;
 import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
@@ -23,6 +26,12 @@ public class Bitmap {
 	private MessageVO messageVO;
 	private StringBuilder visualPayload = new StringBuilder();
 	
+	/**
+	 * Builds the bitmap and the values of each bit from the payload.
+	 * @param payload
+	 * @param messageVO
+	 * @throws ParseException
+	 */
 	public Bitmap(byte[] payload, MessageVO messageVO) throws ParseException {
 		
 		this.messageVO = messageVO.getInstanceCopy();
@@ -32,6 +41,7 @@ public class Bitmap {
 		int headerSize = 4;
 		int bitmapSize = 0;
 		
+		//This try block will extract the bitmap from the payload
 		try {
 			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
 			
@@ -45,28 +55,33 @@ public class Bitmap {
 			
 			binaryBitmap = tempBitmap1 + tempBitmap2;
 	
-			payloadBitmap = messageVO.getBitmatEncoding().convert(binaryBitmap.substring(0, 64));
+			payloadBitmap = messageVO.getBitmatEncoding().convert(binaryBitmap.substring(0, bitmapSize));
 			visualPayload.append("Bitmap: [").append(new String(payloadBitmap)).append("]\n\n");
+		}
+		catch (OutOfBoundsException x) {
+			throw new PayloadIncompleteException("Error trying to parse the Bitmap from payload. Payload incomplete.", 0);
 		}
 		catch (Exception x) {
 			throw new ParseException("Error parsing the bitmap.\n" + x.getMessage() + "\n" + visualPayload);
 		}
-		
+
+		//The next try block will extract the values of each bit field from the payload
+		int bitNum = 1;
 		try {
 			this.messageVO.setFieldList(new ArrayList<FieldVO>());
 			int startPosition = headerSize + bitmapSize;
-			for (int i = 1; i < binaryBitmap.length(); i++) {
-				if (binaryBitmap.substring(i, i + 1).equals("1")) {
+			for (; bitNum < binaryBitmap.length(); bitNum++) {
+				if (binaryBitmap.substring(bitNum, bitNum + 1).equals("1")) {
 					FieldVO foundFieldVO = null;
 					for (FieldVO fieldVO : messageVO.getFieldList()) {
-						if (fieldVO.getBitNum().intValue() == (i + 1)) {
+						if (fieldVO.getBitNum().intValue() == (bitNum + 1)) {
 							foundFieldVO = fieldVO.getInstanceCopy();
 							break;
 						}
 					}
 					
 					if (foundFieldVO == null) {
-						throw new ParseException("Field not found.");
+						throw new FieldNotFoundException("Field bit ("+ bitNum +") not found.");
 					}
 					else {
 						startPosition = foundFieldVO.setValueFromPayload(payload, startPosition);
@@ -74,10 +89,13 @@ public class Bitmap {
 						bitmap.get(foundFieldVO.getBitNum()).setPresent(true);
 						
 						this.messageVO.getFieldList().add(foundFieldVO);
-						visualPayload.append("Bit").append(i).append(": [").append(foundFieldVO.getPayloadValue()).append("]\n");
+						visualPayload.append("Bit").append(bitNum).append(": [").append(foundFieldVO.getPayloadValue()).append("]\n");
 					}
 				}
 			}
+		}
+		catch (OutOfBoundsException x) {
+			throw new PayloadIncompleteException("Error trying to parse the fields from the payload. Payload incomplete.", bitNum + 1);
 		}
 		catch (Exception x) {
 			throw new ParseException("Error parsing the message body.\n" + x.getMessage() + "\n" + visualPayload);

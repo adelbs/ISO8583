@@ -14,7 +14,7 @@ import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlMessageProperties extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private JLabel lblMsgType = new JLabel("Message Type");
 	private JTextField txtMsgType = new JTextField();

@@ -15,7 +15,7 @@ import org.adelbs.iso8583.vo.MessageVO;
 
 public class ISOTreeRenderer extends DefaultTreeCellRenderer  {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	private static final Icon isoIcon = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/isoIcon.png"));
 	private static final Icon validMessage = new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/validMessage.png"));

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
+import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.util.ISOUtils;
 
@@ -280,8 +281,14 @@ public class FieldVO extends GenericIsoVO {
 		return result;
 	}
 	
-	
-	public int setValueFromPayload(byte[] payload, int startPosition) {
+	/**
+	 * Extracts the value from the payload to populate the VO.
+	 * It parses the payload according to the rules of each field.
+	 * @param payload
+	 * @param startPosition
+	 * @return
+	 */
+	public int setValueFromPayload(byte[] payload, int startPosition) throws OutOfBoundsException {
 		int endPosition = startPosition;
 		String newContent = "";
 		
@@ -328,7 +335,7 @@ public class FieldVO extends GenericIsoVO {
 		return endPosition;
 	}
 	
-	public int populateTLVFromPayload(int lenType, int lenLen, byte[] payload, int startPosition) {
+	public int populateTLVFromPayload(int lenType, int lenLen, byte[] payload, int startPosition) throws OutOfBoundsException {
 		int endPosition = startPosition + lenType;
 		tlvType = new String(ISOUtils.subArray(payload, startPosition, endPosition));
 		

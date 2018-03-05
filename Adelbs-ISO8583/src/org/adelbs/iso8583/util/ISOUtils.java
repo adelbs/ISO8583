@@ -1,6 +1,7 @@
 package org.adelbs.iso8583.util;
 import java.util.List;
 
+import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.w3c.dom.Node;
 
 public class ISOUtils {
@@ -35,7 +36,10 @@ public class ISOUtils {
 		return result;
 	}
 	
-	public static byte[] subArray(byte[] data, int start, int end) {
+	public static byte[] subArray(byte[] data, int start, int end) throws OutOfBoundsException {
+		if ((end - start) <= 0) throw new OutOfBoundsException();
+		if (data.length < end || data.length < start || data.length < (end - start)) throw new OutOfBoundsException();
+		
 		byte[] result = new byte[end - start];
 	  
 		for (int i = start; i < end; i++)

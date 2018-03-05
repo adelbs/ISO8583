@@ -5,7 +5,7 @@ import javax.swing.text.ViewFactory;
 
 public class XmlEditorKit extends StyledEditorKit {
 	 
-    private static final long serialVersionUID = 2969169649596107757L;
+    private static final long serialVersionUID = 2969169649596107758L;
     private ViewFactory xmlViewFactory;
  
     public XmlEditorKit() {
