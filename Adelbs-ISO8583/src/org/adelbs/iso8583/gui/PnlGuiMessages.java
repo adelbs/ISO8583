@@ -167,21 +167,23 @@ public class PnlGuiMessages extends JPanel {
 	private void connectAction(final PnlMain pnlMain) throws ParseException, NumberFormatException, IOException, ConnectionException {
 		if (isServer) {
 			if (isoServer == null) {
-				try{
+				try {
 					isoServer = new ISOConnection(true, txtHost.getText(), Integer.parseInt(txtPort.getText()), Integer.parseInt(txtTimeout.getText()));
 					isoServer.setIsoConfig(pnlMain.getIso8583Config());
 					isoServer.setCallback(new Callback(pnlMain, true));
 					isoServer.connect();
 					System.out.println("Server connected.");
 					
-				}catch(Exception ex){
-					isoServer=null;
+				}
+				catch(Exception ex) {
+					isoServer = null;
 					throw ex;
 				}
 			}
 			
 			if (pnlResponse.getBtnSendResponse().getActionListeners().length > 0) 
 				pnlResponse.getBtnSendResponse().removeActionListener(pnlResponse.getBtnSendResponse().getActionListeners()[0]);
+			
 			pnlResponse.getBtnSendResponse().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -192,7 +194,7 @@ public class PnlGuiMessages extends JPanel {
 					try {
 						isoServer.sendBytes(
 								pnlMain.getIso8583Config().getDelimiter().preparePayload(pnlResponse.getPayloadMessageConfig().getIsoMessage(), pnlMain.getIso8583Config()), 
-								ckRequestSync.isSelected(), ckResponseSync.isSelected());
+								ckRequestSync.isSelected(), ckResponseSync.isSelected(), true);
 					}
 					catch (Exception x) {
 						x.printStackTrace();
@@ -211,8 +213,9 @@ public class PnlGuiMessages extends JPanel {
 					System.out.println("Client connected.");
 					//TODO: Send handshake message to start the communication
 					sendHandshake();
-				}catch(Exception ex){
-					isoClient=null;
+				}
+				catch(Exception ex) {
+					isoClient = null;
 					throw ex;
 				}
 			}
@@ -245,7 +248,7 @@ public class PnlGuiMessages extends JPanel {
 		
 		isoClient.sendBytes(
 				pnlMain.getIso8583Config().getDelimiter().preparePayload(pnlRequest.getPayloadMessageConfig().getIsoMessage(), pnlMain.getIso8583Config()), 
-				ckRequestSync.isSelected(), ckResponseSync.isSelected());
+				ckRequestSync.isSelected(), ckResponseSync.isSelected(), false);
 	}
 
 	public PnlGuiPayload getPnlRequest() {

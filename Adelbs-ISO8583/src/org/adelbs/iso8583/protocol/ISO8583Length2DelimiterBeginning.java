@@ -2,6 +2,7 @@ package org.adelbs.iso8583.protocol;
 
 import java.util.List;
 
+import org.adelbs.iso8583.exception.InvalidPayloadException;
 import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.util.ISOUtils;
@@ -34,21 +35,15 @@ public class ISO8583Length2DelimiterBeginning implements ISO8583Delimiter {
 	}
 
 	@Override
-	public boolean isPayloadComplete(List<Byte> bytes, Iso8583Config isoConfig) {
+	public boolean isPayloadComplete(List<Byte> bytes, Iso8583Config isoConfig) throws InvalidPayloadException {
 		boolean result = false;
 		
 		if (bytes.size() > 2) {
-			//byte[] data = ISOUtils.listToArray(bytes);
-			
-			//String bt1 = String.format("%02X", ISOUtils.subArray(data, 0, 1)[0]);
-			//String bt2 = String.format("%02X", ISOUtils.subArray(data, 1, 2)[0]);
 			try {
-				//int messageSize = Integer.parseInt(bt1.concat(bt2), 16);
-				//result = bytes.size() == (messageSize + 2);
 				result = bytes.size() == (getMessageSize(bytes) + 2);
 			}
-			catch (Exception x) {
-				x.printStackTrace();
+			catch (Exception e) {
+				throw new InvalidPayloadException(e.getMessage(), e);
 			}
 		}
 		
@@ -69,21 +64,16 @@ public class ISO8583Length2DelimiterBeginning implements ISO8583Delimiter {
 	}
 	
 	@Override
-	public int getMessageSize(List<Byte> bytes){
-		try {
-			if (bytes.size() > 2) {
-				byte[] data = ISOUtils.listToArray(bytes);
-				
-				String bt1 = String.format("%02X", ISOUtils.subArray(data, 0, 1)[0]);
-				String bt2 = String.format("%02X", ISOUtils.subArray(data, 1, 2)[0]);
-				
-				int messageSize = Integer.parseInt(bt1.concat(bt2), 16);
-				
-				return messageSize;
-			}
-		}
-		catch (OutOfBoundsException e) {
-			e.printStackTrace();
+	public int getMessageSize(List<Byte> bytes) throws OutOfBoundsException {
+		if (bytes.size() > 2) {
+			byte[] data = ISOUtils.listToArray(bytes);
+			
+			String bt1 = String.format("%02X", ISOUtils.subArray(data, 0, 1)[0]);
+			String bt2 = String.format("%02X", ISOUtils.subArray(data, 1, 2)[0]);
+			
+			int messageSize = Integer.parseInt(bt1.concat(bt2), 16);
+			
+			return messageSize;
 		}
 		
 		return -1;

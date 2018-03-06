@@ -6,10 +6,12 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.adelbs.iso8583.exception.ConnectionException;
+import org.adelbs.iso8583.exception.InvalidPayloadException;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.util.ISOUtils;
@@ -82,6 +84,11 @@ public class ISOConnection {
 		return running;
 	}
 	
+	public void resetSocket() {
+		if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
+		socket = null;
+	}
+	
 	public void endConnection() {
 		running = false;
 		lastAction = 0;
@@ -118,13 +125,16 @@ public class ISOConnection {
 		this.callback = callback;
 	}
 	
-	public void sendBytes(byte[] data, boolean isResquestSynchronized, boolean isResponseSynchronized) throws IOException, ParseException, InterruptedException {
+	public void sendBytes(byte[] data, boolean isResquestSynchronized, boolean isResponseSynchronized, boolean resetSocket) throws IOException, ParseException, InterruptedException {
 		receiver.setIsSync(isResponseSynchronized);
 
-		if (!isResquestSynchronized)
+		if (!isResquestSynchronized && !resetSocket)
 			payloadQueue.addPayloadOut(data);
 		else
 			sender.send(data);
+		
+		if (resetSocket)
+			resetSocket();
 		
 		receiver.waitResponse(0);
 	}
@@ -144,8 +154,14 @@ public class ISOConnection {
 		public void run() {
 			try {
 				while (running) {
-					exec();
-					sleep(SLEEP_TIME);
+					try {
+						exec();
+						sleep(SLEEP_TIME);
+					}
+					catch (SocketException se) {
+						callback.log("Client disconnected...");
+						resetSocket();
+					}
 					
 					if (timeout < (System.currentTimeMillis() - lastAction)) {
 						callback.log("Connection timeout.");
@@ -186,35 +202,46 @@ public class ISOConnection {
 		
 		protected void exec() throws IOException, ParseException {
 			if (socket == null) {
-				socket = listener.accept();
-				callback.log("Client connected!");
-				socket.sendUrgentData(1);
-				registerActionTimeMilis();
+				if (isServer) {
+					socket = listener.accept();
+					callback.log("Client connected!");
+					socket.sendUrgentData(1);
+					registerActionTimeMilis();
+				}
+				else {
+					socket = new Socket(host, port);
+				}
 			}
 			
 			callback.log("Waiting for the bytes...");
 			input = socket.getInputStream();
 		
-			bytes = new ArrayList<Byte>();
-			while (!socket.isClosed() && !isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig))
-				bytes.add(new Byte((byte) input.read()));
-			
-			byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
-			
-			/*test*/
-			//callback.log("Bytes received: " + bytesToConsole(data));
-			callback.log("---");
-			callback.log("Total Bytes received: " + bytesToConsole(ISOUtils.listToArray(bytes)));
-			callback.log("---");
-			/*test*/
-			registerActionTimeMilis();
-			
-			if (!isSync) {
-				payloadQueue.addPayloadIn(data);
+			try {
+				bytes = new ArrayList<Byte>();
+				while (!socket.isClosed() && !isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig))
+					bytes.add(new Byte((byte) input.read()));
+				
+				byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
+				
+				/*test*/
+				//callback.log("Bytes received: " + bytesToConsole(data));
+				callback.log("---");
+				callback.log("Total Bytes received: " + bytesToConsole(ISOUtils.listToArray(bytes)));
+				callback.log("---");
+				/*test*/
+				registerActionTimeMilis();
+				
+				if (!isSync) {
+					payloadQueue.addPayloadIn(data);
+				}
+				else {
+					receivedDataProcessor.process(data);
+					isSync = false;
+				}
 			}
-			else {
-				receivedDataProcessor.process(data);
-				isSync = false;
+			catch (InvalidPayloadException e) {
+				callback.log("Invalid Payload ("+ e.getMessage() +")");
+				resetSocket();
 			}
 		}
 		
@@ -268,7 +295,7 @@ public class ISOConnection {
 			        out.flush();
 				}
 				else {
-					callback.log("Impossible to send the payload, the socket is null!");
+					callback.log("Impossible to send the payload, the socket is closed!");
 				}
 			}
 		}

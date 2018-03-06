@@ -2,7 +2,8 @@ package org.adelbs.iso8583.protocol;
 
 import java.util.List;
 
-import org.adelbs.iso8583.exception.ParseException;
+import org.adelbs.iso8583.exception.InvalidPayloadException;
+import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.exception.PayloadIncompleteException;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.util.ISOUtils;
@@ -26,7 +27,7 @@ public class ISO8583GenericConfigDelimiter implements ISO8583Delimiter {
 	}
 
 	@Override
-	public boolean isPayloadComplete(List<Byte> bytes, Iso8583Config isoConfig) {
+	public boolean isPayloadComplete(List<Byte> bytes, Iso8583Config isoConfig) throws InvalidPayloadException {
 		boolean isComplete = false;
 		
 		//The minimum size = first bitmap (64) + message type (4)
@@ -40,8 +41,8 @@ public class ISO8583GenericConfigDelimiter implements ISO8583Delimiter {
 			catch (PayloadIncompleteException x) {
 				isComplete = false;
 			} 
-			catch (ParseException e) {
-				e.printStackTrace();
+			catch (Exception e) {
+				throw new InvalidPayloadException(e.getMessage(), e);
 			}
 		}
 		
@@ -54,7 +55,7 @@ public class ISO8583GenericConfigDelimiter implements ISO8583Delimiter {
 	}
 
 	@Override
-	public int getMessageSize(List<Byte> bytes) {
+	public int getMessageSize(List<Byte> bytes) throws OutOfBoundsException {
 		return 0;
 	}
 
