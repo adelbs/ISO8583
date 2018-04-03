@@ -25,7 +25,7 @@ public class PnlMain extends JPanel {
 	
 	private JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM);
 	
-	//Abas
+	//Tabs
 	private PnlGuiConfig pnlGuiConfig;
 	private PnlGuiMessages pnlGuiMessagesClient;
 	private PnlGuiMessages pnlGuiMessagesServer;
@@ -114,6 +114,10 @@ public class PnlMain extends JPanel {
 				parseXML();
 			}
 		});
+		
+		//TODO COMENTAR
+		//txtFilePath.setText("C:\\Users\\jacfe02\\Desktop\\testeISO.xml");
+		//openXML();
 	}
 	
 	private void parseXML() {

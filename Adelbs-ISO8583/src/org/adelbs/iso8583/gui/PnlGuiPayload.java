@@ -24,7 +24,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -50,6 +49,7 @@ public class PnlGuiPayload extends JPanel {
 	private JButton btnSendResponse = new JButton("Send Response");
 	private JButton btnOpenPayload = new JButton("Open Payload");
 	private JButton btnSavePayload = new JButton("Save Payload");
+	private JButton btnNextPayload = new JButton("Next Payload");
 	
 	private JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 	
@@ -66,10 +66,6 @@ public class PnlGuiPayload extends JPanel {
 	private JScrollPane scrXML = new JScrollPane();
 	private XmlTextPane xmlText = new XmlTextPane();
 	
-	private JPanel pnlRawMessage = new JPanel();
-	private JScrollPane scrRawMessage = new JScrollPane();
-	private JTextArea txtRawMessage = new JTextArea();
-	
 	public PnlGuiPayload(final PnlMain pnlMain, boolean server, boolean request) {
 		setLayout(null);
 		
@@ -83,13 +79,15 @@ public class PnlGuiPayload extends JPanel {
 		btnSendResponse.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/enter.png")));
 		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/openFile.png")));
 		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/saveFile.png")));
-
+		btnNextPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/update.png")));
+		
 		tabbedPane.setEnabled(false);
 		if (server) {
 			enablePnl(false);
 			if (request) {
 				add(lblMessageType);
 				add(cmbMessageType);
+				add(btnNextPayload);
 				add(btnSavePayload);
 			}
 			else {
@@ -113,6 +111,7 @@ public class PnlGuiPayload extends JPanel {
 			else {
 				add(lblMessageType);
 				add(cmbMessageType);
+				add(btnNextPayload);
 				add(btnSavePayload);
 				enablePnl(false);
 			}
@@ -135,6 +134,7 @@ public class PnlGuiPayload extends JPanel {
 		//######### Apenas para visualizacao no WindowBuilder *********************************
 		
 		btnOpenPayload.setBounds(430, 9, 143, 25);
+		btnNextPayload.setBounds(430, 9, 143, 25);
 		btnSavePayload.setBounds(585, 9, 143, 25);
 		tabbedPane.setBounds(12, 42, 716, 516);
 		
@@ -152,6 +152,7 @@ public class PnlGuiPayload extends JPanel {
 				btnSendRequest.setBounds(getWidth() - 402, 9, 85, 25);
 				btnSendResponse.setBounds(getWidth() - 160, 9, 143, 25);
 				btnOpenPayload.setBounds(getWidth() - 310, 9, 143, 25);
+				btnNextPayload.setBounds(getWidth() - 310, 9, 143, 25);
 				btnSavePayload.setBounds(getWidth() - 160, 9, 143, 25);
 				tabbedPane.setBounds(12, 42, getWidth() - 25, getHeight() - 55);
 				
@@ -202,12 +203,6 @@ public class PnlGuiPayload extends JPanel {
 		scrXML.setViewportView(xmlText);
 		pnlXML.add(scrXML);
 		tabbedPane.addTab("XML", pnlXML);
-		
-		tabbedPane.addTab("Raw message", pnlRawMessage);
-		txtRawMessage.setEditable(false);
-		scrRawMessage.setViewportView(txtRawMessage);
-		pnlRawMessage.setLayout(new BorderLayout(0, 0));
-		pnlRawMessage.add(scrRawMessage);
 		
 		btnSavePayload.addActionListener(new ActionListener() {
 			@Override
@@ -305,16 +300,10 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				try {
-					if (tabbedPane.getSelectedIndex() == 0) {
+					if (tabbedPane.getSelectedIndex() == 0)
 						payloadMessageConfig.setMessageVO(payloadMessageConfig.getMessageVOFromXML(xmlText.getText()));
-					}
-					else if (tabbedPane.getSelectedIndex() == 1) {
+					else if (tabbedPane.getSelectedIndex() == 1)
 						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
-					}
-					else {
-						updateRawMessage(pnlMain);
-						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
-					}
 				}
 				catch (Exception x) {
 					JOptionPane.showMessageDialog(pnlMain, x.getMessage());
@@ -341,24 +330,16 @@ public class PnlGuiPayload extends JPanel {
 			tabbedPane.setEnabled(true);
 			tabbedPane.setEnabledAt(0, false);
 			tabbedPane.setEnabledAt(1, true);
-			tabbedPane.setEnabledAt(2, false);
 		}
 		else {
 			enablePnl(true);
 			tabbedPane.setEnabledAt(0, true);
-			tabbedPane.setEnabledAt(2, true);
 		}
-	}
-	
-	public void updateRawMessage(PnlMain pnlMain) {
-		if (payloadMessageConfig != null)
-			payloadMessageConfig.updateRawMessage(pnlMain, txtRawMessage);
 	}
 	
 	public void cmbClick(PnlMain pnlMain) {
 		
 		tabbedPane.setEnabledAt(0, true);
-		tabbedPane.setEnabledAt(2, true);
 		
 		tabbedPane.setEnabled(false);
 		tabbedPane.setSelectedIndex(0);
@@ -435,6 +416,10 @@ public class PnlGuiPayload extends JPanel {
 		return payloadMessageConfig;
 	}
 
+	public JButton getBtnNextPayload() {
+		return btnNextPayload;
+	}
+	
 	public JButton getBtnSendRequest() {
 		return btnSendRequest;
 	}

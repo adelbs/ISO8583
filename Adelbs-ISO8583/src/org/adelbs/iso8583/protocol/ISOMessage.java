@@ -10,7 +10,6 @@ public class ISOMessage {
 
 	private int messageSize;
 	private byte[] payload;
-	private StringBuilder visualPayload = new StringBuilder();
 
 	private Bitmap bitmap;
 	
@@ -33,23 +32,12 @@ public class ISOMessage {
 		
 		for (int i = 0; i <= bitmap.getSize(); i++) {
 			if (bitmap.getBit(i) != null) {
-			/*	System.out.println("---");
-				System.out.println(bitmap.getBit(i).getName());*/
-				
 				this.payload = ISOUtils.mergeArray(this.payload, bitmap.getBit(i).getPayloadValue());
 				strMessage.append(bitmap.getBit(i).getPayloadValue());
 			}
 		}
 		
-		visualPayload.append(bitmap.getVisualPayload());
-		visualPayload.append("\nEntire message: [").append(strMessage).append("]\n");
-		
 		this.messageSize = strMessage.length();
-		//this.payload = strMessage.toString().getBytes();
-	}
-	
-	public String getVisualPayload() {
-		return visualPayload.toString();
 	}
 	
 	public byte[] getPayload() {

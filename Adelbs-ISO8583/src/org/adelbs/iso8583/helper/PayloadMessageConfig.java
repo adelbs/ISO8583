@@ -12,7 +12,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -101,12 +100,8 @@ public class PayloadMessageConfig {
 		xmlMessage.append("<?xml version=\"1.0\" ?>\n\n ");
 		xmlMessage.append("<document>\n\n");
 		
-		if (pnlMain != null) {
-			isoTest = new ISOTestVO(
-					pnlMain.getTxtFilePath().getText(), 
-					pnlMain.getPnlGuiMessagesClient().getCkRequestSync().isSelected(), 
-					pnlMain.getPnlGuiMessagesClient().getCkResponseSync().isSelected());
-		}
+		if (pnlMain != null)
+			isoTest = new ISOTestVO(pnlMain.getTxtFilePath().getText());
 
 		if (isoTest != null)
 			xmlMessage.append(isoTest.toXML(false));
@@ -206,7 +201,7 @@ public class PayloadMessageConfig {
 	}
 	
 	public ISOTestVO getISOTestVOFromXML(String xml) throws ParseException {
-		ISOTestVO testVO = new ISOTestVO("", true, true);
+		ISOTestVO testVO = new ISOTestVO("");
 		
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -220,11 +215,8 @@ public class PayloadMessageConfig {
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				node = nodeList.item(i);
 				
-				if ("test-iso".equalsIgnoreCase(node.getNodeName())) {
+				if ("test-iso".equalsIgnoreCase(node.getNodeName()))
 					testVO.setConfigFile(ISOUtils.getAttr(node, "config-file", ""));
-					testVO.setRequestSync(ISOUtils.getAttr(node, "request-sync", "false").equals("true"));
-					testVO.setResponseSync(ISOUtils.getAttr(node, "response-sync", "false").equals("true"));
-				}
 			}
 		}
 		catch (Exception x) {
@@ -284,6 +276,10 @@ public class PayloadMessageConfig {
 		updateFromPayload(null, bytes);
 	}
 	
+	public void updateFromMessageVO() throws ParseException {
+		isoMessage = new ISOMessage(messageVO);
+	}
+	
 	public void updateFromPayload(PnlMain pnlMain, byte[] bytes) throws ParseException {
 		try {
 			isoMessage = new ISOMessage(bytes, messageVO);
@@ -295,18 +291,6 @@ public class PayloadMessageConfig {
 				JOptionPane.showMessageDialog(pnlMain, "It was not possible to parse this payload. Certify that the message structure was not changed.\n" + x.getMessage());
 			else
 				throw x;
-		}
-	}
-	
-	public void updateRawMessage(PnlMain pnlMain, JTextArea txtRawMessage) {
-		try {
-			if (messageVO != null) {
-				isoMessage = new ISOMessage(messageVO);
-				txtRawMessage.setText(isoMessage.getVisualPayload());
-			}
-		}
-		catch (Exception x) {
-			JOptionPane.showMessageDialog(pnlMain, "Error building the raw message.\n" + x.getMessage());
 		}
 	}
 	

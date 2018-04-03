@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.adelbs.iso8583.constants.ForceCloseConnection;
 import org.adelbs.iso8583.exception.ConnectionException;
 import org.adelbs.iso8583.exception.InvalidPayloadException;
 import org.adelbs.iso8583.exception.ParseException;
@@ -34,7 +35,6 @@ public class ISOConnection {
 	private CallbackAction callback;
 
 	private final PayloadQueue payloadQueue = new PayloadQueue();
-	private ReceivedDataProcessor receivedDataProcessor = new ReceivedDataProcessor();
 	private Receiver receiver = new Receiver();
 	private Sender sender = new Sender();
 
@@ -68,7 +68,6 @@ public class ISOConnection {
 				}
 				
 				running = true;
-				receivedDataProcessor.start();
 				receiver.start();
 				sender.start();
 			}else{
@@ -103,9 +102,22 @@ public class ISOConnection {
 		input = null;
 		out = null;
 
-		receivedDataProcessor = null;
 		receiver = null;
 		sender = null;
+	}
+	
+	private boolean checkForceCloseConnection(List<Byte> bytes) {
+		boolean isClose = false;
+		
+		try {
+			isClose = new String(ForceCloseConnection.CLOS.bytes).equals(new String(ISOUtils.listToArray(bytes)));
+		}
+		catch (Exception e) { }
+		
+		if (isClose)
+			endConnection();
+
+		return isClose;
 	}
 	
 	private String bytesToConsole(byte[] data) {
@@ -117,6 +129,22 @@ public class ISOConnection {
 		return result;
 	}
 	
+	private long startOfWaitNextRequest = 0;
+	public void processNextPayload(boolean waitIfThereIsNothingAtQueue, int keepaliveTimeout) throws ParseException, InterruptedException {
+		
+		if (waitIfThereIsNothingAtQueue) {
+			startOfWaitNextRequest = System.currentTimeMillis();
+			receiver.waitRequest(keepaliveTimeout);
+		}
+		
+		if (payloadQueue.hasMorePayloadIn()) {
+			synchronized(this) {
+				callback.log("Parsing bytes...");
+				callback.dataReceived(payloadQueue.getNextPayloadIn());
+			}
+		}
+	}
+	
 	public void setIsoConfig(Iso8583Config isoConfig) {
 		this.isoConfig = isoConfig;
 	}
@@ -125,25 +153,15 @@ public class ISOConnection {
 		this.callback = callback;
 	}
 	
-	public void sendBytes(byte[] data, boolean isResquestSynchronized, boolean isResponseSynchronized, boolean resetSocket) throws IOException, ParseException, InterruptedException {
-		receiver.setIsSync(isResponseSynchronized);
-
-		if (!isResquestSynchronized && !resetSocket)
-			payloadQueue.addPayloadOut(data);
-		else
-			sender.send(data);
+	public void sendBytes(byte[] data, boolean waitReponse) throws IOException, ParseException, InterruptedException {
+		payloadQueue.addPayloadOut(data);
 		
-		if (resetSocket)
-			resetSocket();
+		//TODO INVESTIGAR
+		//if (resetSocket)
+		//	resetSocket();
 		
-		receiver.waitResponse(0);
-	}
-	
-	private long startOfWaitNextRequest = 0;
-	public void waitNextRequest(boolean isResponseSynchronized, int keepaliveTimeout) throws InterruptedException {
-		startOfWaitNextRequest = System.currentTimeMillis();
-		receiver.setIsSync(isResponseSynchronized);
-		receiver.waitResponse(keepaliveTimeout);
+		if (waitReponse)
+			receiver.waitRequest(0);
 	}
 	
 	private void registerActionTimeMilis() {
@@ -198,7 +216,6 @@ public class ISOConnection {
 	private class Receiver extends DefThread {
 		
 		private List<Byte> bytes;
-		private boolean isSync = false;
 		
 		protected void exec() throws IOException, ParseException {
 			if (socket == null) {
@@ -218,7 +235,7 @@ public class ISOConnection {
 		
 			try {
 				bytes = new ArrayList<Byte>();
-				while (!socket.isClosed() && !isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig))
+				while (!socket.isClosed() && !checkForceCloseConnection(bytes) && !isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig))
 					bytes.add(new Byte((byte) input.read()));
 				
 				byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
@@ -231,13 +248,7 @@ public class ISOConnection {
 				/*test*/
 				registerActionTimeMilis();
 				
-				if (!isSync) {
-					payloadQueue.addPayloadIn(data);
-				}
-				else {
-					receivedDataProcessor.process(data);
-					isSync = false;
-				}
+				payloadQueue.addPayloadIn(data);
 			}
 			catch (InvalidPayloadException e) {
 				callback.log("Invalid Payload ("+ e.getMessage() +")");
@@ -245,8 +256,8 @@ public class ISOConnection {
 			}
 		}
 		
-		public void waitResponse(int keepaliveTimeout) throws InterruptedException {
-			while (isSync && running) {
+		public void waitRequest(int keepaliveTimeout) throws InterruptedException {
+			while (running && !payloadQueue.hasMorePayloadIn()) {
 				sleep(SLEEP_TIME);
 				
 				if (keepaliveTimeout > 0 && (System.currentTimeMillis() - startOfWaitNextRequest) > (keepaliveTimeout * 1000)) {
@@ -254,25 +265,6 @@ public class ISOConnection {
 					callback.keepalive();
 				}
 				
-			}
-		}
-		
-		public void setIsSync(boolean value) {
-			isSync = value;
-		}
-	}
-	
-	private class ReceivedDataProcessor extends DefThread {
-		protected void exec() throws IOException, ParseException {
-			if (payloadQueue.hasMorePayloadIn())
-				process(payloadQueue.getNextPayloadIn());
-		}
-		
-		public void process(byte[] data) throws ParseException {
-			synchronized(this) {
-				callback.log("Parsing bytes...");
-				callback.dataReceived(data);
-				callback.log("Select the response...");
 			}
 		}
 	}
