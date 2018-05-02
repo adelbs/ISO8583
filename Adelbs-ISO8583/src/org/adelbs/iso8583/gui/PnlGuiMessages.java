@@ -207,7 +207,7 @@ public class PnlGuiMessages extends JPanel {
 			if (isoServer != null) {
 				
 				if (ckForceClose.isSelected())
-					isoServer.sendBytes(ForceCloseConnection.CLOS.bytes, false);
+					isoServer.sendBytes(ForceCloseConnection.CLOS.bytes);
 
 				
 				isoServer.endConnection();
@@ -222,7 +222,7 @@ public class PnlGuiMessages extends JPanel {
 			if (isoClient != null) {
 				
 				if (ckForceClose.isSelected()) {
-					isoClient.sendBytes(ForceCloseConnection.CLOS.bytes, false);
+					isoClient.sendBytes(ForceCloseConnection.CLOS.bytes);
 					Thread.sleep(3000);
 				}
 
@@ -275,7 +275,9 @@ public class PnlGuiMessages extends JPanel {
 						isoServer.sendBytes(
 								pnlMain.getIso8583Config().getDelimiter().preparePayload(
 										pnlResponse.getPayloadMessageConfig().getIsoMessage(), 
-										pnlMain.getIso8583Config()), false);
+										pnlMain.getIso8583Config()));
+						
+						isoServer.resetSocket(true);
 					}
 					catch (Exception x) {
 						x.printStackTrace();
@@ -320,7 +322,7 @@ public class PnlGuiMessages extends JPanel {
 		isoClient.sendBytes(
 				pnlMain.getIso8583Config().getDelimiter().preparePayload(
 						pnlRequest.getPayloadMessageConfig().getIsoMessage(), 
-						pnlMain.getIso8583Config()), false);
+						pnlMain.getIso8583Config()));
 	}
 
 	public PnlGuiPayload getPnlRequest() {

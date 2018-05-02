@@ -83,7 +83,8 @@ public class ISOConnection {
 		return running;
 	}
 	
-	public void resetSocket() {
+	public void resetSocket(boolean waitIfThereIsNothingAtQueue) {
+		if (waitIfThereIsNothingAtQueue) try {sender.waitRequest();} catch (Exception x) {x.printStackTrace();}
 		if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
 		socket = null;
 	}
@@ -153,19 +154,20 @@ public class ISOConnection {
 		this.callback = callback;
 	}
 	
-	public void sendBytes(byte[] data, boolean waitReponse) throws IOException, ParseException, InterruptedException {
+	public void sendBytes(byte[] data) throws IOException, ParseException, InterruptedException {
 		payloadQueue.addPayloadOut(data);
-		
-		//TODO INVESTIGAR
-		//if (resetSocket)
-		//	resetSocket();
-		
-		if (waitReponse)
-			receiver.waitRequest(0);
 	}
 	
 	private void registerActionTimeMilis() {
 		lastAction = System.currentTimeMillis();
+	}
+	
+	public String getHost() {
+		return host;
+	}
+	
+	public int getPort() {
+		return port;
 	}
 	
 	private abstract class DefThread extends Thread {
@@ -178,7 +180,7 @@ public class ISOConnection {
 					}
 					catch (SocketException se) {
 						callback.log("Client disconnected...");
-						resetSocket();
+						resetSocket(false);
 					}
 					
 					if (timeout < (System.currentTimeMillis() - lastAction)) {
@@ -252,7 +254,7 @@ public class ISOConnection {
 			}
 			catch (InvalidPayloadException e) {
 				callback.log("Invalid Payload ("+ e.getMessage() +")");
-				resetSocket();
+				resetSocket(false);
 			}
 		}
 		
@@ -291,5 +293,11 @@ public class ISOConnection {
 				}
 			}
 		}
+		
+		public void waitRequest() throws InterruptedException {
+			while (running && payloadQueue.hasMorePayloadOut())
+				sleep(SLEEP_TIME);
+		}
+
 	}
 }
