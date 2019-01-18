@@ -37,6 +37,7 @@ public class PnlFieldProperties extends JPanel {
 	private JLabel lblEncoding = new JLabel("Encoding");
 	private JComboBox<EncodingEnum> cmbEncoding = new JComboBox<EncodingEnum>();
 	private JCheckBox chckbxMandatory = new JCheckBox("Mandatory");
+	private JCheckBox chckbxIgnore = new JCheckBox("Ignore");
 	private JLabel lblLenValue = new JLabel("Length value");
 	private JComboBox<TypeLengthEnum> cmbLength = new JComboBox<TypeLengthEnum>();
 
@@ -88,10 +89,9 @@ public class PnlFieldProperties extends JPanel {
 		cmbEncoding.setBounds(322, 122, 116, 22);
 		cmbEncoding.setModel(new DefaultComboBoxModel<EncodingEnum>(new EncodingEnum[] {
 				EncodingEnum.UTF8, EncodingEnum.EBCDIC, 
-				EncodingEnum.ISO88591, EncodingEnum.BINARY}));
+				EncodingEnum.ISO88591, EncodingEnum.BASE64, EncodingEnum.BINARY}));
 		
 		chckbxMandatory.setBounds(179, 88, 113, 25);
-		
 		chckbxMandatory.addActionListener(new ActionListener() {
 			
 			@Override
@@ -99,6 +99,15 @@ public class PnlFieldProperties extends JPanel {
 				pnlGuiConfig.getPnlFieldCondition().setMandatory(chckbxMandatory.isSelected());
 			}
 		});
+		
+		chckbxIgnore.setBounds(320, 88, 113, 25);
+		chckbxIgnore.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				pnlGuiConfig.getPnlFieldCondition().setIgnored(chckbxIgnore.isSelected());
+			}
+		});
+		
 		
 		add(lblName);
 		add(txtName);
@@ -113,6 +122,7 @@ public class PnlFieldProperties extends JPanel {
 		add(lblEncoding);
 		add(cmbEncoding);
 		add(chckbxMandatory);
+		add(chckbxIgnore);
 		add(cmbLength);
 		add(lblLenValue);
 		
@@ -155,35 +165,45 @@ public class PnlFieldProperties extends JPanel {
 		lblEncoding.setEnabled(value);
 		cmbEncoding.setEnabled(value);
 		chckbxMandatory.setEnabled(value);
+		chckbxIgnore.setEnabled(value);
 		
 		lblNum.setText("Bit Num");
 	}
 	
-	public void disableSuperField() {
+	public void disableMessageField() {
+		lblName.setEnabled(true);
+		txtName.setEnabled(true);
 		lblSubfield.setEnabled(false);
 		txtSubField.setEnabled(false);
+		chckbxMandatory.setSelected(false);
+		chckbxMandatory.setEnabled(false);
+		chckbxIgnore.setEnabled(true);
+		lblNum.setText("Bit Num");
+	}
+	
+	public void disableSubField() {
+		lblName.setEnabled(false);
+		txtName.setEnabled(false);
+		lblSubfield.setEnabled(true);
+		txtSubField.setEnabled(true);
+		chckbxMandatory.setEnabled(true);
+		chckbxIgnore.setSelected(false);
+		chckbxIgnore.setEnabled(false);
+		lblNum.setText("Order");
+	}
+	
+	public void disableIntermediaryField(){
 		lblLenght.setEnabled(false);
 		cmbLength.setEnabled(false);
 		lblLenValue.setEnabled(false);
 		txtLength.setEnabled(false);
-		
-		lblNum.setText("Bit Num");
 	}
-
-	public void disableSubField() {
-		lblName.setEnabled(false);
-		txtName.setEnabled(false);
-		chckbxMandatory.setSelected(false);
-		chckbxMandatory.setEnabled(false);
-		
-		lblSubfield.setEnabled(true);
-		txtSubField.setEnabled(true);
+	
+	public void disableLeafField(){	
 		lblLenght.setEnabled(true);
 		cmbLength.setEnabled(true);
 		lblLenValue.setEnabled(true);
 		txtLength.setEnabled(true);
-
-		lblNum.setText("Order");
 	}
 	
 	public void save(FieldVO fieldVo) {
@@ -225,7 +245,8 @@ public class PnlFieldProperties extends JPanel {
 			cmbLength.setSelectedItem(fieldVo.getTypeLength());
 			txtLength.setText(String.valueOf(fieldVo.getLength()));
 			cmbEncoding.setSelectedItem(fieldVo.getEncoding());
-			chckbxMandatory.setSelected(fieldVo.getDynaCondition().equals("true"));
+			chckbxMandatory.setSelected(fieldVo.getDynaCondition().trim().equalsIgnoreCase("true"));
+			chckbxIgnore.setSelected(fieldVo.getDynaCondition().trim().equalsIgnoreCase("false"));
 			
 			cmbLengthClick();
 		}
@@ -238,10 +259,15 @@ public class PnlFieldProperties extends JPanel {
 		txtLength.setText("");
 		cmbEncoding.setSelectedIndex(0);
 		chckbxMandatory.setSelected(false);
+		chckbxIgnore.setSelected(false);
 		cmbLength.setSelectedIndex(0);
 	}
 	
 	public JCheckBox getChckbxMandatory() {
 		return chckbxMandatory;
+	}
+	
+	public JCheckBox getChckbxIgnored() {
+		return chckbxIgnore;
 	}
 }

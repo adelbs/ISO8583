@@ -172,8 +172,13 @@ public class PnlFieldCondition extends JPanel {
 			txtDynaCondition.setText("");
 			ckDynamic.setEnabled(true);
 		}
-		
 		ckDynamicClick();
+	}
+	
+	public void setIgnored(boolean value) {
+		ckDynamic.setSelected(false);
+		ckDynamic.setEnabled(false);
+		txtDynaCondition.setText(value ? "false" : "");
 	}
 	
 	public void setEnabled(boolean value) {
@@ -197,7 +202,12 @@ public class PnlFieldCondition extends JPanel {
 		if (fieldVo != null) {
 			cmbDynaOperator.setSelectedItem(fieldVo.getDynaCondition());
 			txtDynaCondition.setText(fieldVo.getDynaCondition());
-			ckDynamic.setSelected(fieldVo.getDynaCondition() != null && !fieldVo.getDynaCondition().trim().equals("") && !fieldVo.getDynaCondition().trim().equals("true"));
+			
+			final boolean isDynaConditionNotNull = fieldVo.getDynaCondition() != null;
+			final boolean isDynaConditionNotEmpty = fieldVo.getDynaCondition().trim().length() != 0 ;
+			final boolean isDynaConditionNotTrueString = !fieldVo.getDynaCondition().trim().equalsIgnoreCase("true");
+			final boolean isDynaConditionNotFalseString = !fieldVo.getDynaCondition().trim().equalsIgnoreCase("false");
+			ckDynamic.setSelected(isDynaConditionNotNull && isDynaConditionNotEmpty && isDynaConditionNotTrueString && isDynaConditionNotFalseString);
 		}
 	}
 	
@@ -206,7 +216,16 @@ public class PnlFieldCondition extends JPanel {
 		cmbDynaBit.removeAllItems();
 		cmbDynaOperator.setSelectedIndex(0);
 		txtDynaValue.setText("");
-		txtDynaCondition.setText(pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxMandatory().isSelected() ? "true" : "");
+		txtDynaCondition.setText("");
+		
+		final boolean fieldIsMandatory = pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxMandatory().isSelected();
+		final boolean fieldIsIgnored = pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxIgnored().isSelected();
+		if(fieldIsMandatory){
+			txtDynaCondition.setText("true");
+		}else if(fieldIsIgnored){
+			txtDynaCondition.setText("false");
+		}
+		
 	}
 
 	private class AddLogicActionListener implements ActionListener {

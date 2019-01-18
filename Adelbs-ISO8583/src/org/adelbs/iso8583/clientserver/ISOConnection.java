@@ -20,7 +20,7 @@ import org.adelbs.iso8583.util.ISOUtils;
 
 public class ISOConnection {
 
-	private final static int SLEEP_TIME = 500;
+	private final static int SLEEP_TIME = 50;
 	
 	private boolean running = false;
 	private long lastAction = 0;
@@ -83,8 +83,7 @@ public class ISOConnection {
 		return running;
 	}
 	
-	public void resetSocket(boolean waitIfThereIsNothingAtQueue) {
-		if (waitIfThereIsNothingAtQueue) try {sender.waitRequest();} catch (Exception x) {x.printStackTrace();}
+	public void resetSocket() {
 		if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
 		socket = null;
 	}
@@ -154,8 +153,11 @@ public class ISOConnection {
 		this.callback = callback;
 	}
 	
-	public void sendBytes(byte[] data) throws IOException, ParseException, InterruptedException {
+
+	public void sendBytes(byte[] data, boolean waitReponse) throws IOException, ParseException, InterruptedException {
 		payloadQueue.addPayloadOut(data);
+		if (waitReponse)
+			receiver.waitRequest(0);
 	}
 	
 	private void registerActionTimeMilis() {
@@ -180,7 +182,7 @@ public class ISOConnection {
 					}
 					catch (SocketException se) {
 						callback.log("Client disconnected...");
-						resetSocket(false);
+						resetSocket();
 					}
 					
 					if (timeout < (System.currentTimeMillis() - lastAction)) {
@@ -254,7 +256,7 @@ public class ISOConnection {
 			}
 			catch (InvalidPayloadException e) {
 				callback.log("Invalid Payload ("+ e.getMessage() +")");
-				resetSocket(false);
+				resetSocket();
 			}
 		}
 		

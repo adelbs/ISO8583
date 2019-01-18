@@ -30,6 +30,9 @@ public class EncodingHEXA implements Encoding {
 	public int getMinBitmapSize() {
 		return 16;
 	}
-
-
+	
+	@Override
+	public int getEncondedByteLength(final int asciiLength) {
+		return asciiLength;
+	}
 }

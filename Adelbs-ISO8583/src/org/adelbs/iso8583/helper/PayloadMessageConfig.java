@@ -4,8 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.StringReader;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -13,22 +14,25 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.gui.PnlGuiPayload;
 import org.adelbs.iso8583.gui.PnlMain;
+import org.adelbs.iso8583.helper.listoperations.FieldListMerge;
+import org.adelbs.iso8583.helper.listoperations.StructurePriorityMerge;
+import org.adelbs.iso8583.helper.listoperations.ValuePriorityMerge;
 import org.adelbs.iso8583.protocol.ISOMessage;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.ISOTestVO;
 import org.adelbs.iso8583.vo.MessageVO;
+import org.adelbs.iso8583.xml.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 
 public class PayloadMessageConfig {
@@ -72,21 +76,31 @@ public class PayloadMessageConfig {
 		if (messageVO != null) {
 			this.messageVO = messageVO.getInstanceCopy();
 			this.messageVO.setFieldList(new ArrayList<FieldVO>());
-			
-			pnlFields.removeAll();
 			numLines = 0;
+			pnlFields.removeAll();
 			fieldList = new ArrayList<GuiPayloadField>();
 			
-			GuiPayloadField payloadField;
 			
+			//Add Field lists of this message
 			for (FieldVO fieldVO : messageVO.getFieldList()) {
-				payloadField = addLine(fieldVO);
-				payloadField.setValues(fieldVO);
-				for (FieldVO subFieldVO : fieldVO.getFieldList()) {
-					payloadField = addSubline(subFieldVO);
-					payloadField.setValues(subFieldVO);
-				}
+				GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, null);
+				fieldList.add(newPayloadField);
+				newPayloadField.setValues(fieldVO);
+				setSubFieldsVO(fieldVO.getFieldList(), newPayloadField);
 			}
+		}
+	}
+	
+	/**
+	 * Iteratively adds all fields and subfields to the Panel
+	 * @param fields List of {@link FieldVO) to be added to the Panel
+	 * @param payloadField GUI panel that will receive all lines
+	 */
+	protected void setSubFieldsVO(final List<FieldVO> fields, final GuiPayloadField parentPlayloadField){
+		for (final FieldVO fieldVO : fields) {
+			GuiPayloadField innerFieldPayload = parentPlayloadField.addSubline(fieldVO, parentPlayloadField.getFieldVO());
+			innerFieldPayload.setValues(fieldVO);
+			setSubFieldsVO(fieldVO.getFieldList(), innerFieldPayload);
 		}
 	}
 
@@ -121,75 +135,80 @@ public class PayloadMessageConfig {
 	}
 	
 	public MessageVO getMessageVO() throws ParseException {
-		MessageVO messageVO = getMessageVOFromXML(runTimeXML);
+		MessageVO messageVO = updateMessageValuesFromXML(runTimeXML);
 		setMessageVO(messageVO);
 		return messageVO;
 	}
 	
+	
+	/**
+	 * Creates a {@link MessageVO} where its list of Fields will be created from the XML.
+	 * 
+	 * This method was replaced by two method of this class, {@link #buildMessageStructureFromXML} and {@link #updateMessageValuesFromXML}
+	 * and will be removed on a future release. Newer implementations should choose between those two methods, and
+	 * older implementations should update its code.
+	 * 
+	 * @deprecated
+	 * @param xml Message XML from Request/Response panel
+	 * @return {@link MessageVO} updated with a list of Field from the XML panel
+	 * @throws ParseException
+	 */
 	public MessageVO getMessageVOFromXML(String xml) throws ParseException {
-		MessageVO newMessageVO = null;
-		
-		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-		    InputSource is = new InputSource(new StringReader(xml));
-			
-			Document document = builder.parse(is);
-			NodeList nodeList = document.getDocumentElement().getChildNodes();
-			Node node;
-
-			ArrayList<FieldVO> fieldsFromXML = new ArrayList<FieldVO>();
-			ArrayList<FieldVO> newFieldList = new ArrayList<FieldVO>();
-			FieldVO newFieldVO;
-			
+		return this.buildMessageStructureFromXML(xml);
+	}
+	
+	private static NodeList convertToDOMNodes(final String xml) throws ParserConfigurationException, SAXException, IOException {
+		final Document document = XMLUtils.convertXMLToDOM(xml);
+		return document.getDocumentElement().getChildNodes();
+	}
+	
+	/**
+	 * Creates a {@link MessageVO} where its list of Fields will be created from the XML:
+	 * structure o fields, types, values, etc, will be create based on the <bit> tags
+	 * 
+	 * @param xml Message XML from Request/Response panel
+	 * @return {@link MessageVO} updated with a list of Field from the XML panel
+	 * @throws ParseException
+	 */
+	public MessageVO buildMessageStructureFromXML(final String xml) throws ParseException{
+		return buildMessagesFromXML(xml, new ValuePriorityMerge());
+	}
+	
+	/**
+	 * Creates a {@link MessageVO} where its list of Fields will be update with values from the XML panel.
+	 * But will maintain it's original structure of fields, even if it's not defined at the XML structure.
+	 * 
+	 * @param xml Message XML from Request/Response panel
+	 * @return {@link MessageVO} with it's original field list, but with values updated from the xml
+	 * @throws ParseException
+	 */
+	public MessageVO updateMessageValuesFromXML(final String xml) throws ParseException{
+		return buildMessagesFromXML(xml, new StructurePriorityMerge());
+	}
+	
+	public MessageVO buildMessagesFromXML(final String xml, final FieldListMerge fieldListMege) throws ParseException{
+		try{
+			MessageVO newMessageVO = null;
+			final NodeList nodeList = convertToDOMNodes(xml);
 			for (int i = 0; i < nodeList.getLength(); i++) {
-				node = nodeList.item(i);
-				
+				final Node node = nodeList.item(i);
 				if ("message".equalsIgnoreCase(node.getNodeName())) {
-
 					newMessageVO = isoConfig.getMessageVOAtTree(ISOUtils.getAttr(node, "type", "")).getInstanceCopy();
-					fieldsFromXML = getFieldsFromXML(node.getChildNodes(), newMessageVO.getFieldList());
-					
-					//Carregando o valor dos campos
-					for (FieldVO fieldVO : newMessageVO.getFieldList()) {
-						newFieldVO = fieldVO;
-						for (FieldVO fieldXMLVO : fieldsFromXML) {
-							if (fieldVO.getBitNum().intValue() == fieldXMLVO.getBitNum().intValue()) {
-								newFieldVO = fieldXMLVO;
-							}
-						}
-						
-						newFieldList.add(newFieldVO);
-					}
-					
-					newMessageVO.setFieldList(newFieldList);
-					
+					final ArrayList<FieldVO> messageFieldList = newMessageVO.getFieldList();
+					final ArrayList<FieldVO> xmlFieldList = getFieldsFromXML(node.getChildNodes(), messageFieldList);
+					final List<FieldVO> newFieldList = fieldListMege.merge(messageFieldList, xmlFieldList);
+					newMessageVO.setFieldList((ArrayList<FieldVO>)newFieldList);
 					break;
 				}
 			}
+			return newMessageVO;
+		}catch(SAXException | IOException | ParserConfigurationException e){
+			throw new ParseException(e.getMessage());
 		}
-		catch (Exception x) {
-			x.printStackTrace();
-		}
-		
-		return newMessageVO;
 	}
 	
 	public int getNumLines() {
 		return numLines;
-	}
-	
-	private GuiPayloadField addLine(FieldVO fieldVO) {
-		GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, null);
-		fieldList.add(newPayloadField);
-		return newPayloadField;
-	}
-
-	private GuiPayloadField addSubline(FieldVO fieldVO) {
-		GuiPayloadField newPayloadField = null;
-		if (fieldList.size() > 0)
-			newPayloadField = fieldList.get(fieldList.size() - 1).addSubline(fieldVO, fieldList.get(fieldList.size() - 1).getFieldVO());
-		return newPayloadField;
 	}
 
 	public void setISOTestVO(ISOTestVO isoTestVO) {
@@ -204,16 +223,10 @@ public class PayloadMessageConfig {
 		ISOTestVO testVO = new ISOTestVO("");
 		
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-		    InputSource is = new InputSource(new StringReader(xml));
-		    
-			Document document = builder.parse(is);
-			NodeList nodeList = document.getDocumentElement().getChildNodes();
-			Node node;
+			NodeList nodeList = convertToDOMNodes(xml);
 			
 			for (int i = 0; i < nodeList.getLength(); i++) {
-				node = nodeList.item(i);
+				Node node = nodeList.item(i);
 				
 				if ("test-iso".equalsIgnoreCase(node.getNodeName()))
 					testVO.setConfigFile(ISOUtils.getAttr(node, "config-file", ""));
@@ -251,9 +264,10 @@ public class PayloadMessageConfig {
 					}
 				}
 				
-				if (fieldFound == null)
+				if (fieldFound == null){
 					throw new ParseException("It was not possible to parse the XML. The bit number was not found at the ISO structure.");
-
+				}
+					
 				newFieldVO = fieldFound.getInstanceCopy();
 				
 				newFieldVO.setPresent(true);
@@ -261,9 +275,10 @@ public class PayloadMessageConfig {
 				newFieldVO.setTlvLength(ISOUtils.getAttr(node, "length", ""));
 				newFieldVO.setValue(ISOUtils.getAttr(node, "value", ""));
 				
-				if (node.getChildNodes().getLength() > 0)
+				if (node.getChildNodes().getLength() > 0){
 					newFieldVO.setFieldList(getFieldsFromXML(node.getChildNodes(), newFieldVO.getFieldList()));
-				
+				}
+					
 				fieldList.add(newFieldVO);
 			}
 		}
@@ -299,12 +314,14 @@ public class PayloadMessageConfig {
 	}
 	
 	public void setReadOnly() {
-		for (GuiPayloadField field : fieldList) {
+		setFieldListsReadOnly(fieldList);
+	}
+	
+	public static void setFieldListsReadOnly(final List<GuiPayloadField> fieldList){
+		fieldList.forEach(field->{
 			field.setReadOnly();
-			for (GuiPayloadField field2 : field.subfieldList) {
-				field2.setReadOnly();	
-			}
-		}
+			setFieldListsReadOnly(field.subfieldList);
+		});
 	}
 	
 	private class GuiPayloadField {
@@ -341,10 +358,11 @@ public class PayloadMessageConfig {
 			this.fieldVO = fieldVO.getInstanceCopy();
 			this.fieldVO.setFieldList(new ArrayList<FieldVO>());
 			
-			if (isSubfield)
+			if (isSubfield){
 				superFieldVO.getFieldList().add(this.fieldVO);
-			else
+			}else{
 				messageVO.getFieldList().add(this.fieldVO);
+			}
 			
 			ckBox = new JCheckBox();
 			txtType = new JTextField();
@@ -385,9 +403,14 @@ public class PayloadMessageConfig {
 				
 			pnlFields.add(lblFieldNum);
 			pnlFields.add(lblFieldName);
-			pnlFields.add(txtValue);
-			pnlFields.add(lblType);
-
+			
+			//Remove TypeLabel and TextField when we have SubFields. 
+			//Parent field has its value created by its subfields
+			if(fieldVO.getFieldList().size() == 0 || fieldVO.getType() == TypeEnum.TLV){
+				pnlFields.add(txtValue);
+				pnlFields.add(lblType);
+			}
+			
 			txtType.addKeyListener(saveFieldPayloadAction);
 			txtLength.addKeyListener(saveFieldPayloadAction);
 			txtValue.addKeyListener(saveFieldPayloadAction);
@@ -448,20 +471,24 @@ public class PayloadMessageConfig {
 		private void ckBoxClick(JCheckBox ckBox) {
 			setEnabled(ckBox.isSelected());
 			txtValue.setText("");
-			for (GuiPayloadField subfield : subfieldList) {
-				subfield.setEnabled(ckBox.isSelected());
-				subfield.txtValue.setText("");
-			}
+			setEnableStatusForFields(subfieldList, ckBox.isSelected());
+		}
+		
+		/**
+		 * Enable/Disable the fields, and subsfields, depending on the checkbox 
+		 * @param subFields list of fields to be enabled/disabled
+		 * @param enabledValue boolean that represent whether the checkbox is checked or not.
+		 */
+		private void setEnableStatusForFields(final List<GuiPayloadField> subFields, final boolean enabledValue){
+			subFields.forEach(subField->{
+				subField.setEnabled(enabledValue);
+				subField.txtValue.setText("");
+				setEnableStatusForFields(subField.subfieldList, enabledValue);
+			});
 		}
 		
 		private GuiPayloadField addSubline(FieldVO fieldVO, FieldVO superfieldVO) {
-			GuiPayloadField newPayloadField;
-			if (superfieldVO != null && superfieldVO.getType() != TypeEnum.TLV) {
-				pnlFields.remove(txtValue);
-				pnlFields.remove(lblType);
-			}
-			
-			newPayloadField = new GuiPayloadField(fieldVO, superfieldVO);
+			GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, superfieldVO);
 			subfieldList.add(newPayloadField);
 			return newPayloadField;
 		}
@@ -506,8 +533,6 @@ public class PayloadMessageConfig {
 			String tabs = isSubfield ? "\t\t" : "\t";
 			
 			if (isSubfield || ckBox.isSelected()) {
-				boolean hasSubfield = false;
-				
 				xmlField.append("\n").append(tabs).append("<bit num=\"").append(fieldVO.getBitNum()).append("\"");
 
 				if (fieldVO.getType() == TypeEnum.TLV) {
@@ -515,19 +540,21 @@ public class PayloadMessageConfig {
 							append("\" length=\"").append(getLength()).append("\"").
 							append(" value=\"").append(getValue()).append("\"");
 				}
-
-				for (GuiPayloadField subfield : subfieldList) {
-					if (!hasSubfield) xmlField.append(">");
-					xmlField.append(subfield.getXML());
-					hasSubfield = true;
+				
+				if (subfieldList.size() > 0){
+					xmlField.append(">");
 				}
 				
-				if (hasSubfield) 
+				subfieldList.forEach(subfield->{
+					xmlField.append(subfield.getXML());
+				});
+
+				
+				if (subfieldList.size() > 0){
 					xmlField.append("\n\t</bit>");
-				else {
-					if (fieldVO.getType() != TypeEnum.TLV)
+				}else if (fieldVO.getType() != TypeEnum.TLV){
 						xmlField.append(" value=\"").append(getValue()).append("\"/>");
-					else
+				}else{
 						xmlField.append("/>");
 				}
 			}

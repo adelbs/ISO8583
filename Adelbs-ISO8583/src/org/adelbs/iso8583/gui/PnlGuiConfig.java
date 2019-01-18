@@ -151,8 +151,8 @@ public class PnlGuiConfig extends JPanel{
 				DefaultMutableTreeNode newNode = pnlMain.getIso8583Config().addField(pnlMain, treeTypes.getLastSelectedPathComponent());
 
 				if (selectedNode.getUserObject() instanceof FieldVO) {
-					checkFieldsEnablement();
 					pnlMain.getIso8583Config().updateSumField(treeTypes.getLastSelectedPathComponent());
+					checkFieldsEnablement();
 					loadFieldValues();
 				}
 				
@@ -225,23 +225,14 @@ public class PnlGuiConfig extends JPanel{
 						pnlFieldProperties.setEnabled(false);
 						pnlFieldCondition.setEnabled(false);
 					}
+					
+					btnNewField.setEnabled(false);
+					btnRemove.setEnabled(false);
 	
 					//Habilitando os botões
-					if (selectedNode.getUserObject() instanceof MessageVO) {
+					if (selectedNode.getUserObject() instanceof MessageVO || selectedNode.getUserObject() instanceof FieldVO) {
 						btnNewField.setEnabled(true);
 						btnRemove.setEnabled(true);
-					}
-					else if (selectedNode.getUserObject() instanceof FieldVO) {
-						btnRemove.setEnabled(true);
-						
-						if (selectedNodeParent.getUserObject() instanceof FieldVO) 
-							btnNewField.setEnabled(false);
-						else 
-							btnNewField.setEnabled(true);
-					}
-					else {
-						btnNewField.setEnabled(false);
-						btnRemove.setEnabled(false);
 					}
 				}
 			}
@@ -362,16 +353,23 @@ public class PnlGuiConfig extends JPanel{
 	}
 
 	private void checkFieldsEnablement() {
-		if (selectedNode.getChildCount() > 0) {
-			pnlFieldProperties.disableSuperField();
-			pnlFieldCondition.ckDynamicClick();
-		}
-		else if (selectedNodeParent.getUserObject() instanceof FieldVO) {
-			pnlFieldProperties.disableSubField();
+		if (selectedNodeParent.getUserObject() instanceof MessageVO) {
+			pnlFieldProperties.disableMessageField();
+			
 			pnlFieldCondition.setEnabled(false);
+		}else if(selectedNodeParent.getUserObject() instanceof FieldVO){
+			pnlFieldProperties.disableSubField();
 		}
-		else {
-			pnlFieldCondition.ckDynamicClick();
+		
+		if(selectedNode.getChildCount() == 0){
+			pnlFieldProperties.disableLeafField();
+			pnlFieldCondition.setEnabled(false);
+		}else{
+			pnlFieldProperties.disableIntermediaryField();
+			
+			if(selectedNodeParent.getUserObject() instanceof FieldVO){
+				pnlFieldCondition.ckDynamicClick();
+			}
 		}
 	}
 	

@@ -27,5 +27,8 @@ public class EncodingUTF8 implements Encoding {
 		return 64;
 	}
 
-
+	@Override
+	public int getEncondedByteLength(final int asciiLength) {
+		return asciiLength;
+	}
 }

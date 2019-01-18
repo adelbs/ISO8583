@@ -33,6 +33,7 @@ public class EncodingEBCDIC implements Encoding {
 	}
 
 	@Override
+	//TODO: Check the code
 	public String convertBitmap(byte[] binaryBitmap) {
 		String strByte;
 		String result = "";
@@ -46,6 +47,7 @@ public class EncodingEBCDIC implements Encoding {
 	}
 
 	@Override
+	//TODO: This code is not validated under the requirements of an ISO bitmap
 	public byte[] convertBitmap(String binaryBitmap) {
 		byte[] result = new byte[]{};
 
@@ -60,5 +62,10 @@ public class EncodingEBCDIC implements Encoding {
 	public int getMinBitmapSize() {
 		return 16;
 	}
-
+	
+	
+	@Override
+	public int getEncondedByteLength(final int asciiLength) {
+		return asciiLength;
+	}
 }

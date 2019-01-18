@@ -31,5 +31,11 @@ public class EncodingBINARY implements Encoding {
 		// TODO Auto-generated method stub
 		return 64;
 	}
+	
+	@Override
+	public int getEncondedByteLength(final int asciiLength) {
+		// TODO Auto-generated method stub
+		return asciiLength;
+	}
 
 }

@@ -22,6 +22,8 @@ import org.adelbs.iso8583.clientserver.ISOConnection;
 import org.adelbs.iso8583.constants.ForceCloseConnection;
 import org.adelbs.iso8583.exception.ConnectionException;
 import org.adelbs.iso8583.exception.ParseException;
+import org.adelbs.iso8583.helper.Iso8583Config;
+import org.adelbs.iso8583.protocol.ISOMessage;
 import org.adelbs.iso8583.vo.ISOTestVO;
 
 
@@ -207,7 +209,7 @@ public class PnlGuiMessages extends JPanel {
 			if (isoServer != null) {
 				
 				if (ckForceClose.isSelected())
-					isoServer.sendBytes(ForceCloseConnection.CLOS.bytes);
+					isoServer.sendBytes(ForceCloseConnection.CLOS.bytes, false);
 
 				
 				isoServer.endConnection();
@@ -222,7 +224,7 @@ public class PnlGuiMessages extends JPanel {
 			if (isoClient != null) {
 				
 				if (ckForceClose.isSelected()) {
-					isoClient.sendBytes(ForceCloseConnection.CLOS.bytes);
+					isoClient.sendBytes(ForceCloseConnection.CLOS.bytes, false);
 					Thread.sleep(3000);
 				}
 
@@ -275,9 +277,7 @@ public class PnlGuiMessages extends JPanel {
 						isoServer.sendBytes(
 								pnlMain.getIso8583Config().getDelimiter().preparePayload(
 										pnlResponse.getPayloadMessageConfig().getIsoMessage(), 
-										pnlMain.getIso8583Config()));
-						
-						isoServer.resetSocket(true);
+										pnlMain.getIso8583Config()), false);
 					}
 					catch (Exception x) {
 						x.printStackTrace();
@@ -316,13 +316,14 @@ public class PnlGuiMessages extends JPanel {
 	private void sendMessageAction(final PnlMain pnlMain) throws ParseException, NumberFormatException, IOException, InterruptedException {
 		pnlRequest.getPayloadMessageConfig().updateFromMessageVO();
 		
-		if (pnlRequest.getTabbedPane().getSelectedIndex() == 1)
-			pnlRequest.getPayloadMessageConfig().setMessageVO(pnlRequest.getPayloadMessageConfig().getMessageVOFromXML(pnlRequest.getXmlText().getText()));
+		if (pnlRequest.getTabbedPane().getSelectedIndex() == 1){
+			pnlRequest.getPayloadMessageConfig().setMessageVO(pnlRequest.getPayloadMessageConfig().updateMessageValuesFromXML(pnlRequest.getXmlText().getText()));
+		}
 		
-		isoClient.sendBytes(
-				pnlMain.getIso8583Config().getDelimiter().preparePayload(
-						pnlRequest.getPayloadMessageConfig().getIsoMessage(), 
-						pnlMain.getIso8583Config()));
+		final ISOMessage requestMessage = pnlRequest.getPayloadMessageConfig().getIsoMessage();
+		final Iso8583Config isoConfig = pnlMain.getIso8583Config();
+		final byte[] preparedPayload = isoConfig.getDelimiter().preparePayload(requestMessage, isoConfig);
+		isoClient.sendBytes(preparedPayload, false);
 	}
 
 	public PnlGuiPayload getPnlRequest() {

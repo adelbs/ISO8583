@@ -6,14 +6,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.adelbs.iso8583.constants.DelimiterEnum;
 import org.adelbs.iso8583.constants.EncodingEnum;
@@ -21,22 +18,27 @@ import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.exception.OutOfBoundsException;
+import org.adelbs.iso8583.gui.ISOConfigGuiConverter;
 import org.adelbs.iso8583.gui.PnlMain;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.protocol.ISO8583Delimiter;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
+import org.adelbs.iso8583.vo.ISOConfigVO;
 import org.adelbs.iso8583.vo.MessageVO;
+import org.adelbs.iso8583.xml.ISOConfigMarshaller;
+import org.adelbs.iso8583.xml.ISOConfigMarshallerException;
+import org.adelbs.iso8583.xml.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import groovy.util.Eval;
 
 public class Iso8583Config {
 	
+	private static final String XML_FIELD_NODENAME = "field";
 	private DefaultMutableTreeNode configTreeNode;
 	private XmlTextPane xmlText = new XmlTextPane();
 	
@@ -74,16 +76,30 @@ public class Iso8583Config {
 	public DefaultMutableTreeNode addField(PnlMain pnlMain, Object node) {
 		DefaultMutableTreeNode newNode = null;
 		
-		boolean add = ((DefaultMutableTreeNode) node).getUserObject() instanceof MessageVO;
-		add = add || (((DefaultMutableTreeNode) node).getUserObject() instanceof FieldVO && 
-				!(((DefaultMutableTreeNode) ((DefaultMutableTreeNode) node).getParent()).getUserObject() instanceof FieldVO));
-		
-		if (add) {
+		if (isAMessageNode(node) || isAFieldNode(node)) {
 			newNode = new DefaultMutableTreeNode(new FieldVO(pnlMain, "NewField", "", 2, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 1, EncodingEnum.UTF8, ""));
 			((DefaultMutableTreeNode) node).add(newNode);
 		}
 		
 		return newNode;
+	}
+
+	/**
+	 * Check whether this node object is or isn't a {@link FieldVO} element;
+	 * @param node {@link GenericIsoVO} object
+	 * @return True if its a FieldVO, False otherwise.
+	 */
+	private boolean isAFieldNode(final Object node) {
+		return ((DefaultMutableTreeNode) node).getUserObject() instanceof FieldVO;
+	}
+
+	/**
+	 * Check whether this node object is or isn't a {@link MessageVO} element;
+	 * @param node {@link GenericIsoVO} object
+	 * @return True if its a MessageVO, False otherwise.
+	 */
+	private boolean isAMessageNode(final Object node) {
+		return ((DefaultMutableTreeNode) node).getUserObject() instanceof MessageVO;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -110,86 +126,20 @@ public class Iso8583Config {
 			fieldVo.setLength(sum);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public void parseConfigToXML() {
-		MessageVO messageVo;
-		FieldVO fieldVo;
-
-		DefaultMutableTreeNode node;
-		
-		StringBuilder xmlISO = new StringBuilder();
-		
-		xmlISO.append("<?xml version=\"1.0\" ?>\n\n");
-		xmlISO.append("<iso8583 delimiter=\"").append(isoDelimiter.getValue()).append("\">");
-		
-		//Capturando os MessageVO
-		Enumeration<DefaultMutableTreeNode> enuParse = configTreeNode.children();
-		Enumeration<DefaultMutableTreeNode> enuFields;
-		Enumeration<DefaultMutableTreeNode> enuSubFields;
-		
-		while (enuParse.hasMoreElements()) {
-			node = enuParse.nextElement();
-			messageVo = (MessageVO) node.getUserObject();
-			xmlISO.append("\n\n\t<message type=\"").append(messageVo.getType()).
-					append("\" header-encoding=\"").append(messageVo.getHeaderEncoding().toPlainString()).
-					append("\" bitmap-encoding=\"").append(messageVo.getBitmatEncoding().toPlainString()).append("\">");
-			
-			//Capturando os FieldVO
-			enuFields = node.children();
-			while (enuFields.hasMoreElements()) {
-				node = enuFields.nextElement();
-				fieldVo = (FieldVO) node.getUserObject();
-				
-				appendFieldVO(xmlISO, fieldVo, (node.getChildCount() > 0), false);
-				
-				if (node.getChildCount() > 0) {
-					
-					xmlISO.append(">");
-					
-					//Capturando os FieldVO filhos
-					enuSubFields = node.children();
-					while (enuSubFields.hasMoreElements()) {
-						node = enuSubFields.nextElement();
-						fieldVo = (FieldVO) node.getUserObject();
-						
-						appendFieldVO(xmlISO, fieldVo, false, true);
-					}
-					xmlISO.append("\n\t\t</field>");
-				}
-					
-			}
-			
-			xmlISO.append("\n\t</message>");
-		}
-
-		xmlISO.append("\n</iso8583>");
-		
-		xmlText.setText(xmlISO.toString());
+	public void parseConfigToXML() throws ISOConfigMarshallerException {
+		final ISOConfigMarshaller xmlParser = ISOConfigMarshaller.creatMarshaller();
+		final ISOConfigVO isoConfigVO = ISOConfigGuiConverter.revert(configTreeNode);
+		isoConfigVO.setDelimiter(isoDelimiter);
+		xmlText.setText(xmlParser.marshal(isoConfigVO));
 	}
 	
-	private void appendFieldVO(StringBuilder xmlISO, FieldVO fieldVo, boolean hasChild, boolean subField) {
-		xmlISO.append("\n").append(subField ? "\t\t\t" : "\t\t").append("<field ").
-			append("name=\"").append((subField ? fieldVo.getSubFieldName() : fieldVo.getName())).append("\" ").		
-			append("bitnum=\"").append(fieldVo.getBitNum()).append("\" ").
-			append("condition=\"").append(fieldVo.getDynaCondition()).append("\" ").
-			append("length-type=\"").append(fieldVo.getTypeLength().toPlainString()).append("\" ").
-			append("length=\"").append(fieldVo.getLength()).append("\" ").
-			append("type=\"").append(fieldVo.getType()).append("\" ").
-			append("encoding=\"").append(fieldVo.getEncoding().toPlainString()).append("\" ");
-		
-		if (!hasChild) xmlISO.append("/>");
-	}
-	
+	//TODO: Could be substituted by a ISOConfigMarshaller.unmarshal method
 	public void parseXmlToConfig(PnlMain pnlMain) {
 		try {
 			if (!xmlText.getText().trim().equals("")) {
 				configTreeNode.removeAllChildren();
 				
-				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder builder = factory.newDocumentBuilder();
-			    InputSource is = new InputSource(new StringReader(xmlText.getText()));
-				
-				Document document = builder.parse(is);
+				Document document = XMLUtils.convertXMLToDOM(xmlText.getText());
 				
 				DefaultMutableTreeNode lastParseNode;
 				
@@ -220,77 +170,51 @@ public class Iso8583Config {
 	}
 
 	public MessageVO getMessageVOAtTree(String type) {
-		
-		DefaultMutableTreeNode messageNode = null;
-		MessageVO messageVO;
 		MessageVO newMessageVO = null;
-		FieldVO fieldVO;
-		FieldVO newFieldVO;
-		FieldVO newSubfieldVO;
-		
-		for (int i = 0; i < configTreeNode.getChildCount(); i++) {
-			messageNode = (DefaultMutableTreeNode) configTreeNode.getChildAt(i);
-			messageVO = (MessageVO) messageNode.getUserObject();
-			if (messageVO.getType().equals(type)) {
+		final ISOConfigVO isoConfigVO = ISOConfigGuiConverter.revert(configTreeNode);
+		final List<MessageVO> messages = isoConfigVO.getMessageList();
+		for (MessageVO messageVO : messages) {
+			if (messageVO.getType().equalsIgnoreCase(type)) {
 				newMessageVO = messageVO.getInstanceCopy();
 				break;
 			}
-		}
-		
-		if (newMessageVO != null) {
-			newMessageVO.setFieldList(new ArrayList<FieldVO>());
-			for (int i = 0; i < messageNode.getChildCount(); i++) {
-				fieldVO = (FieldVO) ((DefaultMutableTreeNode) messageNode.getChildAt(i)).getUserObject();
-				newFieldVO = fieldVO.getInstanceCopy();
-				
-				newMessageVO.getFieldList().add(newFieldVO);
-				
-				newFieldVO.setFieldList(new ArrayList<FieldVO>());
-				for (int j = 0; j < messageNode.getChildAt(i).getChildCount(); j++) {
-					fieldVO = (FieldVO) ((DefaultMutableTreeNode) messageNode.getChildAt(i).getChildAt(j)).getUserObject();	
-					newSubfieldVO = fieldVO.getInstanceCopy();
-
-					newFieldVO.getFieldList().add(newSubfieldVO);
-				}
-			}
-		}
-		
+		}		
 		return newMessageVO;
 	}
+
+	private void addFieldsToTree(PnlMain pnlMain, Node domNode, DefaultMutableTreeNode lastParseUINode) {
+		final NodeList fielNodedList = domNode.getChildNodes();
+		for (int j = 0; j < fielNodedList.getLength(); j++) {
+			domNode = fielNodedList.item(j);
+			addFieldToTree(pnlMain, domNode, lastParseUINode, false);
+		}
+	}
 	
-	private void addFieldsToTree(PnlMain pnlMain, Node node, DefaultMutableTreeNode lastParseNode) {
-		NodeList fieldList = node.getChildNodes();
-		NodeList subFieldList;
-
-		DefaultMutableTreeNode lastFieldNode;
-		DefaultMutableTreeNode newNode;
-		FieldVO fieldVo;
-
-		for (int j = 0; j < fieldList.getLength(); j++) {
-			node = fieldList.item(j);
+	/**
+	 * Add a single Message Field, and its children fields, to the panel tree. 
+	 * Only tags {@link XML_FIELD_NODENAME} are considered message fields. All other tags will be disconsidered.
+	 * 
+	 * @param pnlMain parent panel element.
+	 * @param domNode root DOM node with the XML structure of the field we are adding to the panel.
+	 * @param lastParseUINode last added UI node element.
+	 * @param isSubField indicates that this field is a inner field of a "<i>pre-created</i>" field, enabling nested fields.
+	 */
+	private void addFieldToTree(final PnlMain pnlMain, final Node domNode, final DefaultMutableTreeNode lastParseUINode, final boolean isSubField){	
+		if (XML_FIELD_NODENAME.equalsIgnoreCase(domNode.getNodeName())) {
+			final DefaultMutableTreeNode newUINode = addField(pnlMain, lastParseUINode);
+			final FieldVO fieldVo = (FieldVO) newUINode.getUserObject();
+			populateField(domNode, fieldVo, newUINode, lastParseUINode, isSubField);
 			
-			if ("field".equalsIgnoreCase(node.getNodeName())) {
-				newNode = addField(pnlMain, lastParseNode);
-				fieldVo = (FieldVO) newNode.getUserObject();
-				populateField(node, fieldVo, newNode, lastParseNode, false);
-				
-				subFieldList = node.getChildNodes();
-				if (subFieldList.getLength() > 1) {
-					lastFieldNode = newNode;
-					for (int w = 0; w < subFieldList.getLength(); w++) {
-						node = subFieldList.item(w);
-						
-						if ("field".equalsIgnoreCase(node.getNodeName())) {
-							newNode = addField(pnlMain, lastFieldNode);
-							fieldVo = (FieldVO) newNode.getUserObject();
-							populateField(node, fieldVo, newNode, lastParseNode, true);
-						}
-					}
-					updateSumField(lastFieldNode);
+			final NodeList subFieldNodeList = domNode.getChildNodes();
+			if (subFieldNodeList.getLength() > 1) {
+				for (int i = 0; i < subFieldNodeList.getLength(); i++) {
+					addFieldToTree(pnlMain, subFieldNodeList.item(i), newUINode, true);
 				}
+				updateSumField(newUINode);
 			}
 		}
 	}
+	
 	
 	private void populateField(Node node, FieldVO fieldVo, DefaultMutableTreeNode newNode, DefaultMutableTreeNode lastParseNode, boolean isSubfield) {
 

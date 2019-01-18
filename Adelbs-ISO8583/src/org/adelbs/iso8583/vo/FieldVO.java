@@ -2,13 +2,25 @@ package org.adelbs.iso8583.vo;
 
 import java.util.ArrayList;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.gui.PnlMain;
+import org.adelbs.iso8583.payload.PayloadTransformator;
+import org.adelbs.iso8583.payload.RevertResult;
 import org.adelbs.iso8583.util.ISOUtils;
 
+import groovy.lang.GroovyShell;
+
+@XmlRootElement(name="field")
+@XmlType(propOrder={"name", "bitNum", "dynaCondition", "typeLength", "length", "type", "encoding", "fieldList"})
 public class FieldVO extends GenericIsoVO {
 
 	private String name;
@@ -33,10 +45,11 @@ public class FieldVO extends GenericIsoVO {
 	private String tlvLength = "";
 	private String value = "";
 	private byte[] payloadValue = null;
-	
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
 
 	private PnlMain pnlMain;
+	
+	public FieldVO(){};
 	
 	public FieldVO(PnlMain pnlMain, String name, String subFieldName, Integer bitNum, TypeEnum type, TypeLengthEnum typeLength, Integer length, EncodingEnum encoding, String dynaCondition) {
 		this.name = name;
@@ -64,38 +77,75 @@ public class FieldVO extends GenericIsoVO {
 		return newFieldVO;
 	}
 	
+	@XmlAttribute
 	public String getName() {
-		return name;
+		return (subFieldName != null && !subFieldName.isEmpty()) ? subFieldName : name;
 	}
 
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	@XmlAttribute(name="bitnum")
 	public Integer getBitNum() {
 		return bitNum;
 	}
 
+	
 	public void setBitNum(Integer bitNum) {
 		this.bitNum = bitNum;
 	}
 
+	@XmlAttribute
 	public TypeEnum getType() {
 		return type;
 	}
 
+	
 	public void setType(TypeEnum type) {
 		this.type = type;
 	}
 
+	@XmlAttribute(name="condition")
 	public String getDynaCondition() {
 		return dynaCondition;
 	}
 
+	
 	public void setDynaCondition(String dynaCondition) {
 		this.dynaCondition = dynaCondition;
 	}
+	
+	@XmlAttribute(name="encoding")
+	public EncodingEnum getEncoding() {
+		return encoding;
+	}
 
+	
+	public void setEncoding(EncodingEnum encoding) {
+		this.encoding = encoding;
+	}
+	
+	@XmlAttribute
+	public Integer getLength() {
+		return length;
+	}
+
+	
+	public void setLength(Integer length) {
+		this.length = length;
+	}
+	
+	@XmlAttribute(name="length-type")
+	public TypeLengthEnum getTypeLength() {
+		return typeLength;
+	}
+	
+	public void setTypeLength(TypeLengthEnum typeLength) {
+		this.typeLength = typeLength;
+	}
+
+	@XmlElement(name="field")
 	public ArrayList<FieldVO> getFieldList() {
 		return fieldList;
 	}
@@ -109,14 +159,8 @@ public class FieldVO extends GenericIsoVO {
 		return (pnlMain != null && pnlMain.getPnlGuiConfig().isShowBitNum() ? "[" + bitNum + "] " : "") + fieldName + getValidationMessage();
 	}
 
-	public Integer getLength() {
-		return length;
-	}
 
-	public void setLength(Integer length) {
-		this.length = length;
-	}
-
+	@XmlTransient
 	public String getValue() {
 		return value;
 	}
@@ -125,14 +169,7 @@ public class FieldVO extends GenericIsoVO {
 		this.value = value;
 	}
 
-	public EncodingEnum getEncoding() {
-		return encoding;
-	}
-
-	public void setEncoding(EncodingEnum encoding) {
-		this.encoding = encoding;
-	}
-
+	@XmlTransient
 	public String getSubFieldName() {
 		return subFieldName;
 	}
@@ -141,14 +178,7 @@ public class FieldVO extends GenericIsoVO {
 		this.subFieldName = subFieldName;
 	}
 
-	public TypeLengthEnum getTypeLength() {
-		return typeLength;
-	}
-
-	public void setTypeLength(TypeLengthEnum typeLength) {
-		this.typeLength = typeLength;
-	}
-
+	@XmlTransient
 	public boolean isPresent() {
 		return isPresent;
 	}
@@ -157,6 +187,7 @@ public class FieldVO extends GenericIsoVO {
 		this.isPresent = isPresent;
 	}
 
+	@XmlTransient
 	public String getTlvType() {
 		return tlvType;
 	}
@@ -165,12 +196,35 @@ public class FieldVO extends GenericIsoVO {
 		this.tlvType = tlvType;
 	}
 
+	@XmlTransient
 	public String getTlvLength() {
 		return tlvLength;
 	}
 
 	public void setTlvLength(String tlvLength) {
 		this.tlvLength = tlvLength;
+	}
+
+	/**
+	 * This method evaluates the dynamic condition rule, checking if this field
+	 * should be ignored or not.
+	 * 
+	 * @return True or False based on the Conditional Rule of the attribute DynaCondition
+	 * @throws IllegalArgumentException case the expression, to evaluate if the Field should be ignored, is not a boolean expression
+	 */
+	@XmlTransient
+	public boolean isIgnored(){
+		boolean isIgnored = false;
+		if(dynaCondition != null && dynaCondition.length() > 0){
+			final GroovyShell shell = new GroovyShell();
+			String condition = "Object[] BIT = new Object[255];\n"+dynaCondition;
+			final Object result = shell.evaluate(condition);
+			if(!(result instanceof Boolean)){
+				throw new IllegalArgumentException("The expression do not generates a boolean result");
+			}
+			isIgnored = !((boolean) result);
+		}
+		return isIgnored;
 	}
 	
 	//********** runtime
@@ -179,6 +233,7 @@ public class FieldVO extends GenericIsoVO {
 		this.payloadValue = payloadValue;
 	}
 	
+	@XmlTransient
 	public byte[] getPayloadValue() {
 		if (payloadValue == null)
 			payloadValue = getPayloadValue(null);
@@ -189,44 +244,32 @@ public class FieldVO extends GenericIsoVO {
 		byte[] payload = encoding.convert("");
 
 		byte[] newValue = encoding.convert(value);
-		int sizeTypeTLV = 2;
 		
 		if (type != TypeEnum.TLV) {
 			length = (fieldList.size() > 0) ? 0 : length;
-			for (FieldVO fieldVO : fieldList)
-				ISOUtils.mergeArray(newValue, fieldVO.getPayloadValue(this));
-		}
-		else if (type == TypeEnum.TLV) {
-			if (superFieldVO == null) {
-				sizeTypeTLV = 2;
-				length = 3;
-			}
-			else {
-				sizeTypeTLV = (superFieldVO.getValue().equals("") ? 0 : Integer.parseInt(superFieldVO.getValue().substring(0, 1)));
-				length = (superFieldVO.getValue().equals("") ? 0 : Integer.parseInt(superFieldVO.getValue().substring(1, 2)));
+			for (FieldVO fieldVO : fieldList){
+				newValue = ISOUtils.mergeArray(newValue, fieldVO.getPayloadValue(this));
 			}
 		}
 		
-		if (type == TypeEnum.ALPHANUMERIC)
+		if (type == TypeEnum.ALPHANUMERIC){
 			payload = getPayloadValue(typeLength, newValue, length);
-		else if (type == TypeEnum.TLV) {
-			String size = getMaxSizeStr(tlvLength, length);
-
-			tlvType = (tlvType == null) ? "" : tlvType;
-			payload = encoding.convert(getMaxSizeStr(tlvType, sizeTypeTLV));
-			payload = ISOUtils.mergeArray(payload, encoding.convert(size));
-			payload = ISOUtils.mergeArray(payload, getPayloadValue(TypeLengthEnum.FIXED, newValue, (size.equals("") ? 0 : Integer.parseInt(size))));
+		}else if (type == TypeEnum.TLV) {	
+			payload = PayloadTransformator.getInstance(encoding).transform(this,  TypeEnum.TLV);
 		}
 		
-		if (superFieldVO != null && superFieldVO.getType() != TypeEnum.TLV)
+		if (superFieldVO != null && superFieldVO.getType() != TypeEnum.TLV){
 			superFieldVO.setLength(superFieldVO.getLength().intValue() + payload.length);
+		}
 		
 		if (type == TypeEnum.TLV && fieldList.size() > 0) {
-			for (FieldVO fieldVO : fieldList)
+			for (FieldVO fieldVO : fieldList){
 				payload = ISOUtils.mergeArray(payload, fieldVO.getPayloadValue(this));
+			}
 			
-			if (superFieldVO == null)
+			if (superFieldVO == null){
 				payload = ISOUtils.mergeArray(encoding.convert(getMaxSizeStr(String.valueOf(payload.length), 3)), payload);
+			}
 		}
 		
 		return payload;
@@ -243,6 +286,7 @@ public class FieldVO extends GenericIsoVO {
 			maxSize = Integer.parseInt(size);
 		}
 		
+		//TODO: Check to Remove
 		if (type == TypeEnum.TLV)
 			payload = ISOUtils.mergeArray(payload, encoding.convert(getMaxSizeStr(encoding.convert(value), maxSize)));
 		else
@@ -287,23 +331,23 @@ public class FieldVO extends GenericIsoVO {
 	 * @param payload
 	 * @param startPosition
 	 * @return
-	 */
+	 */	
 	public int setValueFromPayload(byte[] payload, int startPosition) throws OutOfBoundsException {
 		int endPosition = startPosition;
 		String newContent = "";
 		
 		if (type != TypeEnum.TLV && fieldList.size() > 0) {
-			for (FieldVO fieldVO : fieldList)
+			for (FieldVO fieldVO : fieldList){
 				endPosition = fieldVO.setValueFromPayload(payload, endPosition);
-		}
-		else {
+			}
+		}else {
 			if (type == TypeEnum.ALPHANUMERIC) {
 				if (typeLength == TypeLengthEnum.FIXED) {
-					endPosition = startPosition + length;
+					endPosition = startPosition + encoding.getEncondedByteLength(length);
 					newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
 				}
 				else if (typeLength == TypeLengthEnum.NVAR) {
-					String strVarValue = encoding.convert(ISOUtils.subArray(payload, startPosition, startPosition + length));
+					String strVarValue = encoding.convert(ISOUtils.subArray(payload, startPosition, startPosition + encoding.getEncondedByteLength(length)));
 					int nVarValue = Integer.valueOf(strVarValue);
 					endPosition = startPosition + strVarValue.length() + nVarValue;
 	
@@ -312,39 +356,101 @@ public class FieldVO extends GenericIsoVO {
 				}
 				
 				value = newContent;
-			}
-			else if (type == TypeEnum.TLV) {
-				String strVarValue = new String(ISOUtils.subArray(payload, startPosition, startPosition + 3));
-				int nVarValue = Integer.valueOf(strVarValue);
-				int endTlvPosition = startPosition + strVarValue.length() + nVarValue;
+			}else if (type == TypeEnum.TLV) {
+				final byte[] tlvPayload = ISOUtils.subArray(payload, startPosition, payload.length);
+				final RevertResult revertedValue = PayloadTransformator.getInstance(encoding).revert(tlvPayload, TypeEnum.TLV);
 				
-				endPosition = populateTLVFromPayload(2, 3, payload, startPosition + 3);
-				fieldList = new ArrayList<FieldVO>();
-				FieldVO tlvSubfield;
-				int count = 1;
-				while (endPosition < endTlvPosition) {
-					tlvSubfield = getInstanceCopy();
-					tlvSubfield.setFieldList(new ArrayList<FieldVO>());
-					tlvSubfield.setBitNum(count++);
-					endPosition = tlvSubfield.populateTLVFromPayload(Integer.parseInt(value.substring(0, 1)), Integer.parseInt(value.substring(1, 2)), payload, endPosition);
-					fieldList.add(tlvSubfield);
-				}
+				final FieldVO revertedField = (FieldVO) revertedValue.getResultantObject();
+				this.tlvLength = revertedField.tlvLength;
+				this.tlvType = revertedField.tlvType;
+				this.value = revertedField.value;
+				
+				endPosition = revertedValue.getRevertEndPosition();
 			}
 		}
 		
 		return endPosition;
 	}
-	
-	public int populateTLVFromPayload(int lenType, int lenLen, byte[] payload, int startPosition) throws OutOfBoundsException {
-		int endPosition = startPosition + lenType;
-		tlvType = new String(ISOUtils.subArray(payload, startPosition, endPosition));
-		
-		endPosition = endPosition + lenLen;
-		tlvLength = new String(ISOUtils.subArray(payload, startPosition + lenType, endPosition));
 
-		endPosition = endPosition + Integer.parseInt(tlvLength);
-		value = new String(ISOUtils.subArray(payload, startPosition + lenType + lenLen, endPosition));
-		
-		return endPosition;
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((bitNum == null) ? 0 : bitNum.hashCode());
+		result = prime * result + ((dynaCondition == null) ? 0 : dynaCondition.hashCode());
+		result = prime * result + ((encoding == null) ? 0 : encoding.hashCode());
+		result = prime * result + ((fieldList == null) ? 0 : fieldList.hashCode());
+		result = prime * result + ((length == null) ? 0 : length.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((subFieldName == null) ? 0 : subFieldName.hashCode());
+		result = prime * result + ((tlvLength == null) ? 0 : tlvLength.hashCode());
+		result = prime * result + ((tlvType == null) ? 0 : tlvType.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((typeLength == null) ? 0 : typeLength.hashCode());
+		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FieldVO other = (FieldVO) obj;
+		if (bitNum == null) {
+			if (other.bitNum != null)
+				return false;
+		} else if (!bitNum.equals(other.bitNum))
+			return false;
+		if (dynaCondition == null) {
+			if (other.dynaCondition != null)
+				return false;
+		} else if (!dynaCondition.equals(other.dynaCondition))
+			return false;
+		if (encoding != other.encoding)
+			return false;
+		if (fieldList == null) {
+			if (other.fieldList != null)
+				return false;
+		} else if (!fieldList.equals(other.fieldList))
+			return false;
+		if (length == null) {
+			if (other.length != null)
+				return false;
+		} else if (!length.equals(other.length))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (subFieldName == null) {
+			if (other.subFieldName != null)
+				return false;
+		} else if (!subFieldName.equals(other.subFieldName))
+			return false;
+		if (tlvLength == null) {
+			if (other.tlvLength != null)
+				return false;
+		} else if (!tlvLength.equals(other.tlvLength))
+			return false;
+		if (tlvType == null) {
+			if (other.tlvType != null)
+				return false;
+		} else if (!tlvType.equals(other.tlvType))
+			return false;
+		if (type != other.type)
+			return false;
+		if (typeLength != other.typeLength)
+			return false;
+		if (value == null) {
+			if (other.value != null)
+				return false;
+		} else if (!value.equals(other.value))
+			return false;
+		return true;
 	}
 }

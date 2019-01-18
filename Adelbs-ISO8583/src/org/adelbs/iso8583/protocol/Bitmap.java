@@ -12,6 +12,7 @@ import org.adelbs.iso8583.exception.PayloadIncompleteException;
 import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
+import org.adelbs.iso8583.vo.GenericIsoVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
 
@@ -66,25 +67,31 @@ public class Bitmap {
 		}
 
 		//The next try block will extract the values of each bit field from the payload
+		extractValueFromPayload(payload, messageVO, headerSize, bitmapSize);
+	}
+
+	/**
+	 * Based on the Map of Bits, extract the Value from the Payload and recreate the original MessageVO/FieldVo structure
+	 * with values
+	 * 
+	 * @param payload
+	 * @param messageVO
+	 * @param headerSize
+	 * @param bitmapSize
+	 * @throws PayloadIncompleteException
+	 * @throws ParseException
+	 */
+	private void extractValueFromPayload(byte[] payload, MessageVO messageVO, int headerSize, int bitmapSize) throws PayloadIncompleteException, ParseException {
 		int bitNum = 1;
-		try {
+		try{
 			this.messageVO.setFieldList(new ArrayList<FieldVO>());
 			int startPosition = headerSize + bitmapSize;
-			for (; bitNum < binaryBitmap.length(); bitNum++) {
-				if (binaryBitmap.substring(bitNum, bitNum + 1).equals("1")) {
-					FieldVO foundFieldVO = null;
-					for (FieldVO fieldVO : messageVO.getFieldList()) {
-						if (fieldVO.getBitNum().intValue() == (bitNum + 1)) {
-							foundFieldVO = fieldVO.getInstanceCopy();
-							break;
-						}
-					}
+			for (; bitNum < binaryBitmap.length(); bitNum++){
+				if (this.bitIsEnabled(bitNum)) {
+					final FieldVO foundFieldVO = getFieldVOFromBitMap(messageVO, bitNum);
+					startPosition = foundFieldVO.setValueFromPayload(payload, startPosition);
 					
-					if (foundFieldVO == null) {
-						throw new FieldNotFoundException("Field bit ("+ bitNum +") not found.");
-					}
-					else {
-						startPosition = foundFieldVO.setValueFromPayload(payload, startPosition);
+					if(!foundFieldVO.isIgnored()){
 						bitmap.put(foundFieldVO.getBitNum(), foundFieldVO);
 						bitmap.get(foundFieldVO.getBitNum()).setPresent(true);
 						
@@ -93,29 +100,43 @@ public class Bitmap {
 					}
 				}
 			}
-		}
-		catch (OutOfBoundsException x) {
+		}catch (OutOfBoundsException x) {
 			throw new PayloadIncompleteException("Error trying to parse the fields from the payload. Payload incomplete.", bitNum + 1);
 		}
 		catch (Exception x) {
 			throw new ParseException("Error parsing the message body.\n" + x.getMessage() + "\n" + visualPayload);
 		}
 	}
-	
-	public Bitmap(MessageVO messageVO) {
-		
-		this.messageVO = messageVO.getInstanceCopy();
-		this.messageVO.setFieldList(new ArrayList<FieldVO>());
-		visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
-		
-		for (FieldVO fieldVO : messageVO.getFieldList())
-			if (fieldVO.isPresent()) {
-				bitmap.put(fieldVO.getBitNum(), fieldVO.getInstanceCopy());
-				bitmap.get(fieldVO.getBitNum()).setPresent(true);
-				
-				this.messageVO.getFieldList().add(bitmap.get(fieldVO.getBitNum()));
-				visualPayload.append("Bit").append(fieldVO.getBitNum()).append(": [").append(fieldVO.getPayloadValue()).append("]\n");
+
+	/**
+	 * Search for the field that represents the Bit that is enabled at the BitMap.
+	 * @param messageVO
+	 * @param bitNum
+	 * @param foundFieldVO
+	 * @return 
+	 * @return
+	 * @throws FieldNotFoundException case no fieldVO found
+	 */
+	private FieldVO getFieldVOFromBitMap(final GenericIsoVO genericVO, int bitNum) throws FieldNotFoundException {
+		for (final FieldVO fieldVO : genericVO.getFieldList()) {
+			if (fieldVO.getBitNum().intValue() == (bitNum + 1)) {
+				return fieldVO.getInstanceCopy();
 			}
+		}
+		
+		throw new FieldNotFoundException("Field bit ("+ bitNum +") not found.");
+	}
+
+	private boolean bitIsEnabled(final int bitNum) {
+		return binaryBitmap.substring(bitNum, bitNum + 1).equals("1");
+	}
+	
+	public Bitmap(MessageVO sourceMessageVO) {
+		this.messageVO = sourceMessageVO.getInstanceCopy();
+		this.messageVO.setFieldList(new ArrayList<FieldVO>());
+		visualPayload.append("Message Type: [").append(sourceMessageVO.getType()).append("]\n");
+		
+		buildBitMapFromParentVO(sourceMessageVO, this.messageVO);
 		
 		int lastBit = 0;
 		for (int i = 1; i <= 128; i++) {
@@ -125,18 +146,50 @@ public class Bitmap {
 		
 		totalBits = lastBit;
 		
-		payloadBitmap = messageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(0, 64));
+		payloadBitmap = sourceMessageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(0, 64));
 		visualPayload.append("Bitmap: [").append(new String(payloadBitmap)).append("]\n\n");
 		
 		if (lastBit > 64) {
-			FieldVO secondBitmap = new FieldVO(null, "Bitmap", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 16, messageVO.getBitmatEncoding(), "true");
+			FieldVO secondBitmap = new FieldVO(null, "Bitmap", "", 1, TypeEnum.ALPHANUMERIC, TypeLengthEnum.FIXED, 16, sourceMessageVO.getBitmatEncoding(), "true");
 			binaryBitmap = "1".concat(binaryBitmap.substring(1));
-			payloadBitmap = messageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(0, 64));
-			secondBitmap.setPayloadValue(messageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(64, 128)));
+			payloadBitmap = sourceMessageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(0, 64));
+			secondBitmap.setPayloadValue(sourceMessageVO.getBitmatEncoding().convertBitmap(binaryBitmap.substring(64, 128)));
 			secondBitmap.setPresent(true);
 			bitmap.put(1, secondBitmap);
 			binaryBitmap.substring(0, 64);
 		}
+	}
+	
+	//TODO: @Felipe Why we should create instance copies? Is it necessary?
+	/**
+	 * Calculate the bits that are enabled, based on the UI checkboxes that enables and disables
+	 * super fields. 
+	 * 
+	 * Only message's fields are able to be enabled or disabled, Their bitNum can't be repeated, and 
+	 * will be the base to build the BitMap that will be sent to the Server. SubFields do not participate
+	 * of the bit map calculation
+	 * 
+	 * @param originalParentVO
+	 * @param parentVOCopy
+	 */
+	private void buildBitMapFromParentVO(final GenericIsoVO originalParentVO, final GenericIsoVO parentVOCopy){
+		originalParentVO.getFieldList().forEach(originalFieldVO->{
+			//TODO Maybe we could update isPresent for the Fields and its subfields, when the checkbox is clicked.
+			if (isASuperFieldAndCheckBoxClicked(originalParentVO, originalFieldVO)) {
+				//Setup field copy
+				final FieldVO fieldVOCopy = originalFieldVO.getInstanceCopy();
+				
+				//insert into parent's field list
+				parentVOCopy.getFieldList().add(fieldVOCopy);
+				bitmap.put(originalFieldVO.getBitNum(), fieldVOCopy);
+				
+				visualPayload.append("Bit").append(originalFieldVO.getBitNum()).append(": [").append(originalFieldVO.getPayloadValue()).append("]\n");
+			}
+		});
+	}
+	
+	private static boolean isASuperFieldAndCheckBoxClicked(final GenericIsoVO originalParentVO, FieldVO originalFieldVO) {
+		return originalFieldVO.isPresent() && originalParentVO instanceof MessageVO;
 	}
 
 	public int getSize() {

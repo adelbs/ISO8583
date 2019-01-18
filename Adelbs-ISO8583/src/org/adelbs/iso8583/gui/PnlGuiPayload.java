@@ -300,10 +300,16 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				try {
-					if (tabbedPane.getSelectedIndex() == 0)
-						payloadMessageConfig.setMessageVO(payloadMessageConfig.getMessageVOFromXML(xmlText.getText()));
-					else if (tabbedPane.getSelectedIndex() == 1)
+					if (tabbedPane.getSelectedIndex() == 0){
+						if(server && !request || !server && request){
+							payloadMessageConfig.setMessageVO(payloadMessageConfig.updateMessageValuesFromXML(xmlText.getText())); 
+						}else{
+							payloadMessageConfig.setMessageVO(payloadMessageConfig.buildMessageStructureFromXML(xmlText.getText())); 
+							setReadOnly();
+						}
+					}else if (tabbedPane.getSelectedIndex() == 1){
 						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
+					}
 				}
 				catch (Exception x) {
 					JOptionPane.showMessageDialog(pnlMain, x.getMessage());
@@ -369,6 +375,7 @@ public class PnlGuiPayload extends JPanel {
 		enablePnl(true);
 		payloadMessageConfig.setReadOnly();
 		cmbMessageType.setEnabled(false);
+		setEnableXmlPanel(false);
 	}
 	
 	public void enablePnl(boolean value) {
@@ -380,6 +387,12 @@ public class PnlGuiPayload extends JPanel {
 		btnSavePayload.setEnabled(value);
 		
 		tabbedPane.setEnabled(value);
+	}
+	
+	private void setEnableXmlPanel(boolean value){
+		pnlXML.setEnabled(value);
+		scrXML.setEnabled(value);
+		xmlText.setEnabled(value);
 	}
 	
 	/**

@@ -86,5 +86,4 @@ public final class Main extends JFrame {
 	public PnlGuiConfig getPnlGuiConfig() {
 		return pnlMain.getPnlGuiConfig();
 	}
-	
 }

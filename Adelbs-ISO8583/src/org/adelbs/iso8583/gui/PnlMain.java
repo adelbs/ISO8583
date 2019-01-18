@@ -18,6 +18,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.adelbs.iso8583.helper.Iso8583Config;
+import org.adelbs.iso8583.xml.ISOConfigMarshallerException;
 
 public class PnlMain extends JPanel {
 
@@ -120,13 +121,18 @@ public class PnlMain extends JPanel {
 		//openXML();
 	}
 	
-	private void parseXML() {
+	private void parseXML() {	
 		pnlGuiConfig.save(this);
-		if (tabbedPane.getSelectedComponent().equals(pnlGuiConfig))
-			isoConfig.parseXmlToConfig(this);
-		else 
-			isoConfig.parseConfigToXML();
-		
+		try{
+			if (tabbedPane.getSelectedComponent().equals(pnlGuiConfig)){
+				isoConfig.parseXmlToConfig(this);
+			}else{
+				isoConfig.parseConfigToXML();
+			}
+		}catch(ISOConfigMarshallerException e){
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "An error ocurred while creating the XML.\n\n" + e.getMessage());
+		}
 		pnlGuiConfig.updateTree();
 		pnlGuiConfig.expandAllNodes();
 	}
@@ -169,13 +175,19 @@ public class PnlMain extends JPanel {
 	}
 	
 	private boolean save() {
-		
 		boolean fileSaved = false;
 		
-		if (tabbedPane.getComponent(tabbedPane.getSelectedIndex()) instanceof PnlGuiConfig)
-			isoConfig.parseConfigToXML();
-		else 
-			isoConfig.parseXmlToConfig(this);
+		try{
+			if (tabbedPane.getComponent(tabbedPane.getSelectedIndex()) instanceof PnlGuiConfig){
+				pnlGuiConfig.save(this);
+				isoConfig.parseConfigToXML();
+			}else{
+				isoConfig.parseXmlToConfig(this);
+			}
+		}catch(ISOConfigMarshallerException e){
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "An error ocurred while creating the XML.\n\n" + e.getMessage());
+		}
 		
 		if (txtFilePath.getText().equals("")) {
 			JFileChooser file = new JFileChooser();
