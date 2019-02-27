@@ -48,7 +48,7 @@ public class PnlGuiConfig extends JPanel{
 	private JTree treeTypes;
 	private JScrollPane scrTreeTypes = new JScrollPane();
 	
-	//Botões
+	//Botoes
 	private JButton btnNew = new JButton();
 	private JButton btnNewField = new JButton();
 	private JButton btnRemove = new JButton();
@@ -76,7 +76,7 @@ public class PnlGuiConfig extends JPanel{
 		
 		//######### Apenas para visualizacao no WindowBuilder *********************************
 		scrTreeTypes.setBounds(12, 20, 246, 350); //FAKE!!!!!
-		pnlISOProperties.setBounds(271, 12, 450, 200);
+		pnlISOProperties.setBounds(271, 12, 450, 230);
 		pnlMessageProperties.setBounds(271, 12, 450, 60); //FAKE!!!!
 		pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, 450, 185); //FAKE!!!!!
 		pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, 450, 200); //FAKE!!!!!
@@ -104,7 +104,7 @@ public class PnlGuiConfig extends JPanel{
 				
 				//Paineis de propriedades
 				pnlMessageProperties.setBounds(271, 12, getWidth() - 295, 90);
-				pnlISOProperties.setBounds(271, 12, getWidth() - 295, 200);
+				pnlISOProperties.setBounds(271, 12, getWidth() - 295, 230);
 				pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, getWidth() - 295, 185);
 				pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, getWidth() - 295, 
 						getHeight() - pnlMessageProperties.getHeight() - pnlFieldProperties.getHeight() - 43);
@@ -115,7 +115,7 @@ public class PnlGuiConfig extends JPanel{
 			public void componentHidden(ComponentEvent e) {}
 		}); 
 		
-		//Configurando botões
+		//Configurando botoes
 		btnNew.setIcon(new ImageIcon(PnlGuiConfig.class.getResource("/org/adelbs/iso8583/resource/addType.png")));
 		btnNew.setText("Add Message Type");
 		btnNew.setToolTipText("Add Message Type");
@@ -133,7 +133,7 @@ public class PnlGuiConfig extends JPanel{
 		add(btnNewField);
 		add(btnRemove);
 
-		//Ações dos botões
+		//Acoes dos botoes
 		btnNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				save(pnlMain);
@@ -229,7 +229,7 @@ public class PnlGuiConfig extends JPanel{
 					btnNewField.setEnabled(false);
 					btnRemove.setEnabled(false);
 	
-					//Habilitando os botões
+					//Habilitando os botoes
 					if (selectedNode.getUserObject() instanceof MessageVO || selectedNode.getUserObject() instanceof FieldVO) {
 						btnNewField.setEnabled(true);
 						btnRemove.setEnabled(true);

@@ -25,7 +25,7 @@ final class TreeNodeTestFactory {
 	}
 
 	private static DefaultMutableTreeNode createMessageNode(final String messageCode) {
-		final MessageVO messageVO = new MessageVO(messageCode, EncodingEnum.UTF8, EncodingEnum.UTF8);
+		final MessageVO messageVO = new MessageVO(messageCode, EncodingEnum.UTF8);
 		return new DefaultMutableTreeNode(messageVO);
 	}
 	

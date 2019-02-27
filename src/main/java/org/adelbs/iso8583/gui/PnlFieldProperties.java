@@ -89,7 +89,7 @@ public class PnlFieldProperties extends JPanel {
 		cmbEncoding.setBounds(322, 122, 116, 22);
 		cmbEncoding.setModel(new DefaultComboBoxModel<EncodingEnum>(new EncodingEnum[] {
 				EncodingEnum.UTF8, EncodingEnum.EBCDIC, 
-				EncodingEnum.ISO88591, EncodingEnum.BASE64, EncodingEnum.BINARY}));
+				EncodingEnum.ISO88591, EncodingEnum.BASE64}));
 		
 		chckbxMandatory.setBounds(179, 88, 113, 25);
 		chckbxMandatory.addActionListener(new ActionListener() {

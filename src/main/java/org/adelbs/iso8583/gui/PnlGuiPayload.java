@@ -24,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -55,7 +56,9 @@ public class PnlGuiPayload extends JPanel {
 	
 	private JPanel pnlFormattedFields = new JPanel();
 	private JPanel pnlFields = new JPanel();
-	private JLabel lblBit = new JLabel("Bit #");
+    private JLabel lblHeader = new JLabel("Header:");
+    private JTextField txtHeader = new JTextField();
+    private JLabel lblBit = new JLabel("Bit #");
 	private JLabel lblFieldName = new JLabel("Field Name");
 	private JLabel lblFieldValue = new JLabel("Field Value");
 	private JLabel lblType = new JLabel("Type");
@@ -80,7 +83,8 @@ public class PnlGuiPayload extends JPanel {
 		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/openFile.png")));
 		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/saveFile.png")));
 		btnNextPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/update.png")));
-		
+        
+        txtHeader.setEnabled(false);
 		tabbedPane.setEnabled(false);
 		if (server) {
 			enablePnl(false);
@@ -139,7 +143,7 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.setBounds(12, 42, 716, 516);
 		
 		//Formatted fields
-		scrFields.setBounds(12, 32, 681, 432);
+		scrFields.setBounds(12, 67, 681, 467);
 		
 		//***************************************************************************
 		
@@ -156,8 +160,9 @@ public class PnlGuiPayload extends JPanel {
 				btnSavePayload.setBounds(getWidth() - 160, 9, 143, 25);
 				tabbedPane.setBounds(12, 42, getWidth() - 25, getHeight() - 55);
 				
-				//Formatted fields
-				scrFields.setBounds(0, 32, tabbedPane.getWidth() - 5, tabbedPane.getHeight() - 60);
+                //Formatted fields
+                //32
+				scrFields.setBounds(0, 67, tabbedPane.getWidth() - 5, tabbedPane.getHeight() - 95);
 			}
 			@Override
 			public void componentMoved(ComponentEvent e) {}
@@ -170,25 +175,40 @@ public class PnlGuiPayload extends JPanel {
 		//Formatted fields ***************************************************************************
 		tabbedPane.addTab("Formatted Fields", pnlFormattedFields);
 		pnlFormattedFields.setLayout(null);
-		
+        
+        lblHeader.setFont(new Font("Tahoma", Font.BOLD, 14));
+        lblHeader.setBounds(30, 10, 60, 16);
+        pnlFormattedFields.add(lblHeader);
+        
+        txtHeader.setBounds(100, 10, 570, 20);
+        pnlFormattedFields.add(txtHeader);
+
+        txtHeader.addKeyListener(new KeyListener(){
+            public void keyTyped(KeyEvent e) { }
+            public void keyReleased(KeyEvent e) {
+                payloadMessageConfig.setHeaderValue(txtHeader.getText());
+            }
+            public void keyPressed(KeyEvent e) { }
+        });
+
 		lblBit.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblBit.setBounds(30, 10, 40, 16);
+		lblBit.setBounds(30, 45, 40, 16);
 		pnlFormattedFields.add(lblBit);
 		
 		lblFieldName.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblFieldName.setBounds(80, 10, 88, 16);
+		lblFieldName.setBounds(80, 45, 88, 16);
 		pnlFormattedFields.add(lblFieldName);
 		
 		lblFieldValue.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblFieldValue.setBounds(190, 10, 77, 16);
+		lblFieldValue.setBounds(190, 45, 77, 16);
 		pnlFormattedFields.add(lblFieldValue);
 		
 		lblType.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblType.setBounds(470, 10, 56, 16);
+		lblType.setBounds(470, 45, 56, 16);
 		pnlFormattedFields.add(lblType);
 
 		lblDynamic.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblDynamic.setBounds(580, 10, 70, 16);
+		lblDynamic.setBounds(580, 45, 70, 16);
 		pnlFormattedFields.add(lblDynamic);
 		
 		pnlFormattedFields.add(scrFields);
@@ -301,13 +321,21 @@ public class PnlGuiPayload extends JPanel {
 			public void stateChanged(ChangeEvent e) {
 				try {
 					if (tabbedPane.getSelectedIndex() == 0){
-						if(server && !request || !server && request){
-							payloadMessageConfig.setMessageVO(payloadMessageConfig.updateMessageValuesFromXML(xmlText.getText())); 
-						}else{
-							payloadMessageConfig.setMessageVO(payloadMessageConfig.buildMessageStructureFromXML(xmlText.getText())); 
+                        MessageVO messageVO;
+
+						if (server && !request || !server && request) {
+                            messageVO = payloadMessageConfig.updateMessageValuesFromXML(xmlText.getText());
+                            payloadMessageConfig.setMessageVO(messageVO); 
+                        }
+                        else {
+                            messageVO = payloadMessageConfig.buildMessageStructureFromXML(xmlText.getText());
+                            payloadMessageConfig.setMessageVO(messageVO); 
 							setReadOnly();
-						}
-					}else if (tabbedPane.getSelectedIndex() == 1){
+                        }
+
+                        txtHeader.setText(messageVO.getHeader());
+                    }
+                    else if (tabbedPane.getSelectedIndex() == 1){
 						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
 					}
 				}
@@ -331,9 +359,9 @@ public class PnlGuiPayload extends JPanel {
 
 	public void checkAdvancedTag() {
 		if (xmlText.getText().indexOf("<%") > -1 || xmlText.getText().indexOf("%>") > -1) {
-			enablePnl(false);
+            enablePnl(false);
 			
-			tabbedPane.setEnabled(true);
+            tabbedPane.setEnabled(true);
 			tabbedPane.setEnabledAt(0, false);
 			tabbedPane.setEnabledAt(1, true);
 		}
@@ -348,7 +376,8 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.setEnabledAt(0, true);
 		
 		tabbedPane.setEnabled(false);
-		tabbedPane.setSelectedIndex(0);
+        tabbedPane.setSelectedIndex(0);
+        txtHeader.setText("");
 		pnlFields.removeAll();
 		
 		if (cmbMessageType.getSelectedItem() != null) {
@@ -357,7 +386,8 @@ public class PnlGuiPayload extends JPanel {
 			}
 			else {
 				tabbedPane.setEnabled(true);
-				
+                txtHeader.setEnabled(true);
+                
 				payloadMessageConfig.setMessageVO(pnlMain.getIso8583Config().getMessageVOAtTree(((MessageVO) cmbMessageType.getSelectedItem()).getType()));
 				updateScrFields();
 			}
@@ -386,7 +416,8 @@ public class PnlGuiPayload extends JPanel {
 		btnOpenPayload.setEnabled(value);
 		btnSavePayload.setEnabled(value);
 		
-		tabbedPane.setEnabled(value);
+        tabbedPane.setEnabled(value);
+        txtHeader.setEnabled(value);
 	}
 	
 	private void setEnableXmlPanel(boolean value){

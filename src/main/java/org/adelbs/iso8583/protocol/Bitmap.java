@@ -38,19 +38,22 @@ public class Bitmap {
 		this.messageVO = messageVO.getInstanceCopy();
 		
 		String tempBitmap1 = "";
-		String tempBitmap2 = "";
-		int headerSize = 4;
+        String tempBitmap2 = "";
+        int headerPlusType = messageVO.getHeaderSize() + 4;
 		int bitmapSize = 0;
 		
 		//This try block will extract the bitmap from the payload
 		try {
 			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
-			
+            
+            if (messageVO.getHeaderSize() > 0)
+                this.messageVO.setHeader(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, messageVO.getHeaderSize())));
+
 			bitmapSize = messageVO.getBitmatEncoding().getMinBitmapSize();
-			tempBitmap1 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerSize, headerSize + bitmapSize));
+			tempBitmap1 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerPlusType, headerPlusType + bitmapSize));
 			
 			if (tempBitmap1.substring(0, 1).equals("1")) {
-				tempBitmap2 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerSize + bitmapSize, headerSize + (bitmapSize * 2)));
+				tempBitmap2 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerPlusType + bitmapSize, headerPlusType + (bitmapSize * 2)));
 				bitmapSize = bitmapSize * 2;
 			}
 			
@@ -67,7 +70,7 @@ public class Bitmap {
 		}
 
 		//The next try block will extract the values of each bit field from the payload
-		extractValueFromPayload(payload, messageVO, headerSize, bitmapSize);
+		extractValueFromPayload(payload, messageVO, headerPlusType, bitmapSize);
 	}
 
 	/**
@@ -212,10 +215,6 @@ public class Bitmap {
 		return messageVO;
 	}
 
-	public Encoding getHeaderEncoding() {
-		return messageVO.getHeaderEncoding();
-	}
-	
 	public Encoding getBitmapEncoding() {
 		return messageVO.getBitmatEncoding();
 	}

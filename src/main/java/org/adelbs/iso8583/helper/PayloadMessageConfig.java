@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 public class PayloadMessageConfig {
 
 	private MessageVO messageVO;
-	
+    
 	private ArrayList<GuiPayloadField> fieldList;
 
 	private int numLines;
@@ -60,18 +60,18 @@ public class PayloadMessageConfig {
 	
 	public PayloadMessageConfig(Iso8583Config isoConfig) {
 		this.pnlFields = new JPanel();
-		this.isoConfig = isoConfig;
+        this.isoConfig = isoConfig;
 	}
 	
 	public PayloadMessageConfig(Iso8583Config isoConfig, JPanel pnlFields) {
 		this.pnlFields = pnlFields;
-		this.isoConfig = isoConfig;
+        this.isoConfig = isoConfig;
 	}
 
 	public void setMessageVO(String messageType) {
 		setMessageVO(isoConfig.getMessageVOAtTree(messageType));
 	}
-	
+    
 	public void setMessageVO(MessageVO messageVO) {
 		if (messageVO != null) {
 			this.messageVO = messageVO.getInstanceCopy();
@@ -121,7 +121,7 @@ public class PayloadMessageConfig {
 			xmlMessage.append(isoTest.toXML(false));
 
 		if (messageVO != null) {
-			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\">");
+			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\">");
 			
 			for (GuiPayloadField payloadField : fieldList)
 				xmlMessage.append(payloadField.getXML());
@@ -139,24 +139,22 @@ public class PayloadMessageConfig {
 		setMessageVO(messageVO);
 		return messageVO;
 	}
-	
-	
-	/**
-	 * Creates a {@link MessageVO} where its list of Fields will be created from the XML.
-	 * 
-	 * This method was replaced by two method of this class, {@link #buildMessageStructureFromXML} and {@link #updateMessageValuesFromXML}
-	 * and will be removed on a future release. Newer implementations should choose between those two methods, and
-	 * older implementations should update its code.
-	 * 
-	 * @deprecated
-	 * @param xml Message XML from Request/Response panel
-	 * @return {@link MessageVO} updated with a list of Field from the XML panel
-	 * @throws ParseException
-	 */
-	public MessageVO getMessageVOFromXML(String xml) throws ParseException {
-		return this.buildMessageStructureFromXML(xml);
-	}
-	
+    
+    public void setHeaderValue(String headerValue) {
+        
+        this.messageVO.setHeaderEncoding(isoConfig.getHeaderEncoding());
+        this.messageVO.setHeaderSize(isoConfig.getHeaderSize());
+        
+        if (headerValue != null) {
+            if (headerValue.length() > isoConfig.getHeaderSize()) {
+                this.messageVO.setHeader(headerValue.substring(0, isoConfig.getHeaderSize()));
+            }
+            else {
+                this.messageVO.setHeader(headerValue);
+            }
+        }
+    }
+		
 	private static NodeList convertToDOMNodes(final String xml) throws ParserConfigurationException, SAXException, IOException {
 		final Document document = XMLUtils.convertXMLToDOM(xml);
 		return document.getDocumentElement().getChildNodes();
@@ -193,7 +191,21 @@ public class PayloadMessageConfig {
 			for (int i = 0; i < nodeList.getLength(); i++) {
 				final Node node = nodeList.item(i);
 				if ("message".equalsIgnoreCase(node.getNodeName())) {
-					newMessageVO = isoConfig.getMessageVOAtTree(ISOUtils.getAttr(node, "type", "")).getInstanceCopy();
+                    newMessageVO = isoConfig.getMessageVOAtTree(ISOUtils.getAttr(node, "type", "")).getInstanceCopy();
+                    
+                    String headerValue = ISOUtils.getAttr(node, "header", "");
+                    if (headerValue != null) {
+                        if (headerValue.length() > isoConfig.getHeaderSize()) {
+                            newMessageVO.setHeader(headerValue.substring(0, isoConfig.getHeaderSize()));
+                        }
+                        else {
+                            newMessageVO.setHeader(headerValue);
+                        }
+                    }
+
+                    newMessageVO.setHeaderEncoding(isoConfig.getHeaderEncoding());
+                    newMessageVO.setHeaderSize(isoConfig.getHeaderSize());
+
 					final ArrayList<FieldVO> messageFieldList = newMessageVO.getFieldList();
 					final ArrayList<FieldVO> xmlFieldList = getFieldsFromXML(node.getChildNodes(), messageFieldList);
 					final List<FieldVO> newFieldList = fieldListMege.merge(messageFieldList, xmlFieldList);
@@ -360,7 +372,8 @@ public class PayloadMessageConfig {
 			
 			if (isSubfield){
 				superFieldVO.getFieldList().add(this.fieldVO);
-			}else{
+            }
+            else{
 				messageVO.getFieldList().add(this.fieldVO);
 			}
 			

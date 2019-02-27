@@ -1,6 +1,7 @@
 package org.adelbs.iso8583.clientserver;
 
 import java.io.IOException;
+import java.net.Socket;
 
 import org.adelbs.iso8583.exception.ConnectionException;
 import org.adelbs.iso8583.exception.ParseException;
@@ -13,19 +14,24 @@ public class MockServerCallback extends CallbackAction{
 	private final Iso8583Config isoConfig;
 	private ISOConnection isoConnection;
 	
+	private Socket socketToRespond;
+	
 	MockServerCallback(final ISOConnection isoConnection, final Iso8583Config isoConfig) {
 		this.isoConfig = isoConfig;
 		this.isoConnection = isoConnection;
 	}
 	
 	//TODO
-	public void dataReceived(byte[] data){
+	public void dataReceived(SocketPayload payload){
 		PayloadMessageConfig payloadMessageConfig = new PayloadMessageConfig(isoConfig);
 		try {
-			payloadMessageConfig.updateFromPayload(data);
+			payloadMessageConfig.updateFromPayload(payload.getData());
 			final MessageVO received = payloadMessageConfig.buildMessageStructureFromXML(payloadMessageConfig.getXML());
 			respondImediately(payloadMessageConfig, received);
-		} catch (ParseException e) {
+			
+			socketToRespond = payload.getSocket();
+		} 
+		catch (ParseException e) {
 			System.out.println("Server [Callback]: "+ e.getMessage());
 		}
 	}
@@ -39,7 +45,7 @@ public class MockServerCallback extends CallbackAction{
 			if (!isoConnection.isConnected()){
 				isoConnection.connect();
 			}
-			isoConnection.sendBytes(responseData, false);
+			isoConnection.send(new SocketPayload(responseData, socketToRespond));
 			//isoConnection.resetSocket(true);
 		} catch (IOException | ConnectionException | InterruptedException e) {
 			System.out.println("Server [Callback]: "+ e.getMessage());

@@ -170,7 +170,7 @@ public class PnlMain extends JPanel {
 			pnlGuiConfig.updateTree();
 			pnlGuiConfig.expandAllNodes();
 			
-			pnlGuiConfig.updateTree();
+            pnlGuiConfig.updateTree();
 		}
 	}
 	

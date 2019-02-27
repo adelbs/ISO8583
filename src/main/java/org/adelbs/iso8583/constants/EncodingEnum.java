@@ -65,7 +65,7 @@ public enum EncodingEnum implements Encoding {
 	 */
 	//TODO: This method should be on a separated UI class. UI must be separated from business classes
 	public static void addCmbItemList(JComboBox<EncodingEnum> combo) {
-		combo.addItem(BINARY);
+		// combo.addItem(BINARY);
 		combo.addItem(EBCDIC);
 		combo.addItem(ISO88591);
 		combo.addItem(UTF8);

@@ -1,21 +1,13 @@
 package org.adelbs.iso8583.clientserver;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.adelbs.iso8583.constants.ForceCloseConnection;
 import org.adelbs.iso8583.exception.ConnectionException;
-import org.adelbs.iso8583.exception.InvalidPayloadException;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.helper.Iso8583Config;
-import org.adelbs.iso8583.util.ISOUtils;
 
 
 public class ISOConnection {
@@ -25,17 +17,10 @@ public class ISOConnection {
 	private boolean running = false;
 	private long lastAction = 0;
 	
-	private ServerSocket listener = null;
-	private Socket socket = null;
-	private InputStream input = null;
-	private OutputStream out = null;
-
-	private InetSocketAddress address;
 	private Iso8583Config isoConfig;
 	private CallbackAction callback;
 
 	private final PayloadQueue payloadQueue = new PayloadQueue();
-	private Receiver receiver = new Receiver();
 	private Sender sender = new Sender();
 
 	private boolean isServer;
@@ -43,8 +28,10 @@ public class ISOConnection {
 	private int port;
 	private int timeout;
 	
+	private ISOServer isoServer;
+	private ISOClient isoClient;
+	
 	public ISOConnection(boolean isServer, String host, int port, int timeout) {
-		address = new InetSocketAddress(host, port);
 		this.isServer = isServer;
 		this.host = host;
 		this.port = port;
@@ -55,22 +42,15 @@ public class ISOConnection {
 		if (isoConfig != null && callback != null) {
 			if(isoConfig.getXmlFilePath()!=null){
 				registerActionTimeMilis();
-				if (isServer) {
-					listener = new ServerSocket();
-					listener.bind(address, 100);
-					
-					callback.log("The Server is up!");
-					callback.log("Waiting the request...");
-				}
-				else {
-					callback.log("Opening connection at " + host + ":" + port + "...");
-					socket = new Socket(host, port);
-				}
+				if (isServer) 
+					this.isoServer = new ISOServer(this, host, port, isoConfig, payloadQueue, callback);
+				else 
+					this.isoClient = new ISOClient(host, port, isoConfig, payloadQueue, callback);
 				
 				running = true;
-				receiver.start();
 				sender.start();
-			}else{
+			}
+			else{
 				throw new ConnectionException("ISOConfig is missing");
 			}
 		}
@@ -83,58 +63,36 @@ public class ISOConnection {
 		return running;
 	}
 	
-	public void resetSocket() {
-		if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
-		socket = null;
-	}
-	
 	public void endConnection() {
 		running = false;
 		lastAction = 0;
 		
-		if (listener != null) try {listener.close();} catch (Exception x) {x.printStackTrace();}
-		if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
-		if (input != null) try {input.close();} catch (Exception x) {x.printStackTrace();}
-		if (out != null) try {out.close();} catch (Exception x) {x.printStackTrace();}
+		if (isoClient != null) isoClient.closeConnection();
+		if (isoServer != null) isoServer.closeConnection();
 
-		listener = null;
-		socket = null;
-		input = null;
-		out = null;
-
-		receiver = null;
+		isoClient = null;
+		isoServer = null;
 		sender = null;
 	}
 	
-	private boolean checkForceCloseConnection(List<Byte> bytes) {
-		boolean isClose = false;
-		
-		try {
-			isClose = new String(ForceCloseConnection.CLOS.bytes).equals(new String(ISOUtils.listToArray(bytes)));
+	private void waitRequest(int keepaliveTimeout) throws InterruptedException {
+		while (running && !payloadQueue.hasMorePayloadIn()) {
+			Thread.sleep(SLEEP_TIME);
+			
+			if (keepaliveTimeout > 0 && (System.currentTimeMillis() - startOfWaitNextRequest) > (keepaliveTimeout * 1000)) {
+				startOfWaitNextRequest = System.currentTimeMillis();
+				callback.keepalive();
+			}
+			
 		}
-		catch (Exception e) { }
-		
-		if (isClose)
-			endConnection();
+	}
 
-		return isClose;
-	}
-	
-	private String bytesToConsole(byte[] data) {
-		String result = "";
-		
-		for (int i = 0; i < data.length; i++)
-			result += "byte[" + i + "]{" + data[i] + "},\n";
-		
-		return result;
-	}
-	
 	private long startOfWaitNextRequest = 0;
 	public void processNextPayload(boolean waitIfThereIsNothingAtQueue, int keepaliveTimeout) throws ParseException, InterruptedException {
 		
 		if (waitIfThereIsNothingAtQueue) {
 			startOfWaitNextRequest = System.currentTimeMillis();
-			receiver.waitRequest(keepaliveTimeout);
+			waitRequest(keepaliveTimeout);
 		}
 		
 		if (payloadQueue.hasMorePayloadIn()) {
@@ -152,15 +110,12 @@ public class ISOConnection {
 	public void setCallback(CallbackAction callback) {
 		this.callback = callback;
 	}
-	
 
-	public void sendBytes(byte[] data, boolean waitReponse) throws IOException, ParseException, InterruptedException {
-		payloadQueue.addPayloadOut(data);
-		if (waitReponse)
-			receiver.waitRequest(0);
+	public void send(SocketPayload payload) throws IOException, ParseException, InterruptedException {
+		payloadQueue.addPayloadOut(payload);
 	}
 	
-	private void registerActionTimeMilis() {
+	public void registerActionTimeMilis() {
 		lastAction = System.currentTimeMillis();
 	}
 	
@@ -172,17 +127,30 @@ public class ISOConnection {
 		return port;
 	}
 	
-	private abstract class DefThread extends Thread {
+	public Socket getClientSocket() {
+		Socket socket = null;
+		if (isoClient != null)
+			socket = isoClient.getSocket();
+		return socket;
+	}
+	
+	private class Sender extends Thread {
+		
+		Sender() {
+			setName("Sender");
+		}
+		
 		public void run() {
 			try {
 				while (running) {
 					try {
-						exec();
+						if (payloadQueue.hasMorePayloadOut())
+					        send(payloadQueue.getNextPayloadOut());
+
 						sleep(SLEEP_TIME);
 					}
 					catch (SocketException se) {
 						callback.log("Client disconnected...");
-						resetSocket();
 					}
 					
 					if (timeout < (System.currentTimeMillis() - lastAction)) {
@@ -192,7 +160,7 @@ public class ISOConnection {
 					}
 				}
 			}
-			catch (InterruptedException | ParseException | IOException x) {
+			catch (InterruptedException | IOException x) {
 				if (running) {
 					x.printStackTrace();
 					callback.log("ERROR:");
@@ -200,13 +168,6 @@ public class ISOConnection {
 				}
 			}
 			finally {
-				if (listener != null) try {listener.close();} catch (Exception x) {x.printStackTrace();}
-				if (socket != null) try {socket.close();} catch (Exception x) {x.printStackTrace();}
-				if (input != null) try {input.close();} catch (Exception x) {x.printStackTrace();}
-				if (out != null) try {out.close();} catch (Exception x) {x.printStackTrace();}
-				
-				running = false;
-				
 				endConnection();
 				
 				callback.log("Connection closed.");
@@ -214,80 +175,15 @@ public class ISOConnection {
 			}
 		}
 		
-		protected abstract void exec() throws IOException, ParseException;
-	}
-	
-	private class Receiver extends DefThread {
-		
-		private List<Byte> bytes;
-		
-		protected void exec() throws IOException, ParseException {
-			if (socket == null) {
-				if (isServer) {
-					socket = listener.accept();
-					callback.log("Client connected!");
-					socket.sendUrgentData(1);
-					registerActionTimeMilis();
-				}
-				else {
-					socket = new Socket(host, port);
-				}
-			}
-			
-			callback.log("Waiting for the bytes...");
-			input = socket.getInputStream();
-		
-			try {
-				bytes = new ArrayList<Byte>();
-				while (!socket.isClosed() && !checkForceCloseConnection(bytes) && !isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig))
-					bytes.add(new Byte((byte) input.read()));
-				
-				byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
-				
-				/*test*/
-				//callback.log("Bytes received: " + bytesToConsole(data));
-				callback.log("---");
-				callback.log("Total Bytes received: " + bytesToConsole(ISOUtils.listToArray(bytes)));
-				callback.log("---");
-				/*test*/
-				registerActionTimeMilis();
-				
-				payloadQueue.addPayloadIn(data);
-			}
-			catch (InvalidPayloadException e) {
-				callback.log("Invalid Payload ("+ e.getMessage() +")");
-				resetSocket();
-			}
-		}
-		
-		public void waitRequest(int keepaliveTimeout) throws InterruptedException {
-			while (running && !payloadQueue.hasMorePayloadIn()) {
-				sleep(SLEEP_TIME);
-				
-				if (keepaliveTimeout > 0 && (System.currentTimeMillis() - startOfWaitNextRequest) > (keepaliveTimeout * 1000)) {
-					startOfWaitNextRequest = System.currentTimeMillis();
-					callback.keepalive();
-				}
-				
-			}
-		}
-	}
-	
-	private class Sender extends DefThread {
-		protected void exec() throws IOException {
-			if (payloadQueue.hasMorePayloadOut())
-		        send(payloadQueue.getNextPayloadOut());
-		}
-		
-		public void send(byte[] data) throws IOException {
+		private void send(SocketPayload payload) throws IOException {
 			synchronized(this) {
 				registerActionTimeMilis();
 				
-				if (socket != null && !socket.isClosed()) {
-					out = socket.getOutputStream();
+				if (payload.getSocket() != null && !payload.getSocket().isClosed()) {
+					OutputStream out = payload.getSocket().getOutputStream();
 					
-					callback.log("Sending the payload...");
-			        out.write(data);
+					callback.log("Sending data...");
+			        out.write(payload.getData());
 			        out.flush();
 				}
 				else {
@@ -295,11 +191,5 @@ public class ISOConnection {
 				}
 			}
 		}
-		
-		public void waitRequest() throws InterruptedException {
-			while (running && payloadQueue.hasMorePayloadOut())
-				sleep(SLEEP_TIME);
-		}
-
 	}
 }

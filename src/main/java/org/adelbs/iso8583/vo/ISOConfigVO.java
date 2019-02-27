@@ -7,30 +7,67 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 import org.adelbs.iso8583.constants.DelimiterEnum;
+import org.adelbs.iso8583.constants.EncodingEnum;
 
 /**
  * Representation of a ISO8583 Config.
  */
 @XmlRootElement(name="iso8583")
+@XmlType(propOrder={"delimiter", "headerEncoding", "headerSize", "messageList"})
 public class ISOConfigVO {
 	
-	private DelimiterEnum delimiter;
-	private final List<MessageVO> messageList = new ArrayList<MessageVO>();
-	
-	public ISOConfigVO(){}
-	
-	/**
-	 * Create a new instance of a ISOConfig for a specific Delimiter
-	 * @param delimiter
-	 */
+    private DelimiterEnum delimiter;
+    private EncodingEnum headerEncoding;
+    private Integer headerSize;
+    private final List<MessageVO> messageList = new ArrayList<MessageVO>();
+
+    public ISOConfigVO() {
+    }
+
+    /**
+     * @return the headerSize
+     */
+    @XmlAttribute(name="headerSize")
+    public Integer getHeaderSize() {
+        return headerSize;
+    }
+
+    /**
+     * @param headerSize the headerSize to set
+     */
+    public void setHeaderSize(Integer headerSize) {
+        this.headerSize = headerSize;
+    }
+
+    /**
+     * @return the headerEncoding
+     */
+    @XmlAttribute(name="headerEncoding")
+    public EncodingEnum getHeaderEncoding() {
+        return headerEncoding;
+    }
+
+    /**
+     * @param headerEncoding the headerEncoding to set
+     */
+    public void setHeaderEncoding(EncodingEnum headerEncoding) {
+        this.headerEncoding = headerEncoding;
+    }
+
+    /**
+     * Create a new instance of a ISOConfig for a specific Delimiter
+     * 
+     * @param delimiter
+     */
 	public ISOConfigVO(DelimiterEnum delimiter) {
 		super();
 		this.delimiter = delimiter;
 	}
 
-	@XmlAttribute
+	@XmlAttribute(name="delimiter")
 	public DelimiterEnum getDelimiter() {
 		return delimiter;
 	}

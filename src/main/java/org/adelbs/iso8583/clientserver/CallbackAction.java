@@ -4,7 +4,7 @@ import org.adelbs.iso8583.exception.ParseException;
 
 public abstract class CallbackAction {
 
-	public abstract void dataReceived(byte[] data) throws ParseException;
+	public abstract void dataReceived(SocketPayload payload) throws ParseException;
 	
 	public abstract void log(String log);
 	

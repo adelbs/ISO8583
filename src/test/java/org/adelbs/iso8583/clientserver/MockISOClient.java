@@ -39,7 +39,7 @@ class MockISOClient extends MockISOConnection implements Callable<MockResult>{
 			final ISOMessage sendISOMessage = new ISOMessage(messageToBeSent);
 			final byte[] data = ISOCONFIG.getDelimiter().preparePayload(sendISOMessage, ISOCONFIG);
 			
-			conn.sendBytes(data, false);
+			conn.send(new SocketPayload(data, conn.getClientSocket()));
 			System.out.println("Client: Message Sent");
 			
 			System.out.println("Client: Waiting Response");

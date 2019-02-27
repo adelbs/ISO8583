@@ -39,7 +39,7 @@ public class FieldVO extends GenericIsoVO {
 	
 	private String dynaCondition;
 	
-	//Valor a ser populado durante a execução do ISO
+	//Valor a ser populado durante a execucao do ISO
 	private boolean isPresent = false;
 	private String tlvType = "";
 	private String tlvLength = "";

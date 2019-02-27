@@ -42,9 +42,11 @@ public class Iso8583Config {
 	private DefaultMutableTreeNode configTreeNode;
 	private XmlTextPane xmlText = new XmlTextPane();
 	
-	private DelimiterEnum isoDelimiter;
+    private DelimiterEnum isoDelimiter;
+    private EncodingEnum headerEncoding;
+    private Integer headerSize;
 	
-	//Arquivo de configuração carregado
+	//Arquivo de configuracao carregado
 	private String xmlFilePath = null;
 	
 	public Iso8583Config(String fileName) {
@@ -54,7 +56,9 @@ public class Iso8583Config {
 	}
 	
 	public Iso8583Config() {
-		isoDelimiter = DelimiterEnum.getDelimiter("");
+        isoDelimiter = DelimiterEnum.getDelimiter("");
+        headerEncoding = EncodingEnum.getEncoding("");
+        headerSize = 0;
 		configTreeNode = new DefaultMutableTreeNode("ISO8583");
 	}
 	
@@ -67,7 +71,7 @@ public class Iso8583Config {
 	}
 	
 	public DefaultMutableTreeNode addType() {
-		MessageVO parseVO = new MessageVO("0000", EncodingEnum.UTF8, EncodingEnum.UTF8);
+		MessageVO parseVO = new MessageVO("0000", EncodingEnum.UTF8);
 		DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(parseVO);
 		configTreeNode.add(newNode);
 		return newNode;
@@ -129,7 +133,9 @@ public class Iso8583Config {
 	public void parseConfigToXML() throws ISOConfigMarshallerException {
 		final ISOConfigMarshaller xmlParser = ISOConfigMarshaller.creatMarshaller();
 		final ISOConfigVO isoConfigVO = ISOConfigGuiConverter.revert(configTreeNode);
-		isoConfigVO.setDelimiter(isoDelimiter);
+        isoConfigVO.setDelimiter(isoDelimiter);
+        isoConfigVO.setHeaderEncoding(headerEncoding);
+        isoConfigVO.setHeaderSize(headerSize);
 		xmlText.setText(xmlParser.marshal(isoConfigVO));
 	}
 	
@@ -143,7 +149,15 @@ public class Iso8583Config {
 				
 				DefaultMutableTreeNode lastParseNode;
 				
-				setDelimiterEnum(DelimiterEnum.getDelimiter(document.getDocumentElement().getAttribute("delimiter")));
+                setDelimiterEnum(DelimiterEnum.getDelimiter(document.getDocumentElement().getAttribute("delimiter")));
+                setHeaderEncoding(EncodingEnum.getEncoding(document.getDocumentElement().getAttribute("headerEncoding")));
+                
+                try {
+                    setHeaderSize(Integer.parseInt(document.getDocumentElement().getAttribute("headerSize")));
+                }
+                catch (Exception x) {
+                    setHeaderSize(0);
+                }
 				
 				NodeList nodeList = document.getDocumentElement().getChildNodes();
 				Node node;
@@ -155,7 +169,6 @@ public class Iso8583Config {
 						lastParseNode = addType();
 						
 						((MessageVO) lastParseNode.getUserObject()).setType(ISOUtils.getAttr(node, "type", "0000"));;
-						((MessageVO) lastParseNode.getUserObject()).setHeaderEncoding(EncodingEnum.getEncoding(ISOUtils.getAttr(node, "header-encoding", "")));
 						((MessageVO) lastParseNode.getUserObject()).setBitmatEncoding(EncodingEnum.getEncoding(ISOUtils.getAttr(node, "bitmap-encoding", "")));
 						
 						addFieldsToTree(pnlMain, node, lastParseNode);
@@ -175,7 +188,11 @@ public class Iso8583Config {
 		final List<MessageVO> messages = isoConfigVO.getMessageList();
 		for (MessageVO messageVO : messages) {
 			if (messageVO.getType().equalsIgnoreCase(type)) {
-				newMessageVO = messageVO.getInstanceCopy();
+                newMessageVO = messageVO.getInstanceCopy();
+                
+                newMessageVO.setHeaderEncoding(getHeaderEncoding());
+                newMessageVO.setHeaderSize(getHeaderSize());   
+
 				break;
 			}
 		}		
@@ -337,7 +354,7 @@ public class Iso8583Config {
 	
 	public boolean validateNode(GenericIsoVO isoVO, DefaultMutableTreeNode selectedNodeParent) {
 		if (isoVO instanceof FieldVO) {
-			if (selectedNodeParent == null && ((FieldVO) isoVO).getBitNum().intValue() == 1)
+			if (selectedNodeParent.getUserObject() instanceof MessageVO && ((FieldVO) isoVO).getBitNum().intValue() == 1)
 				isoVO.addValidationError(NodeValidationError.RESERVED_BIT_NUMBER);
 			else
 				isoVO.removeValidationError(NodeValidationError.RESERVED_BIT_NUMBER);
@@ -361,7 +378,7 @@ public class Iso8583Config {
 					
 					for (int j = 0; j < selectedNodeParent.getChildCount(); j++) {
 						fieldVO2 = (FieldVO) ((DefaultMutableTreeNode) selectedNodeParent.getChildAt(j)).getUserObject();
-						if (!fieldVO1.equals(fieldVO2) && fieldVO1.getBitNum().intValue() == fieldVO2.getBitNum().intValue()) {
+						if (fieldVO1 != fieldVO2 && fieldVO1.getBitNum().intValue() == fieldVO2.getBitNum().intValue()) {
 							
 							boolean isDynamic1 = !fieldVO1.getDynaCondition().equals("") && !fieldVO1.getDynaCondition().equals("true");
 							boolean isDynamic2 = !fieldVO2.getDynaCondition().equals("") && !fieldVO2.getDynaCondition().equals("true");
@@ -448,11 +465,27 @@ public class Iso8583Config {
 	public DelimiterEnum getDelimiterEnum() {
 		return isoDelimiter;
 	}
-	
+    
+    public EncodingEnum getHeaderEncoding() {
+        return headerEncoding;
+    }
+
+    public Integer getHeaderSize() {
+        return headerSize;
+    }
+
 	public void setDelimiterEnum(DelimiterEnum isoDelimiter) {
 		this.isoDelimiter = isoDelimiter;
 	}
-	
+    
+    public void setHeaderEncoding(EncodingEnum headerEncoding) {
+        this.headerEncoding = headerEncoding;
+    }
+
+    public void setHeaderSize(Integer headerSize) {
+        this.headerSize = headerSize;
+    }
+
 	public ISO8583Delimiter getDelimiter() {
 		return isoDelimiter.getDelimiter();
 	}
@@ -464,8 +497,9 @@ public class Iso8583Config {
 		MessageVO result = null;
 		try {
 			for (int i = 0; i < configTreeNode.getChildCount(); i++) {
-				result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
-				if (result.getType().equals(result.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 4))))
+                result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
+                
+				if (result.getType().equals(EncodingEnum.UTF8.convert(ISOUtils.subArray(payload, headerSize, (headerSize + 4)))))
 					break;
 				else
 					result = null;

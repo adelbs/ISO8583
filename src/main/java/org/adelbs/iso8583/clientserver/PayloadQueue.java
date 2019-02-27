@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 final class PayloadQueue {
 
-	private ArrayList<byte[]> payloadIn = new ArrayList<byte[]>();
-	private ArrayList<byte[]> payloadOut = new ArrayList<byte[]>();
+	private ArrayList<SocketPayload> payloadIn = new ArrayList<SocketPayload>();
+	private ArrayList<SocketPayload> payloadOut = new ArrayList<SocketPayload>();
 
 	public boolean hasMorePayloadIn() {
 		return (payloadIn.size() > 0);
@@ -15,31 +15,31 @@ final class PayloadQueue {
 		return (payloadOut.size() > 0);
 	}
 	
-	public void addPayloadIn(byte[] payload) {
+	public void addPayloadIn(SocketPayload payload) {
 		addOrRemoveItem(payloadIn, payload);
 	}
 	
-	public void addPayloadOut(byte[] payload) {
+	public void addPayloadOut(SocketPayload payload) {
 		addOrRemoveItem(payloadOut, payload);
 	}
 	
-	public byte[] getNextPayloadIn() {
+	public SocketPayload getNextPayloadIn() {
 		return getNext(payloadIn);
 	}
 	
-	public byte[] getNextPayloadOut() {
+	public SocketPayload getNextPayloadOut() {
 		return getNext(payloadOut);
 	}
 	
-	private byte[] getNext(ArrayList<byte[]> list) {
+	private SocketPayload getNext(ArrayList<SocketPayload> list) {
 		synchronized(this) {
-			byte[] result = list.get(0);
+			SocketPayload result = list.get(0);
 			addOrRemoveItem(list, null);
 			return result;
 		}
 	}
 	
-	private void addOrRemoveItem(ArrayList<byte[]> list, byte[] item) {
+	private void addOrRemoveItem(ArrayList<SocketPayload> list, SocketPayload item) {
 		synchronized(this) {
 			if (item == null)
 				list.remove(0);

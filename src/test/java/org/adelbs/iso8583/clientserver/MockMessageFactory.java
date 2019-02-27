@@ -43,8 +43,6 @@ class MockMessageFactory {
 			message.setType(messageType);
 			final String bitmapEncode = messageNode.getAttributes().getNamedItem("bitmap-encoding").getNodeValue();
 			message.setBitmatEncoding(EncodingEnum.getEncoding(bitmapEncode));
-			final String headerEncoding = messageNode.getAttributes().getNamedItem("header-encoding").getNodeValue();
-			message.setHeaderEncoding(EncodingEnum.getEncoding(headerEncoding));
 			
 			final NodeList fieldNodes = messageNode.getChildNodes();
 			for(int i=0; i<fieldNodes.getLength();i++){

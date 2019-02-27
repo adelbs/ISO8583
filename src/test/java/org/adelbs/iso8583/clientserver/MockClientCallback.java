@@ -13,10 +13,10 @@ public class MockClientCallback extends CallbackAction{
 		this.isoConfig = isoConfig;
 	}
 	
-	public void dataReceived(byte[] data) throws ParseException {
+	public void dataReceived(SocketPayload payload) throws ParseException {
 		try{
 			PayloadMessageConfig payloadMessageConfig = new PayloadMessageConfig(isoConfig);
-			payloadMessageConfig.updateFromPayload(data);
+			payloadMessageConfig.updateFromPayload(payload.getData());
 			this.responseMessage = payloadMessageConfig.buildMessageStructureFromXML(payloadMessageConfig.getXML());
 			System.out.println("Client [Callback]: Message Received!");
 		}catch (Exception e){

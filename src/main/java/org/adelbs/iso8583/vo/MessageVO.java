@@ -5,28 +5,76 @@ import java.util.ArrayList;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 import org.adelbs.iso8583.constants.EncodingEnum;
 
-
-
 @XmlRootElement(name="message")
-@XmlType(propOrder={"type", "headerEncoding", "bitmatEncoding", "fieldList"})
+@XmlType(propOrder={"type", "bitmatEncoding", "fieldList"})
 public class MessageVO extends GenericIsoVO {
 
 	private ArrayList<FieldVO> fieldList = new ArrayList<FieldVO>();
 
 	private String type;
 	private EncodingEnum bitmatEncoding;
-	private EncodingEnum headerEncoding;
-	
-	public MessageVO(){}
-	
-	public MessageVO(String type, EncodingEnum bitmatEncoding, EncodingEnum headerEncoding) {
+    
+    //Valor a ser populado durante a execucao do ISO
+    private String header;
+    private Integer headerSize;
+    private EncodingEnum headerEncoding;
+
+    public MessageVO() {
+    }
+
+    /**
+     * @return the headerSize
+     */
+    @XmlTransient
+    public Integer getHeaderSize() {
+        return headerSize;
+    }
+
+    /**
+     * @param headerSize the headerSize to set
+     */
+    public void setHeaderSize(Integer headerSize) {
+        this.headerSize = headerSize;
+    }
+
+    /**
+     * @return the headerEncoding
+     */
+    @XmlTransient
+    public EncodingEnum getHeaderEncoding() {
+        return headerEncoding;
+    }
+
+    /**
+     * @param headerEncoding the headerEncoding to set
+     */
+    public void setHeaderEncoding(EncodingEnum headerEncoding) {
+        this.headerEncoding = headerEncoding;
+    }
+
+    /**
+     * @return the header
+     */
+    @XmlTransient
+    public String getHeader() {
+        return header;
+    }
+
+    /**
+     * @param header the header to set
+     */
+    public void setHeader(String header) {
+        this.header = header;
+    }
+
+    public MessageVO(String type, EncodingEnum bitmatEncoding) {
 		this.type = type;
 		this.bitmatEncoding = bitmatEncoding;
-		this.headerEncoding = headerEncoding;
 	}
 
 	/**
@@ -34,12 +82,16 @@ public class MessageVO extends GenericIsoVO {
 	 * @return
 	 */
 	public MessageVO getInstanceCopy() {
-		MessageVO newMessageVO = new MessageVO(type, bitmatEncoding, headerEncoding);
+		MessageVO newMessageVO = new MessageVO(type, bitmatEncoding);
 		
 		newMessageVO.setFieldList(new ArrayList<FieldVO>());
 		for (FieldVO fieldVO : fieldList)
 			newMessageVO.getFieldList().add(fieldVO.getInstanceCopy());
-		
+        
+        newMessageVO.setHeader(getHeader());
+        newMessageVO.setHeaderEncoding(getHeaderEncoding());
+        newMessageVO.setHeaderSize(getHeaderSize());
+
 		return newMessageVO;
 	}
 	
@@ -74,21 +126,11 @@ public class MessageVO extends GenericIsoVO {
 		this.bitmatEncoding = bitmatEncoding;
 	}
 
-	@XmlAttribute(name="header-encoding")
-	public EncodingEnum getHeaderEncoding() {
-		return headerEncoding;
-	}
-
-	public void setHeaderEncoding(EncodingEnum headerEncoding) {
-		this.headerEncoding = headerEncoding;
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((bitmatEncoding == null) ? 0 : bitmatEncoding.hashCode());
-		result = prime * result + ((headerEncoding == null) ? 0 : headerEncoding.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
@@ -103,8 +145,6 @@ public class MessageVO extends GenericIsoVO {
 			return false;
 		MessageVO other = (MessageVO) obj;
 		if (bitmatEncoding != other.bitmatEncoding)
-			return false;
-		if (headerEncoding != other.headerEncoding)
 			return false;
 		if (type == null) {
 			if (other.type != null)

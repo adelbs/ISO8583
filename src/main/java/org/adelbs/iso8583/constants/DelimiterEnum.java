@@ -3,12 +3,10 @@ package org.adelbs.iso8583.constants;
 import org.adelbs.iso8583.protocol.ISO8583Delimiter;
 import org.adelbs.iso8583.protocol.ISO8583GenericConfigDelimiter;
 import org.adelbs.iso8583.protocol.ISO8583Length2DelimiterBeginning;
-import org.adelbs.iso8583.protocol.ISO8583Length4DelimiterBeginning;
 
 public enum DelimiterEnum {
 
 	LENGTH2_DELIMITER_BEG("LENGTH2_DELIMITER_BEG", new ISO8583Length2DelimiterBeginning()),
-	LENGTH4_DELIMITER_BEG("LENGTH4_DELIMITER_BEG", new ISO8583Length4DelimiterBeginning()),
 	GENERIC_CONFIG_DELIMITER("GENERIC_CONFIG_DELIMITER", new ISO8583GenericConfigDelimiter());
 	
 	private ISO8583Delimiter isoDelimiter;
@@ -23,8 +21,6 @@ public enum DelimiterEnum {
 		
 		if ("LENGTH2_DELIMITER_BEG".equals(value))
 			return DelimiterEnum.LENGTH2_DELIMITER_BEG;
-		else if ("LENGTH4_DELIMITER_BEG".equals(value))
-			return DelimiterEnum.LENGTH4_DELIMITER_BEG;
 		else if ("GENERIC_CONFIG_DELIMITER".equals(value))
 			return DelimiterEnum.GENERIC_CONFIG_DELIMITER;
 		

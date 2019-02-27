@@ -45,12 +45,12 @@ public final class Main extends JFrame {
 			public void windowOpened(WindowEvent e) {}
 		});
 		
-		//*** Configurações da janela principal ***
+		//*** Configuracoes da janela principal ***
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/org/adelbs/iso8583/resource/package.png")));
-		setTitle("Adelbs-ISO8583 v.1.0");
+		setTitle("Adelbs-ISO8583 v.1.1.1");
 		
-		//Tamanho e posição
+		//Tamanho e posicao
 		setBounds(0, 0, MIN_WIDTH, MIN_HEIGHT);
 		setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 		int w = getSize().width;

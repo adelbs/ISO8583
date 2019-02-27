@@ -1,5 +1,6 @@
 package org.adelbs.iso8583.protocol;
 
+import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
@@ -22,12 +23,19 @@ public class ISOMessage {
 			bitmap = new Bitmap(payload, messageVO);
 		else
 			bitmap = new Bitmap(messageVO);
-				
-		StringBuilder strMessage = new StringBuilder();
+        
+        StringBuilder strMessage = new StringBuilder();
+        this.payload = new byte[0];
+
+        if (bitmap.getMessageVO().getHeader() != null) {
+            strMessage.append(bitmap.getMessageVO().getHeader());
+            this.payload = ISOUtils.mergeArray(this.payload, bitmap.getMessageVO().getHeaderEncoding().convert(bitmap.getMessageVO().getHeader()));
+        }
+
 		strMessage.append(messageVO.getType());
 		strMessage.append(bitmap.getPayloadBitmap());
-		
-		this.payload = bitmap.getHeaderEncoding().convert(messageVO.getType());
+        
+		this.payload = ISOUtils.mergeArray(this.payload, EncodingEnum.UTF8.convert(messageVO.getType()));
 		this.payload = ISOUtils.mergeArray(this.payload, bitmap.getPayloadBitmap());
 		
 		for (int i = 0; i <= bitmap.getSize(); i++) {

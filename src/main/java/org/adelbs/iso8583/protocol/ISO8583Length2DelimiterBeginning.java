@@ -29,7 +29,7 @@ public class ISO8583Length2DelimiterBeginning implements ISO8583Delimiter {
 
 		byte bt1 = (byte) Integer.parseInt(sizeHex.substring(sizeHex.length() - 4, sizeHex.length() - 2), 16);
 		byte bt2 = (byte) Integer.parseInt(sizeHex.substring(sizeHex.length() - 2), 16);
-		
+
 		byte[] data = ISOUtils.mergeArray(new byte[]{bt1, bt2}, isoMessage.getPayload());
 		return data;
 	}
