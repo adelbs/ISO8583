@@ -8,7 +8,7 @@ Through this tool you can:
 
 The messages can be at many encoding formats, inclusive mainframe EBCDIC.
 
-It is under development (not released yet). You can see the development backlog here. Feel free to fork it or sugest anything. Please, any comments or suggestions, feel free to contact me.
+It is under development (not released yet), so you may find some UI bugs. If so, please, fell free to open new issues. Feel free to fork it or sugest anything. Please, any comments or suggestions, contact me.
 
 I intend to write a wiki explaining how to use it. For while, an example of the XML configuration file and some screenshots:
 
