@@ -13,6 +13,6 @@ It is under development (not released yet), so you may find some UI bugs.
 * Open new Issues if you find any bug or if you have suggestions.
 * Visit the Wiki (it's under construction).
 
-<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap01.png" width="400"><img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap02.png" width="400">
+<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap01.png" width="400"> <img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap02.png" width="400">
 
-<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap03.png" width="400"><img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap04.png" width="400">
+<img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap03.png" width="400"> <img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap04.png" width="400">
