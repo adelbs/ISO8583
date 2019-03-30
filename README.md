@@ -10,6 +10,7 @@ The messages can be at many encoding formats, inclusive mainframe EBCDIC.
 
 It is under development (not released yet), so you may find some UI bugs. 
 
+Please:
 * Open new Issues if you find any bug or if you have suggestions.
 * Visit the Wiki (it's under construction).
 
