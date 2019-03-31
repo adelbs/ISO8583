@@ -35,7 +35,7 @@ public class ISOMessage {
 		strMessage.append(messageVO.getType());
 		strMessage.append(bitmap.getPayloadBitmap());
         
-		this.payload = ISOUtils.mergeArray(this.payload, EncodingEnum.UTF8.convert(messageVO.getType()));
+		this.payload = ISOUtils.mergeArray(this.payload, messageVO.getHeaderEncoding().convert(messageVO.getType()));
 		this.payload = ISOUtils.mergeArray(this.payload, bitmap.getPayloadBitmap());
 		
 		for (int i = 0; i <= bitmap.getSize(); i++) {

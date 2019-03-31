@@ -88,6 +88,7 @@ public class PnlFieldProperties extends JPanel {
 		lblEncoding.setHorizontalAlignment(SwingConstants.RIGHT);
 		cmbEncoding.setBounds(322, 122, 116, 22);
 		cmbEncoding.setModel(new DefaultComboBoxModel<EncodingEnum>(new EncodingEnum[] {
+				EncodingEnum.BINARY,
 				EncodingEnum.UTF8, EncodingEnum.EBCDIC, 
 				EncodingEnum.ISO88591, EncodingEnum.BASE64}));
 		

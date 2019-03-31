@@ -3,6 +3,7 @@ package org.adelbs.iso8583.protocol;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.exception.FieldNotFoundException;
@@ -39,15 +40,24 @@ public class Bitmap {
 		
 		String tempBitmap1 = "";
         String tempBitmap2 = "";
-        int headerPlusType = messageVO.getHeaderSize() + 4;
+        int headerPlusType = 0;
 		int bitmapSize = 0;
+		
+		if (messageVO.getHeaderEncoding() == EncodingEnum.BINARY) {
+			headerPlusType = (messageVO.getHeaderSize() / 2) + 2; 
+		}
+		else {
+			headerPlusType = messageVO.getHeaderSize() + 4;
+		}
 		
 		//This try block will extract the bitmap from the payload
 		try {
 			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
             
-            if (messageVO.getHeaderSize() > 0)
-                this.messageVO.setHeader(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, messageVO.getHeaderSize())));
+            if (messageVO.getHeaderSize() > 0) {
+            	int headerSize = (messageVO.getHeaderEncoding() == EncodingEnum.BINARY) ? (messageVO.getHeaderSize() / 2) : messageVO.getHeaderSize();
+            	this.messageVO.setHeader(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, headerSize)));
+            }
 
 			bitmapSize = messageVO.getBitmatEncoding().getMinBitmapSize();
 			tempBitmap1 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerPlusType, headerPlusType + bitmapSize));

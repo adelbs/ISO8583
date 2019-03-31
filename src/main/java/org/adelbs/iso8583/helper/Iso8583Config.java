@@ -499,7 +499,11 @@ public class Iso8583Config {
 			for (int i = 0; i < configTreeNode.getChildCount(); i++) {
                 result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
                 
-				if (result.getType().equals(EncodingEnum.UTF8.convert(ISOUtils.subArray(payload, headerSize, (headerSize + 4)))))
+                int messageTypeSize = (headerEncoding == EncodingEnum.BINARY) ? 2 : 4;
+                int calculatedHeaderSize = (headerEncoding == EncodingEnum.BINARY) ? (headerSize / 2) : headerSize;
+                String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
+                
+				if (result.getType().equals(messageType))
 					break;
 				else
 					result = null;

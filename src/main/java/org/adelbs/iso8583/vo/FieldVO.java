@@ -252,9 +252,14 @@ public class FieldVO extends GenericIsoVO {
 			}
 		}
 		
+		//Se for binario, cada par representa o número do byte (decimal)
+//		int newLength = length;
+//		if (encoding == EncodingEnum.BINARY) newLength = newLength / 2;
+		
 		if (type == TypeEnum.ALPHANUMERIC){
 			payload = getPayloadValue(typeLength, newValue, length);
-		}else if (type == TypeEnum.TLV) {	
+		}
+		else if (type == TypeEnum.TLV) {	
 			payload = PayloadTransformator.getInstance(encoding).transform(this,  TypeEnum.TLV);
 		}
 		
@@ -340,10 +345,12 @@ public class FieldVO extends GenericIsoVO {
 			for (FieldVO fieldVO : fieldList){
 				endPosition = fieldVO.setValueFromPayload(payload, endPosition);
 			}
-		}else {
+		}
+		else {
 			if (type == TypeEnum.ALPHANUMERIC) {
 				if (typeLength == TypeLengthEnum.FIXED) {
-					endPosition = startPosition + encoding.getEncondedByteLength(length);
+					int calculatedLength = (encoding == EncodingEnum.BINARY) ? length / 2 : length;
+					endPosition = startPosition + encoding.getEncondedByteLength(calculatedLength);
 					newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
 				}
 				else if (typeLength == TypeLengthEnum.NVAR) {
@@ -356,7 +363,8 @@ public class FieldVO extends GenericIsoVO {
 				}
 				
 				value = newContent;
-			}else if (type == TypeEnum.TLV) {
+			}
+			else if (type == TypeEnum.TLV) {
 				final byte[] tlvPayload = ISOUtils.subArray(payload, startPosition, payload.length);
 				final RevertResult revertedValue = PayloadTransformator.getInstance(encoding).revert(tlvPayload, TypeEnum.TLV);
 				

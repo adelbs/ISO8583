@@ -23,6 +23,10 @@ public class ISO8583Length2DelimiterBeginning implements ISO8583Delimiter {
 	public byte[] preparePayload(ISOMessage isoMessage, Iso8583Config isoConfig) {
 		String sizeHex = Integer.toString(isoMessage.getPayload().length, 16);
 		
+		if (sizeHex.length() < 2) {
+			sizeHex = "0" + sizeHex;	
+		}
+		
 		if (sizeHex.length() < 4) {
 			sizeHex = "00" + sizeHex;
 		}
