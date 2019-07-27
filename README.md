@@ -17,3 +17,14 @@ Please:
 <img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap01.png" width="400"> <img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap02.png" width="400">
 
 <img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap03.png" width="400"> <img src="https://raw.githubusercontent.com/adelbs/ISO8583/master/resources/img/snap04.png" width="400">
+
+
+## How to build
+
+1- clone the project
+
+	git clone https://github.com/adelbs/ISO8583.git
+
+2- build executable JAR
+
+	clean compile assembly:single
