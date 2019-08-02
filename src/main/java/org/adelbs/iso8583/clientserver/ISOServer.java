@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 import org.adelbs.iso8583.helper.Iso8583Config;
+import org.adelbs.iso8583.util.Out;
 
 public class ISOServer extends Thread {
 
@@ -29,7 +30,7 @@ public class ISOServer extends Thread {
 		
 		start();
 		
-		callback.log("Listening at " + host + ":" + port);
+		Out.log("ISOServer", "Listening at " + host + ":" + port, callback);
 	}
 	
 	public void run() {
@@ -44,7 +45,7 @@ public class ISOServer extends Thread {
 			isConnected = false;
 			listener = null;
 			
-			callback.log("Disconnected. "+ exception.getMessage());
+			Out.log("ISOServer", "Disconnected. "+ exception.getMessage(), callback);
 		}
 	}
 

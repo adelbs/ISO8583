@@ -164,7 +164,7 @@ public class PnlGuiMessages extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					isoConnServer.processNextPayload(false, 0);
+					isoConnServer.processNextPayload(String.valueOf(Thread.currentThread().getId()), false, 0);
 				} 
 				catch (Exception x) {
 					x.printStackTrace();
@@ -177,7 +177,7 @@ public class PnlGuiMessages extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					isoConnClient.processNextPayload(false, 0);
+					isoConnClient.processNextPayload(String.valueOf(Thread.currentThread().getId()), false, 0);
 				} 
 				catch (Exception x) {
 					x.printStackTrace();
@@ -203,7 +203,7 @@ public class PnlGuiMessages extends JPanel {
 	private void disconnectAction() throws IOException, ParseException, InterruptedException {
 		if (isServer) {
 			if (isoConnServer != null) {
-				isoConnServer.endConnection();
+				isoConnServer.endConnection(String.valueOf(Thread.currentThread().getId()));
 				isoConnServer = null;
 			}
 			
@@ -212,7 +212,7 @@ public class PnlGuiMessages extends JPanel {
 		}
 		else {
 			if (isoConnClient != null) {
-				isoConnClient.endConnection();
+				isoConnClient.endConnection(String.valueOf(Thread.currentThread().getId()));
 				isoConnClient = null;
 			}
 		}
@@ -237,8 +237,8 @@ public class PnlGuiMessages extends JPanel {
 				
 				isoConnServer = new ISOConnection(true, txtHost.getText(), Integer.parseInt(txtPort.getText()), Integer.parseInt(txtTimeout.getText()));
 				isoConnServer.setIsoConfig(pnlMain.getIso8583Config());
-				isoConnServer.setCallback(callBackServer);
-				isoConnServer.connect();
+				isoConnServer.putCallback(String.valueOf(Thread.currentThread().getId()), callBackServer);
+				isoConnServer.connect(String.valueOf(Thread.currentThread().getId()));
 				System.out.println("Server connected.");
 				
 			}
@@ -278,8 +278,8 @@ public class PnlGuiMessages extends JPanel {
 			try{
 				isoConnClient = new ISOConnection(false, txtHost.getText(), Integer.parseInt(txtPort.getText()), Integer.parseInt(txtTimeout.getText()));
 				isoConnClient.setIsoConfig(pnlMain.getIso8583Config());
-				isoConnClient.setCallback(new Callback(pnlMain, false));
-				isoConnClient.connect();
+				isoConnClient.putCallback(String.valueOf(Thread.currentThread().getId()), new Callback(pnlMain, false));
+				isoConnClient.connect(String.valueOf(Thread.currentThread().getId()));
 				System.out.println("Client connected.");
 			}
 			catch(Exception ex) {

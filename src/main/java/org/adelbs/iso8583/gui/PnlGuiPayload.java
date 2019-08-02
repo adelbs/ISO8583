@@ -34,7 +34,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.helper.PayloadMessageConfig;
-import org.adelbs.iso8583.vo.GenericIsoVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiPayload extends JPanel {
@@ -196,19 +195,19 @@ public class PnlGuiPayload extends JPanel {
 		pnlFormattedFields.add(lblBit);
 		
 		lblFieldName.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblFieldName.setBounds(80, 45, 88, 16);
+		lblFieldName.setBounds(100, 45, 88, 16);
 		pnlFormattedFields.add(lblFieldName);
 		
 		lblFieldValue.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblFieldValue.setBounds(190, 45, 77, 16);
+		lblFieldValue.setBounds(210, 45, 77, 16);
 		pnlFormattedFields.add(lblFieldValue);
 		
 		lblType.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblType.setBounds(470, 45, 56, 16);
+		lblType.setBounds(490, 45, 56, 16);
 		pnlFormattedFields.add(lblType);
 
 		lblDynamic.setFont(new Font("Tahoma", Font.BOLD, 14));
-		lblDynamic.setBounds(580, 45, 70, 16);
+		lblDynamic.setBounds(600, 45, 70, 16);
 		pnlFormattedFields.add(lblDynamic);
 		
 		pnlFormattedFields.add(scrFields);
@@ -381,16 +380,11 @@ public class PnlGuiPayload extends JPanel {
 		pnlFields.removeAll();
 		
 		if (cmbMessageType.getSelectedItem() != null) {
-			if (!((GenericIsoVO) cmbMessageType.getSelectedItem()).isValid()) {
-				JOptionPane.showMessageDialog(this, "There are errors at the selected message type. Please verify it.");
-			}
-			else {
-				tabbedPane.setEnabled(true);
-                txtHeader.setEnabled(true);
-                
-				payloadMessageConfig.setMessageVO(pnlMain.getIso8583Config().getMessageVOAtTree(((MessageVO) cmbMessageType.getSelectedItem()).getType()));
-				updateScrFields();
-			}
+			tabbedPane.setEnabled(true);
+            txtHeader.setEnabled(true);
+            
+			payloadMessageConfig.setMessageVO(pnlMain.getIso8583Config().getMessageVOAtTree(((MessageVO) cmbMessageType.getSelectedItem()).getType()));
+			updateScrFields();
 		}
 	}
 	

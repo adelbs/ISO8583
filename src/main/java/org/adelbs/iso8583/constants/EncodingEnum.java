@@ -4,7 +4,7 @@ import javax.swing.JComboBox;
 
 import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.EncodingBASE64;
-import org.adelbs.iso8583.util.EncodingBINARY;
+import org.adelbs.iso8583.util.EncodingBCD;
 import org.adelbs.iso8583.util.EncodingEBCDIC;
 import org.adelbs.iso8583.util.EncodingHEXA;
 import org.adelbs.iso8583.util.EncodingUTF8;
@@ -15,7 +15,7 @@ import org.adelbs.iso8583.util.EncodingUTF8;
  */
 public enum EncodingEnum implements Encoding {
 
-	BINARY("BINARY", new EncodingBINARY()), 
+	BCD("BCD", new EncodingBCD()), 
 	EBCDIC("EBCDIC", new EncodingEBCDIC()), 
 	ISO88591("ISO 8859-1", new EncodingUTF8()), 
 	UTF8("UTF-8", new EncodingUTF8()), 
@@ -65,11 +65,11 @@ public enum EncodingEnum implements Encoding {
 	 */
 	//TODO: This method should be on a separated UI class. UI must be separated from business classes
 	public static void addCmbItemList(JComboBox<EncodingEnum> combo) {
-		combo.addItem(BINARY);
+		combo.addItem(UTF8);
 		combo.addItem(EBCDIC);
 		combo.addItem(ISO88591);
-		combo.addItem(UTF8);
 		combo.addItem(HEXA);
+		combo.addItem(BCD);
 		combo.addItem(BASE64);
 	}
 

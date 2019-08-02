@@ -20,7 +20,7 @@ abstract class MockISOConnection {
 	
 	public void terminate(){
 		if(conn!=null){
-			conn.endConnection();
+			conn.endConnection(String.valueOf(Thread.currentThread().getId()));
 			conn = null;
 			System.out.println("Connection terminated");
 		}

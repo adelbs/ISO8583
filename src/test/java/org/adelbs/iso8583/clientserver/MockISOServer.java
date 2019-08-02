@@ -10,14 +10,14 @@ class MockISOServer extends MockISOConnection{
 	public MockISOServer(final String host, final int port) throws IOException, ConnectionException{
 		this.conn = new ISOConnection(true, host, port, 1000);
 		conn.setIsoConfig(ISOCONFIG);
-		conn.setCallback(new MockServerCallback(conn,ISOCONFIG));
-		conn.connect();
+		conn.putCallback(String.valueOf(Thread.currentThread().getId()), new MockServerCallback(conn,ISOCONFIG));
+		conn.connect(String.valueOf(Thread.currentThread().getId()));
 		System.out.println("Server: Connected");
 	}
 	
 	public void process() throws MockISOException{
 		try {
-			conn.processNextPayload(false, 0);
+			conn.processNextPayload(String.valueOf(Thread.currentThread().getId()), false, 0);
 		} catch (ParseException e) {
 			terminate();
 			System.out.println("Server: "+e.getMessage());

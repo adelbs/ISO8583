@@ -26,12 +26,10 @@ public class MockClientCallback extends CallbackAction{
 
 	@Override
 	public void log(String log) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public void end() {
-		// TODO Auto-generated method stub
 	}
 
 	public MessageVO getResponseMessage() {

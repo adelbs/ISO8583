@@ -1,16 +1,17 @@
 package org.adelbs.iso8583.util;
 
-public class EncodingBINARY implements Encoding {
+public class EncodingBCD implements Encoding {
 
 	@Override
 	public String convert(byte[] bytesToConvert) {
 		String result = "";
-		int unitByte;
+		String unitHexa;
+		
+		AsciiTable asciiTable = new AsciiTable();
 		
 		for (int i = 0; i < bytesToConvert.length; i++) {
-			unitByte = bytesToConvert[i];
-			if (unitByte < 10) result = result.concat("0");
-			result = result.concat(String.valueOf(unitByte));
+			unitHexa = asciiTable.findHexaFromByte(bytesToConvert[i]);
+			result = result.concat(unitHexa);
 		}
 		
 		return result;
@@ -19,10 +20,14 @@ public class EncodingBINARY implements Encoding {
 	@Override
 	public byte[] convert(String strToConvert) {
 		byte[] result = new byte[0];
+		String unitHexa;
 		byte unitByte;
 		
+		AsciiTable asciiTable = new AsciiTable();
+		
 		for (int i = 0; i < strToConvert.length(); i+=2) {
-			unitByte = (byte) Integer.parseInt(strToConvert.substring(i, i + 2));
+			unitHexa = strToConvert.substring(i, i + 2);
+			unitByte = asciiTable.findDecimalFromHexa(unitHexa);
 			result = ISOUtils.mergeArray(result, new byte[] {unitByte});
 		}
 		
@@ -62,7 +67,6 @@ public class EncodingBINARY implements Encoding {
 	
 	@Override
 	public int getEncondedByteLength(final int asciiLength) {
-		// TODO Auto-generated method stub
 		return asciiLength;
 	}
 

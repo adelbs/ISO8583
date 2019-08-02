@@ -10,6 +10,7 @@ import org.adelbs.iso8583.exception.FieldNotFoundException;
 import org.adelbs.iso8583.exception.OutOfBoundsException;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.exception.PayloadIncompleteException;
+import org.adelbs.iso8583.helper.BSInterpreter;
 import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
@@ -43,7 +44,7 @@ public class Bitmap {
         int headerPlusType = 0;
 		int bitmapSize = 0;
 		
-		if (messageVO.getHeaderEncoding() == EncodingEnum.BINARY) {
+		if (messageVO.getHeaderEncoding() == EncodingEnum.BCD) {
 			headerPlusType = (messageVO.getHeaderSize() / 2) + 2; 
 		}
 		else {
@@ -55,7 +56,7 @@ public class Bitmap {
 			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
             
             if (messageVO.getHeaderSize() > 0) {
-            	int headerSize = (messageVO.getHeaderEncoding() == EncodingEnum.BINARY) ? (messageVO.getHeaderSize() / 2) : messageVO.getHeaderSize();
+            	int headerSize = (messageVO.getHeaderEncoding() == EncodingEnum.BCD) ? (messageVO.getHeaderSize() / 2) : messageVO.getHeaderSize();
             	this.messageVO.setHeader(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, headerSize)));
             }
 
@@ -96,24 +97,40 @@ public class Bitmap {
 	 */
 	private void extractValueFromPayload(byte[] payload, MessageVO messageVO, int headerSize, int bitmapSize) throws PayloadIncompleteException, ParseException {
 		int bitNum = 1;
-		try{
+		try {
 			this.messageVO.setFieldList(new ArrayList<FieldVO>());
 			int startPosition = headerSize + bitmapSize;
+			
+			BSInterpreter bsInt = new BSInterpreter();
+			byte[] adjustedPayload = payload;
+			
 			for (; bitNum < binaryBitmap.length(); bitNum++){
 				if (this.bitIsEnabled(bitNum)) {
-					final FieldVO foundFieldVO = getFieldVOFromBitMap(messageVO, bitNum);
-					startPosition = foundFieldVO.setValueFromPayload(payload, startPosition);
+					ArrayList<FieldVO> foundFieldVOList = getFieldVOFromBitMap(messageVO, bitNum);
 					
-					if(!foundFieldVO.isIgnored()){
-						bitmap.put(foundFieldVO.getBitNum(), foundFieldVO);
-						bitmap.get(foundFieldVO.getBitNum()).setPresent(true);
+					for (int i = 0; i < foundFieldVOList.size(); i++) {
+						final FieldVO foundFieldVO = foundFieldVOList.get(i);
+
+						if (foundFieldVO.getEncoding() == EncodingEnum.BCD && (foundFieldVO.getLength() % 2) != 0) {
+							foundFieldVO.setLength(foundFieldVO.getLength() + 1);
+						}
 						
-						this.messageVO.getFieldList().add(foundFieldVO);
-						visualPayload.append("Bit").append(bitNum).append(": [").append(foundFieldVO.getPayloadValue()).append("]\n");
+						if (bsInt.evaluate(foundFieldVO.getDynaCondition())) {
+							startPosition = foundFieldVO.setValueFromPayload(adjustedPayload, startPosition, bsInt, "");
+							
+							bitmap.put(foundFieldVO.getBitNum(), foundFieldVO);
+							bitmap.get(foundFieldVO.getBitNum()).setPresent(true);
+							
+							this.messageVO.getFieldList().add(foundFieldVO);
+							visualPayload.append("Bit").append(bitNum).append(": [").append(foundFieldVO.getPayloadValue()).append("]\n");
+							
+							break;
+						}
 					}
 				}
 			}
-		}catch (OutOfBoundsException x) {
+		}
+		catch (OutOfBoundsException x) {
 			throw new PayloadIncompleteException("Error trying to parse the fields from the payload. Payload incomplete.", bitNum + 1);
 		}
 		catch (Exception x) {
@@ -130,14 +147,16 @@ public class Bitmap {
 	 * @return
 	 * @throws FieldNotFoundException case no fieldVO found
 	 */
-	private FieldVO getFieldVOFromBitMap(final GenericIsoVO genericVO, int bitNum) throws FieldNotFoundException {
+	private ArrayList<FieldVO> getFieldVOFromBitMap(final GenericIsoVO genericVO, int bitNum) throws FieldNotFoundException {
+		ArrayList<FieldVO> result = new ArrayList<FieldVO>();
 		for (final FieldVO fieldVO : genericVO.getFieldList()) {
 			if (fieldVO.getBitNum().intValue() == (bitNum + 1)) {
-				return fieldVO.getInstanceCopy();
+				result.add(fieldVO.getInstanceCopy());
 			}
 		}
 		
-		throw new FieldNotFoundException("Field bit ("+ bitNum +") not found.");
+		if (result.size() == 0) throw new FieldNotFoundException("Field bit ("+ bitNum +") not found.");
+		return result;
 	}
 
 	private boolean bitIsEnabled(final int bitNum) {
@@ -173,7 +192,6 @@ public class Bitmap {
 		}
 	}
 	
-	//TODO: @Felipe Why we should create instance copies? Is it necessary?
 	/**
 	 * Calculate the bits that are enabled, based on the UI checkboxes that enables and disables
 	 * super fields. 

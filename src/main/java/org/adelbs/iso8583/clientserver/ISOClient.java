@@ -10,6 +10,7 @@ import java.util.List;
 import org.adelbs.iso8583.exception.InvalidPayloadException;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.util.ISOUtils;
+import org.adelbs.iso8583.util.Out;
 
 public class ISOClient extends Thread {
 
@@ -43,7 +44,9 @@ public class ISOClient extends Thread {
 
 	public void run() {
 		String clientName = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
-		callback.log("Client connected " + clientName);
+		long parsingTime = 0;
+		
+		Out.log("ISOClient", "Client connected " + clientName, callback);
 		
 		try {
 			while (isConnected && (isoServer == null || isoServer.isConnected())) {
@@ -54,6 +57,7 @@ public class ISOClient extends Thread {
 					bytes = new ArrayList<Byte>();
 					
 					byte bRead;
+					parsingTime = 0;
 					while (this.isConnected) {
 						bRead = new Byte((byte) input.read());
 						if (bRead == -1) {
@@ -63,22 +67,26 @@ public class ISOClient extends Thread {
 
 						if (bRead != -1) bytes.add(new Byte(bRead));
 						if (isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig)) break;
+						if (parsingTime == 0) parsingTime = System.currentTimeMillis();
 					}
 					
 					if (this.isConnected) {
 						byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
-						callback.log("Bytes received ("+ clientName +"): " + bytesToConsole(ISOUtils.listToArray(bytes)));
+						
+						Out.log("ISOClient", "Bytes received ("+ clientName +") - (Parsing in milliseconds: "+ (System.currentTimeMillis() - parsingTime) +"): " + bytesToConsole(ISOUtils.listToArray(bytes)), callback);
+						
 						registerActionTimeMilis();
 						payloadQueue.addPayloadIn(new SocketPayload(data, socket));
 					}
 				}
 				catch (InvalidPayloadException e) {
-					callback.log("Invalid Payload ("+ e.getMessage() +")");
+					Out.log("ISOClient", "Invalid Payload ("+ e.getMessage() +")", callback);
 				}
 			}
 		}
 		catch (Exception x) {
-			if (isConnected) callback.log(x.getMessage());
+			Out.log("ISOClient", "Error "+ x.getMessage(), callback);
+			Out.log("ISOClient", "IsConnected = "+ isConnected, callback);
 		}
 		finally {
 			try {
@@ -92,7 +100,7 @@ public class ISOClient extends Thread {
 			}
 		}
 		
-		callback.log("Client disconnected " + clientName);
+		Out.log("ISOClient", "Client disconnected " + clientName, callback);
 	}
 
 	private String bytesToConsole(byte[] data) {

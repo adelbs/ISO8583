@@ -14,7 +14,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.adelbs.iso8583.constants.DelimiterEnum;
 import org.adelbs.iso8583.constants.EncodingEnum;
-import org.adelbs.iso8583.constants.NodeValidationError;
 import org.adelbs.iso8583.constants.TypeEnum;
 import org.adelbs.iso8583.constants.TypeLengthEnum;
 import org.adelbs.iso8583.exception.OutOfBoundsException;
@@ -118,7 +117,6 @@ public class Iso8583Config {
 		while (enu.hasMoreElements()) {
 			fieldVo = (FieldVO) enu.nextElement().getUserObject();
 			fieldVo.setName(name + count);
-			//fieldVo.setBitNum(count);
 			
 			sum += fieldVo.getLength();
 			count++;
@@ -200,7 +198,7 @@ public class Iso8583Config {
 	}
 
 	private void addFieldsToTree(PnlMain pnlMain, Node domNode, DefaultMutableTreeNode lastParseUINode) {
-		final NodeList fielNodedList = domNode.getChildNodes();
+		NodeList fielNodedList = domNode.getChildNodes();
 		for (int j = 0; j < fielNodedList.getLength(); j++) {
 			domNode = fielNodedList.item(j);
 			addFieldToTree(pnlMain, domNode, lastParseUINode, false);
@@ -216,14 +214,14 @@ public class Iso8583Config {
 	 * @param lastParseUINode last added UI node element.
 	 * @param isSubField indicates that this field is a inner field of a "<i>pre-created</i>" field, enabling nested fields.
 	 */
-	private void addFieldToTree(final PnlMain pnlMain, final Node domNode, final DefaultMutableTreeNode lastParseUINode, final boolean isSubField){	
+	private void addFieldToTree(final PnlMain pnlMain, Node domNode, DefaultMutableTreeNode lastParseUINode, boolean isSubField){	
 		if (XML_FIELD_NODENAME.equalsIgnoreCase(domNode.getNodeName())) {
-			final DefaultMutableTreeNode newUINode = addField(pnlMain, lastParseUINode);
-			final FieldVO fieldVo = (FieldVO) newUINode.getUserObject();
+			DefaultMutableTreeNode newUINode = addField(pnlMain, lastParseUINode);
+			FieldVO fieldVo = (FieldVO) newUINode.getUserObject();
 			populateField(domNode, fieldVo, newUINode, lastParseUINode, isSubField);
 			
-			final NodeList subFieldNodeList = domNode.getChildNodes();
-			if (subFieldNodeList.getLength() > 1) {
+			NodeList subFieldNodeList = domNode.getChildNodes();
+			if (subFieldNodeList.getLength() > 0) {
 				for (int i = 0; i < subFieldNodeList.getLength(); i++) {
 					addFieldToTree(pnlMain, subFieldNodeList.item(i), newUINode, true);
 				}
@@ -334,111 +332,6 @@ public class Iso8583Config {
 			}
 		}
 	}
-
-	public void validateAllNodes() {
-		validateAllNodes(configTreeNode);
-	}
-	
-	public void validateAllNodes(DefaultMutableTreeNode rootNode) {
-
-		DefaultMutableTreeNode node;
-		
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-			if (node.getChildCount() > 0)
-				validateAllNodes(node);
-		}
-		
-		validateNode((GenericIsoVO) rootNode.getUserObject(), (DefaultMutableTreeNode) rootNode.getParent());
-	}
-	
-	public boolean validateNode(GenericIsoVO isoVO, DefaultMutableTreeNode selectedNodeParent) {
-		if (isoVO instanceof FieldVO) {
-			if (selectedNodeParent.getUserObject() instanceof MessageVO && ((FieldVO) isoVO).getBitNum().intValue() == 1)
-				isoVO.addValidationError(NodeValidationError.RESERVED_BIT_NUMBER);
-			else
-				isoVO.removeValidationError(NodeValidationError.RESERVED_BIT_NUMBER);
-				
-			if (!"".equals(validateCondition((FieldVO) isoVO)))
-				isoVO.addValidationError(NodeValidationError.INVALID_CONDITION);
-			else
-				isoVO.removeValidationError(NodeValidationError.INVALID_CONDITION);
-			
-			if (((FieldVO) isoVO).getBitNum().intValue() <= 0)
-				isoVO.addValidationError(NodeValidationError.INVALID_BIT_NUMBER);
-			else
-				isoVO.removeValidationError(NodeValidationError.INVALID_BIT_NUMBER);
-			
-			if (selectedNodeParent != null) {
-				FieldVO fieldVO1;
-				FieldVO fieldVO2;
-				for (int i = 0; i < selectedNodeParent.getChildCount(); i++) {
-					fieldVO1 = (FieldVO) ((DefaultMutableTreeNode) selectedNodeParent.getChildAt(i)).getUserObject();
-					fieldVO1.removeValidationError(NodeValidationError.DUPLICATED_BIT);
-					
-					for (int j = 0; j < selectedNodeParent.getChildCount(); j++) {
-						fieldVO2 = (FieldVO) ((DefaultMutableTreeNode) selectedNodeParent.getChildAt(j)).getUserObject();
-						if (fieldVO1 != fieldVO2 && fieldVO1.getBitNum().intValue() == fieldVO2.getBitNum().intValue()) {
-							
-							boolean isDynamic1 = !fieldVO1.getDynaCondition().equals("") && !fieldVO1.getDynaCondition().equals("true");
-							boolean isDynamic2 = !fieldVO2.getDynaCondition().equals("") && !fieldVO2.getDynaCondition().equals("true");
-							
-							if (!isDynamic1)
-								fieldVO1.addValidationError(NodeValidationError.DUPLICATED_BIT);
-							
-							if (!isDynamic2)
-								fieldVO2.addValidationError(NodeValidationError.DUPLICATED_BIT);
-
-							break;
-						}
-					}
-				}
-			}
-		}
-		else if (isoVO instanceof MessageVO) {
-			if (selectedNodeParent != null) {
-				MessageVO messageVO1;
-				MessageVO messageVO2;
-				for (int i = 0; i < selectedNodeParent.getChildCount(); i++) {
-					messageVO1 = (MessageVO) ((DefaultMutableTreeNode) selectedNodeParent.getChildAt(i)).getUserObject();
-					messageVO1.removeValidationError(NodeValidationError.DUPLICATED_MESSAGE_TYPE);
-					
-					for (int j = 0; j < selectedNodeParent.getChildCount(); j++) {
-						messageVO2 = (MessageVO) ((DefaultMutableTreeNode) selectedNodeParent.getChildAt(j)).getUserObject();
-						if (!messageVO1.equals(messageVO2) && messageVO1.getType().equals(messageVO2.getType())) {
-							messageVO1.addValidationError(NodeValidationError.DUPLICATED_MESSAGE_TYPE);
-							messageVO2.addValidationError(NodeValidationError.DUPLICATED_MESSAGE_TYPE);
-							break;
-						}
-					}
-				}
-			}
-		}
-		
-		if (selectedNodeParent != null && !(selectedNodeParent.getUserObject() instanceof String)) {
-			if (selectedNodeParent.getParent() != null && ((DefaultMutableTreeNode) selectedNodeParent.getParent()).getUserObject() instanceof MessageVO) {
-				if (!isoVO.isValid()) {
-					((GenericIsoVO) selectedNodeParent.getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
-					((GenericIsoVO) ((DefaultMutableTreeNode) selectedNodeParent.getParent()).getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
-				}
-				else {
-					((GenericIsoVO) selectedNodeParent.getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
-					((GenericIsoVO) ((DefaultMutableTreeNode) selectedNodeParent.getParent()).getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
-				}
-			}
-			else {
-				if (!isoVO.isValid()) {
-					((GenericIsoVO) selectedNodeParent.getUserObject()).addValidationError(NodeValidationError.CHILD_ERRORS);
-				}
-				else {
-					((GenericIsoVO) selectedNodeParent.getUserObject()).removeValidationError(NodeValidationError.CHILD_ERRORS);
-				}
-				
-			}
-		}
-		
-		return isoVO.isValid();
-	}
 	
 	public String validateCondition(FieldVO fieldVO) {
 		String resultMessage = "";
@@ -499,8 +392,8 @@ public class Iso8583Config {
 			for (int i = 0; i < configTreeNode.getChildCount(); i++) {
                 result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
                 
-                int messageTypeSize = (headerEncoding == EncodingEnum.BINARY) ? 2 : 4;
-                int calculatedHeaderSize = (headerEncoding == EncodingEnum.BINARY) ? (headerSize / 2) : headerSize;
+                int messageTypeSize = (headerEncoding == EncodingEnum.BCD) ? 2 : 4;
+                int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
                 String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
                 
 				if (result.getType().equals(messageType))

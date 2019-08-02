@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
 
 import org.adelbs.iso8583.exception.ConnectionException;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.helper.Iso8583Config;
+import org.adelbs.iso8583.util.Out;
 
 
 public class ISOConnection {
@@ -18,10 +20,12 @@ public class ISOConnection {
 	private long lastAction = 0;
 	
 	private Iso8583Config isoConfig;
-	private CallbackAction callback;
+	private HashMap<String, CallbackAction> callbackMap = new HashMap<String, CallbackAction>();
+//	private CallbackAction callback;
 
 	private final PayloadQueue payloadQueue = new PayloadQueue();
-	private Sender sender = new Sender();
+	private HashMap<String, Sender> senderMap = new HashMap<String, ISOConnection.Sender>();
+//	private Sender sender = new Sender();
 
 	private boolean isServer;
 	private String host;
@@ -38,17 +42,16 @@ public class ISOConnection {
 		this.timeout = (timeout * 1000);
 	}
 	
-	public void connect() throws IOException, ConnectionException {
-		if (isoConfig != null && callback != null) {
+	public void connect(String threadName) throws IOException, ConnectionException {
+		if (isoConfig != null && callbackMap.containsKey(threadName)) {
 			if(isoConfig.getXmlFilePath()!=null){
 				registerActionTimeMilis();
 				if (isServer) 
-					this.isoServer = new ISOServer(this, host, port, isoConfig, payloadQueue, callback);
+					this.isoServer = new ISOServer(this, host, port, isoConfig, payloadQueue, callbackMap.get(threadName));
 				else 
-					this.isoClient = new ISOClient(host, port, isoConfig, payloadQueue, callback);
+					this.isoClient = new ISOClient(host, port, isoConfig, payloadQueue, callbackMap.get(threadName));
 				
-				running = true;
-				sender.start();
+				registerSender(threadName);
 			}
 			else{
 				throw new ConnectionException("ISOConfig is missing");
@@ -59,11 +62,19 @@ public class ISOConnection {
 		}
 	}
 	
+	public void registerSender(String threadName) {
+		running = true;
+		if (!senderMap.containsKey(threadName)) {
+			senderMap.put(threadName, new Sender(threadName));
+			senderMap.get(threadName).start();
+		}
+	}
+	
 	public boolean isConnected() {
 		return running;
 	}
 	
-	public void endConnection() {
+	public void endConnection(String threadName) {
 		running = false;
 		lastAction = 0;
 		
@@ -72,34 +83,32 @@ public class ISOConnection {
 
 		isoClient = null;
 		isoServer = null;
-		sender = null;
+//		senderMap.remove(threadName);
 	}
 	
-	private void waitRequest(int keepaliveTimeout) throws InterruptedException {
+	private void waitRequest(String threadName, int keepaliveTimeout) throws InterruptedException {
 		while (running && !payloadQueue.hasMorePayloadIn()) {
 			Thread.sleep(SLEEP_TIME);
 			
 			if (keepaliveTimeout > 0 && (System.currentTimeMillis() - startOfWaitNextRequest) > (keepaliveTimeout * 1000)) {
 				startOfWaitNextRequest = System.currentTimeMillis();
-				callback.keepalive();
+				callbackMap.get(threadName).keepalive();
 			}
 			
 		}
 	}
 
 	private long startOfWaitNextRequest = 0;
-	public void processNextPayload(boolean waitIfThereIsNothingAtQueue, int keepaliveTimeout) throws ParseException, InterruptedException {
+	public synchronized void processNextPayload(String threadName, boolean waitIfThereIsNothingAtQueue, int keepaliveTimeout) throws ParseException, InterruptedException {
 		
 		if (waitIfThereIsNothingAtQueue) {
 			startOfWaitNextRequest = System.currentTimeMillis();
-			waitRequest(keepaliveTimeout);
+			waitRequest(threadName, keepaliveTimeout);
 		}
 		
 		if (payloadQueue.hasMorePayloadIn()) {
-			synchronized(this) {
-				callback.log("Parsing bytes...");
-				callback.dataReceived(payloadQueue.getNextPayloadIn());
-			}
+			Out.log("ISOConnection", "Parsing bytes...", callbackMap.get(threadName));
+			callbackMap.get(threadName).dataReceived(payloadQueue.getNextPayloadIn());
 		}
 	}
 	
@@ -107,8 +116,8 @@ public class ISOConnection {
 		this.isoConfig = isoConfig;
 	}
 	
-	public void setCallback(CallbackAction callback) {
-		this.callback = callback;
+	public void putCallback(String threadName, CallbackAction callback) {
+		callbackMap.put(threadName, callback);
 	}
 
 	public void send(SocketPayload payload) throws IOException, ParseException, InterruptedException {
@@ -136,42 +145,44 @@ public class ISOConnection {
 	
 	private class Sender extends Thread {
 		
-		Sender() {
+		private String threadName;
+		
+		Sender(String threadName) {
 			setName("Sender");
+			this.threadName = threadName;
 		}
 		
 		public void run() {
 			try {
 				while (running) {
 					try {
-						if (payloadQueue.hasMorePayloadOut())
-					        send(payloadQueue.getNextPayloadOut());
+						if (payloadQueue.hasMorePayloadOut()) {
+							send(payloadQueue.getNextPayloadOut());
+						}
 
 						sleep(SLEEP_TIME);
 					}
 					catch (SocketException se) {
-						callback.log("Client disconnected...");
+						Out.log("ISOConnection", "Client disconnected...", callbackMap.get(threadName));
 					}
 					
-					if (timeout < (System.currentTimeMillis() - lastAction)) {
-						callback.log("Connection timeout.");
+					if (timeout > 0 && timeout < (System.currentTimeMillis() - lastAction)) {
+						Out.log("ISOConnection", "Connection timeout.", callbackMap.get(threadName));
 						running = false;
 						lastAction = 0;
 					}
 				}
 			}
-			catch (InterruptedException | IOException x) {
+			catch (Exception x) {
 				if (running) {
 					x.printStackTrace();
-					callback.log("ERROR:");
-					callback.log(x.getMessage());
+					Out.log("ISOConnection", "ERROR "+ x.getMessage(), callbackMap.get(threadName));
 				}
 			}
 			finally {
-				endConnection();
-				
-				callback.log("Connection closed.");
-				callback.end();
+				Out.log("ISOConnection", "Connection closed.", callbackMap.get(threadName));
+				callbackMap.get(threadName).end();
+				endConnection(threadName);
 			}
 		}
 		
@@ -179,15 +190,18 @@ public class ISOConnection {
 			synchronized(this) {
 				registerActionTimeMilis();
 				
-				if (payload.getSocket() != null && !payload.getSocket().isClosed()) {
+				if (payload == null) {
+					Out.log("ISOConnection", "Null payload", callbackMap.get(threadName));
+				}
+				else if (payload.getSocket() != null && !payload.getSocket().isClosed()) {
 					OutputStream out = payload.getSocket().getOutputStream();
 					
-					callback.log("Sending data...");
+					Out.log("ISOConnection", "Sending data...", callbackMap.get(threadName));
 			        out.write(payload.getData());
 			        out.flush();
 				}
 				else {
-					callback.log("Impossible to send the payload, the socket is closed!");
+					Out.log("ISOConnection", "Impossible to send the payload, the socket is closed!", callbackMap.get(threadName));
 				}
 			}
 		}

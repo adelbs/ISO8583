@@ -2,6 +2,7 @@ package org.adelbs.iso8583.gui;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,7 +29,6 @@ import javax.swing.tree.TreeSelectionModel;
 
 import org.adelbs.iso8583.helper.SortTreeHelper;
 import org.adelbs.iso8583.vo.FieldVO;
-import org.adelbs.iso8583.vo.GenericIsoVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiConfig extends JPanel{
@@ -38,6 +38,9 @@ public class PnlGuiConfig extends JPanel{
 	private JLabel lblExpand = new JLabel("[Expand All]");
 	private JLabel lblCollapse = new JLabel("[Collapse All]");
 	private JCheckBox chckbxShowBitNum = new JCheckBox("Show bit #");
+	
+	private JPanel pnlViewport = new JPanel();
+	private JScrollPane scrComponents = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 	
 	private PnlISOProperties pnlISOProperties;
 	private PnlMessageProperties pnlMessageProperties;
@@ -74,12 +77,19 @@ public class PnlGuiConfig extends JPanel{
 		
 		pnlISOProperties.setVisible(false);
 		
+		pnlViewport.setLayout(null);
+		scrComponents.setViewportView(pnlViewport);
+		scrComponents.setBorder(null);
+		
 		//######### Apenas para visualizacao no WindowBuilder *********************************
+		pnlViewport.setPreferredSize(new Dimension(475, 428));
+		scrComponents.setBounds(271, 20, 475, 428); //FAKE!!!!!
 		scrTreeTypes.setBounds(12, 20, 246, 350); //FAKE!!!!!
-		pnlISOProperties.setBounds(271, 12, 450, 230);
-		pnlMessageProperties.setBounds(271, 12, 450, 60); //FAKE!!!!
-		pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, 450, 185); //FAKE!!!!!
-		pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, 450, 200); //FAKE!!!!!
+		
+		pnlISOProperties.setBounds(0, 0, 430, 230); //FAKE!!!!
+		pnlMessageProperties.setBounds(0, 0, 430, 60); //FAKE!!!!
+		pnlFieldProperties.setBounds(0, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, 430, 185); //FAKE!!!!!
+		pnlFieldCondition.setBounds(0, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, 430, 200); //FAKE!!!!!
 		
 		//SINCRONIZAR VALORES ABAIXO COM O RESIZE
 		btnNew.setBounds(12, scrTreeTypes.getY() + scrTreeTypes.getHeight() + 10, 246, 32);
@@ -103,11 +113,16 @@ public class PnlGuiConfig extends JPanel{
 				btnRemove.setBounds(143, scrTreeTypes.getY() + scrTreeTypes.getHeight() + 50, 115, 32);
 				
 				//Paineis de propriedades
-				pnlMessageProperties.setBounds(271, 12, getWidth() - 295, 90);
-				pnlISOProperties.setBounds(271, 12, getWidth() - 295, 230);
-				pnlFieldProperties.setBounds(271, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, getWidth() - 295, 185);
-				pnlFieldCondition.setBounds(270, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, getWidth() - 295, 
-						getHeight() - pnlMessageProperties.getHeight() - pnlFieldProperties.getHeight() - 43);
+				scrComponents.setBounds(271, 20, getWidth() - 290, getHeight() - 30);
+				pnlViewport.setPreferredSize(new Dimension(getWidth() - 290, ((getHeight() - 30) <= 520 ? 520 : getHeight() - 30)));
+				
+				pnlMessageProperties.setBounds(0, 0, getWidth() - 315, 90);
+				pnlISOProperties.setBounds(0, 0, getWidth() - 315, 230);
+				pnlFieldProperties.setBounds(0, pnlMessageProperties.getHeight() + pnlMessageProperties.getY() + 10, getWidth() - 315, 185);
+				
+				pnlFieldCondition.setBounds(0, pnlFieldProperties.getHeight() + pnlFieldProperties.getY() + 10, getWidth() - 315, 
+						((getHeight() - pnlMessageProperties.getHeight() - pnlFieldProperties.getHeight() - 50) <= 220 ? 220 : getHeight() - pnlMessageProperties.getHeight() - pnlFieldProperties.getHeight() - 50));
+
 			}
 			@Override
 			public void componentMoved(ComponentEvent e) {}
@@ -181,10 +196,11 @@ public class PnlGuiConfig extends JPanel{
 			}
 		});
 		
-		add(pnlISOProperties);
-		add(pnlMessageProperties);
-		add(pnlFieldProperties);
-		add(pnlFieldCondition);
+		pnlViewport.add(pnlISOProperties);
+		pnlViewport.add(pnlMessageProperties);
+		pnlViewport.add(pnlFieldProperties);
+		pnlViewport.add(pnlFieldCondition);
+		add(scrComponents);
 
 		//TabbedPane e Tree
 		treeTypes = new JTree(pnlMain.getIso8583Config().getConfigTreeNode());
@@ -292,6 +308,7 @@ public class PnlGuiConfig extends JPanel{
 				treeTypes.updateUI();
 			}
 		});
+		chckbxShowBitNum.setSelected(true);
 		add(chckbxShowBitNum);
 		
 		scrTreeTypes.setViewportView(treeTypes);
@@ -320,8 +337,6 @@ public class PnlGuiConfig extends JPanel{
 						pnlMain.getIso8583Config().updateSumField(selectedNode);
 				}
 				
-				if (!(selectedNode.getUserObject() instanceof String))
-					pnlMain.getIso8583Config().validateNode((GenericIsoVO) selectedNode.getUserObject(), selectedNodeParent);
 				SortTreeHelper.sortTree(this, selectedNodeParent, treeTypes);
 			}
 		}
@@ -355,21 +370,24 @@ public class PnlGuiConfig extends JPanel{
 	private void checkFieldsEnablement() {
 		if (selectedNodeParent.getUserObject() instanceof MessageVO) {
 			pnlFieldProperties.disableMessageField();
-			
-			pnlFieldCondition.setEnabled(false);
-		}else if(selectedNodeParent.getUserObject() instanceof FieldVO){
+		}
+		else if (selectedNodeParent.getUserObject() instanceof FieldVO) {
 			pnlFieldProperties.disableSubField();
 		}
 		
-		if(selectedNode.getChildCount() == 0){
-			pnlFieldProperties.disableLeafField();
+		if (selectedNode.getUserObject() instanceof FieldVO) {
+			pnlFieldCondition.setEnabled(true);
+			pnlFieldCondition.loadDynamicFields();			
+		}
+		else {
 			pnlFieldCondition.setEnabled(false);
-		}else{
+		}
+		
+		if (selectedNode.getChildCount() == 0) {
+			pnlFieldProperties.disableLeafField();
+		}
+		else {
 			pnlFieldProperties.disableIntermediaryField();
-			
-			if(selectedNodeParent.getUserObject() instanceof FieldVO){
-				pnlFieldCondition.ckDynamicClick();
-			}
 		}
 	}
 	

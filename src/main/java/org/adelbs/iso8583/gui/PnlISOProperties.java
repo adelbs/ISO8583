@@ -94,7 +94,8 @@ public class PnlISOProperties extends JPanel {
 	public void save(Iso8583Config isoConfig) {
         isoConfig.setDelimiterEnum((DelimiterEnum) cmbDelimiter.getSelectedItem());
         isoConfig.setHeaderEncoding((EncodingEnum) cmbHeaderEncoding.getSelectedItem());
-        isoConfig.setHeaderSize(Integer.parseInt(txtHeaderSize.getText()));
+        if (!txtHeaderSize.getText().trim().equals("")) isoConfig.setHeaderSize(Integer.parseInt(txtHeaderSize.getText()));
+        else isoConfig.setHeaderSize(0);
 	}
 
 	public void load(Iso8583Config isoConfig) {

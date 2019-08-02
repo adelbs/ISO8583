@@ -3,6 +3,7 @@ package org.adelbs.iso8583.vo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.adelbs.iso8583.helper.BSInterpreter;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -32,16 +33,19 @@ public class FieldVOTest {
 
 	@Test
 	public void testIsIgnored_BasicTrueFalse() {
+		BSInterpreter bsInt = new BSInterpreter();
+		
 		fieldVO.setDynaCondition("false");
-		assertFalse("String false should evaluate as  boolean false", fieldVO.isIgnored());
+		assertFalse("String false should evaluate as  boolean false", !bsInt.evaluate(fieldVO.getDynaCondition()));
 		
 		fieldVO.setDynaCondition("true");
-		assertTrue("String true should evaluate as  boolean true", fieldVO.isIgnored());
+		assertTrue("String true should evaluate as  boolean true", bsInt.evaluate(fieldVO.getDynaCondition()));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testisIgnored_NonBooleanExpression(){
+		BSInterpreter bsInt = new BSInterpreter();
 		fieldVO.setDynaCondition("return \"foobar\";");
-		fieldVO.isIgnored();
+		bsInt.evaluate(fieldVO.getDynaCondition());
 	}
 }

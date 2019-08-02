@@ -83,10 +83,10 @@ public class PayloadMessageConfig {
 			
 			//Add Field lists of this message
 			for (FieldVO fieldVO : messageVO.getFieldList()) {
-				GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, null);
+				GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, null, "");
 				fieldList.add(newPayloadField);
 				newPayloadField.setValues(fieldVO);
-				setSubFieldsVO(fieldVO.getFieldList(), newPayloadField);
+				setSubFieldsVO(fieldVO.getFieldList(), newPayloadField, "");
 			}
 		}
 	}
@@ -96,11 +96,11 @@ public class PayloadMessageConfig {
 	 * @param fields List of {@link FieldVO) to be added to the Panel
 	 * @param payloadField GUI panel that will receive all lines
 	 */
-	protected void setSubFieldsVO(final List<FieldVO> fields, final GuiPayloadField parentPlayloadField){
+	protected void setSubFieldsVO(final List<FieldVO> fields, final GuiPayloadField parentPlayloadField, String superFieldBitNum){
 		for (final FieldVO fieldVO : fields) {
-			GuiPayloadField innerFieldPayload = parentPlayloadField.addSubline(fieldVO, parentPlayloadField.getFieldVO());
+			GuiPayloadField innerFieldPayload = parentPlayloadField.addSubline(fieldVO, parentPlayloadField.getFieldVO(), superFieldBitNum +"["+ parentPlayloadField.getFieldVO().getBitNum() +"]");
 			innerFieldPayload.setValues(fieldVO);
-			setSubFieldsVO(fieldVO.getFieldList(), innerFieldPayload);
+			setSubFieldsVO(fieldVO.getFieldList(), innerFieldPayload, superFieldBitNum +"["+ parentPlayloadField.getFieldVO().getBitNum() +"]");
 		}
 	}
 
@@ -124,7 +124,7 @@ public class PayloadMessageConfig {
 			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\">");
 			
 			for (GuiPayloadField payloadField : fieldList)
-				xmlMessage.append(payloadField.getXML());
+				xmlMessage.append(payloadField.getXML(1));
 				
 			xmlMessage.append("\n</message>");
 		}
@@ -214,7 +214,8 @@ public class PayloadMessageConfig {
 				}
 			}
 			return newMessageVO;
-		}catch(SAXException | IOException | ParserConfigurationException e){
+		}
+		catch(SAXException | IOException | ParserConfigurationException e){
 			throw new ParseException(e.getMessage());
 		}
 	}
@@ -363,17 +364,17 @@ public class PayloadMessageConfig {
 			public void keyPressed(KeyEvent e) { }
 		};
 
-		private GuiPayloadField(FieldVO fieldVO, FieldVO superfieldVO) {
+		private GuiPayloadField(FieldVO fieldVO, FieldVO superfieldVO, String superFieldBitNum) {
 
 			this.isSubfield = (superfieldVO != null);
 			this.superFieldVO = superfieldVO;
 			this.fieldVO = fieldVO.getInstanceCopy();
 			this.fieldVO.setFieldList(new ArrayList<FieldVO>());
 			
-			if (isSubfield){
+			if (isSubfield) {
 				superFieldVO.getFieldList().add(this.fieldVO);
             }
-            else{
+            else {
 				messageVO.getFieldList().add(this.fieldVO);
 			}
 			
@@ -383,7 +384,7 @@ public class PayloadMessageConfig {
 			txtValue = new JTextField();
 			subfieldList = new ArrayList<GuiPayloadField>();
 			
-			lblFieldNum = new JLabel(fieldVO.getBitNum().toString());
+			lblFieldNum = new JLabel(superFieldBitNum +"["+ fieldVO.getBitNum().toString() +"]");
 			lblFieldName = new JLabel(fieldVO.getName());
 			lblType = new JLabel(fieldVO.getType().toString());
 			lblDynamic = new JLabel();
@@ -394,26 +395,24 @@ public class PayloadMessageConfig {
 			numLines++;
 			
 			ckBox.setBounds(10, 10 + (lineNum * 25), 22, 22);
-			lblFieldNum.setBounds(40, 10 + (lineNum * 25), 50, 22);
-			lblFieldName.setBounds(80, 10 + (lineNum * 25), 100, 22);
-			lblType.setBounds(470, 10 + (lineNum * 25), 100, 22);
-			lblDynamic.setBounds(600, 10 + (lineNum * 25), 50, 22);
+			lblFieldNum.setBounds(40, 10 + (lineNum * 25), 60, 22);
+			lblFieldName.setBounds(100, 10 + (lineNum * 25), 100, 22);
+			lblType.setBounds(490, 10 + (lineNum * 25), 100, 22);
+			lblDynamic.setBounds(620, 10 + (lineNum * 25), 50, 22);
 			
 			if (fieldVO.getType() == TypeEnum.ALPHANUMERIC) {
-				txtValue.setBounds(190, 10 + (lineNum * 25), 260, 22);
+				txtValue.setBounds(210, 10 + (lineNum * 25), 260, 22);
 			}
 			else if (fieldVO.getType() == TypeEnum.TLV) {
-				txtType.setBounds(190, 10 + (lineNum * 25), 80, 22);
-				txtLength.setBounds(280, 10 + (lineNum * 25), 80, 22);
-				txtValue.setBounds(370, 10 + (lineNum * 25), 80, 22);
+				txtType.setBounds(210, 10 + (lineNum * 25), 80, 22);
+				txtLength.setBounds(300, 10 + (lineNum * 25), 80, 22);
+				txtValue.setBounds(390, 10 + (lineNum * 25), 80, 22);
 				
 				pnlFields.add(txtType);
 				pnlFields.add(txtLength);
 			}
 			
-			if (!isSubfield)
-				pnlFields.add(ckBox);
-				
+			pnlFields.add(ckBox);
 			pnlFields.add(lblFieldNum);
 			pnlFields.add(lblFieldName);
 			
@@ -436,7 +435,7 @@ public class PayloadMessageConfig {
 				ckBox.setEnabled(false);
 				ckBoxClick(ckBox);
 				
-				setEnabled(true);
+				setEnabled(true, false);
 			}
 			else {
 				ckBox.addActionListener(new ActionListener() {
@@ -447,7 +446,7 @@ public class PayloadMessageConfig {
 					}
 				});
 				
-				setEnabled(false);
+				setEnabled(false, isSubfield);
 			}
 		}
 		
@@ -482,7 +481,7 @@ public class PayloadMessageConfig {
 		}
 		
 		private void ckBoxClick(JCheckBox ckBox) {
-			setEnabled(ckBox.isSelected());
+			setEnabled(ckBox.isSelected(), false);
 			txtValue.setText("");
 			setEnableStatusForFields(subfieldList, ckBox.isSelected());
 		}
@@ -494,20 +493,20 @@ public class PayloadMessageConfig {
 		 */
 		private void setEnableStatusForFields(final List<GuiPayloadField> subFields, final boolean enabledValue){
 			subFields.forEach(subField->{
-				subField.setEnabled(enabledValue);
+				subField.setEnabled(enabledValue, true);
 				subField.txtValue.setText("");
 				setEnableStatusForFields(subField.subfieldList, enabledValue);
 			});
 		}
 		
-		private GuiPayloadField addSubline(FieldVO fieldVO, FieldVO superfieldVO) {
-			GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, superfieldVO);
+		private GuiPayloadField addSubline(FieldVO fieldVO, FieldVO superfieldVO, String superFieldBitNum) {
+			GuiPayloadField newPayloadField = new GuiPayloadField(fieldVO, superfieldVO, superFieldBitNum);
 			subfieldList.add(newPayloadField);
 			return newPayloadField;
 		}
 		
 		private void setReadOnly() {
-			setEnabled(false);
+			setEnabled(false, false);
 			ckBox.setEnabled(false);
 			
 			txtType.setEnabled(true);
@@ -519,7 +518,7 @@ public class PayloadMessageConfig {
 			txtValue.setEditable(false);
 		}
 		
-		private void setEnabled(boolean enabled) {
+		private void setEnabled(boolean enabled, boolean enableCkBox) {
 			txtType.setEnabled(enabled);
 			txtLength.setEnabled(enabled);
 			txtValue.setEnabled(enabled);
@@ -527,6 +526,10 @@ public class PayloadMessageConfig {
 			lblFieldName.setEnabled(enabled);
 			lblType.setEnabled(enabled);
 			lblDynamic.setEnabled(enabled);
+			if (enableCkBox) {
+				ckBox.setEnabled(enabled);
+				ckBox.setSelected(enabled);
+			}
 		}
 		
 		private String getType() {
@@ -541,11 +544,13 @@ public class PayloadMessageConfig {
 			return txtValue.getText();
 		}
 			
-		private StringBuilder getXML() {
+		private StringBuilder getXML(int depth) {
 			StringBuilder xmlField = new StringBuilder();
-			String tabs = isSubfield ? "\t\t" : "\t";
+
+			String tabs = "";
+			for (int i = 0; i < depth; i++) tabs += "\t";
 			
-			if (isSubfield || ckBox.isSelected()) {
+			if (ckBox.isSelected()) {
 				xmlField.append("\n").append(tabs).append("<bit num=\"").append(fieldVO.getBitNum()).append("\"");
 
 				if (fieldVO.getType() == TypeEnum.TLV) {
@@ -558,17 +563,19 @@ public class PayloadMessageConfig {
 					xmlField.append(">");
 				}
 				
-				subfieldList.forEach(subfield->{
-					xmlField.append(subfield.getXML());
+				subfieldList.forEach(subfield -> {
+					xmlField.append(subfield.getXML(depth + 1));
 				});
 
 				
-				if (subfieldList.size() > 0){
-					xmlField.append("\n\t</bit>");
-				}else if (fieldVO.getType() != TypeEnum.TLV){
-						xmlField.append(" value=\"").append(getValue()).append("\"/>");
-				}else{
-						xmlField.append("/>");
+				if (subfieldList.size() > 0) {
+					xmlField.append("\n"+ tabs +"</bit>");
+				}
+				else if (fieldVO.getType() != TypeEnum.TLV) {
+					xmlField.append(" value=\"").append(getValue()).append("\"/>");
+				}
+				else {
+					xmlField.append("/>");
 				}
 			}
 			

@@ -88,16 +88,23 @@ public class PnlFieldProperties extends JPanel {
 		lblEncoding.setHorizontalAlignment(SwingConstants.RIGHT);
 		cmbEncoding.setBounds(322, 122, 116, 22);
 		cmbEncoding.setModel(new DefaultComboBoxModel<EncodingEnum>(new EncodingEnum[] {
-				EncodingEnum.BINARY,
-				EncodingEnum.UTF8, EncodingEnum.EBCDIC, 
-				EncodingEnum.ISO88591, EncodingEnum.BASE64}));
+				EncodingEnum.UTF8, 
+				EncodingEnum.EBCDIC, 
+				EncodingEnum.ISO88591,
+				EncodingEnum.BCD,
+				EncodingEnum.BASE64}));
 		
 		chckbxMandatory.setBounds(179, 88, 113, 25);
 		chckbxMandatory.addActionListener(new ActionListener() {
-			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				pnlGuiConfig.getPnlFieldCondition().setMandatory(chckbxMandatory.isSelected());
+				if (chckbxMandatory.isSelected()) {
+					chckbxIgnore.setSelected(false);
+					pnlGuiConfig.getPnlFieldCondition().setMandatory(true);
+				}
+				else {
+					pnlGuiConfig.getPnlFieldCondition().setMandatory(false);
+				}
 			}
 		});
 		
@@ -105,7 +112,13 @@ public class PnlFieldProperties extends JPanel {
 		chckbxIgnore.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				pnlGuiConfig.getPnlFieldCondition().setIgnored(chckbxIgnore.isSelected());
+				if (chckbxIgnore.isSelected()) {
+					chckbxMandatory.setSelected(false);
+					pnlGuiConfig.getPnlFieldCondition().setIgnored(true);
+				}
+				else {
+					pnlGuiConfig.getPnlFieldCondition().setIgnored(false);
+				}
 			}
 		});
 		
@@ -176,9 +189,6 @@ public class PnlFieldProperties extends JPanel {
 		txtName.setEnabled(true);
 		lblSubfield.setEnabled(false);
 		txtSubField.setEnabled(false);
-		chckbxMandatory.setSelected(false);
-		chckbxMandatory.setEnabled(false);
-		chckbxIgnore.setEnabled(true);
 		lblNum.setText("Bit Num");
 	}
 	
@@ -187,9 +197,6 @@ public class PnlFieldProperties extends JPanel {
 		txtName.setEnabled(false);
 		lblSubfield.setEnabled(true);
 		txtSubField.setEnabled(true);
-		chckbxMandatory.setEnabled(true);
-		chckbxIgnore.setSelected(false);
-		chckbxIgnore.setEnabled(false);
 		lblNum.setText("Order");
 	}
 	

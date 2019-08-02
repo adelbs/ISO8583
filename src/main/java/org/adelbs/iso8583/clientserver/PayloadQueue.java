@@ -33,8 +33,11 @@ final class PayloadQueue {
 	
 	private SocketPayload getNext(ArrayList<SocketPayload> list) {
 		synchronized(this) {
-			SocketPayload result = list.get(0);
-			addOrRemoveItem(list, null);
+			SocketPayload result = null;
+			if (list.size() > 0) {
+				result = list.get(0);
+				addOrRemoveItem(list, null);
+			}
 			return result;
 		}
 	}

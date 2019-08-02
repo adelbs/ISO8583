@@ -275,7 +275,7 @@ public class AsciiTable {
 		byte result = -1;
 		
 		for (int i = 0; i < items.size(); i++) {
-			if (items.get(i).getBinary().equals(binary)) {
+			if (items.get(i).getBinary().equalsIgnoreCase(binary)) {
 				result = items.get(i).getDecimal();
 				break;
 			}
@@ -295,6 +295,32 @@ public class AsciiTable {
 		}
 		
 		return result;
+	}
+	
+	public byte findDecimalFromHexa(String hexa) {
+		byte result = -1;
+		
+		for (int i = 0; i < items.size(); i++) {
+			if (items.get(i).getHexa().equalsIgnoreCase(hexa)) {
+				result = items.get(i).getDecimal();
+				break;
+			}
+		}
+		
+		return result;		
+	}
+	
+	public String findHexaFromByte(byte decimal) {
+		String result = null;
+		
+		for (int i = 0; i < items.size(); i++) {
+			if (items.get(i).getDecimal() == decimal) {
+				result = items.get(i).getHexa();
+				break;
+			}
+		}
+		
+		return result;				
 	}
 	
 }

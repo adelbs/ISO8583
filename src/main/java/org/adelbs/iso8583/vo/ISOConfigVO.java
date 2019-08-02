@@ -99,7 +99,6 @@ public class ISOConfigVO {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
 		return "iso8583 "+delimiter.toString();
 	}
 	

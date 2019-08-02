@@ -9,7 +9,7 @@ public class EncodingEnumTest {
 	@Test
 	public void testGetEncodingByName() {
 		assertEquals("Match by name shoudl return the exact enconding class instance", EncodingEnum.getEncoding("BINARY").getClass(), 
-				EncodingEnum.BINARY.getClass());	
+				EncodingEnum.BCD.getClass());	
 	}
 	
 	public void testGetEncondingByUnexitentName(){

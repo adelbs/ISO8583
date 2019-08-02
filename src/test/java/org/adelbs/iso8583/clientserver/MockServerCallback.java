@@ -21,7 +21,6 @@ public class MockServerCallback extends CallbackAction{
 		this.isoConnection = isoConnection;
 	}
 	
-	//TODO
 	public void dataReceived(SocketPayload payload){
 		PayloadMessageConfig payloadMessageConfig = new PayloadMessageConfig(isoConfig);
 		try {
@@ -43,24 +42,22 @@ public class MockServerCallback extends CallbackAction{
 		byte[] responseData = payloadMessageConfig.getIsoConfig().getDelimiter().preparePayload(isoMessage, payloadMessageConfig.getIsoConfig());
 		try {
 			if (!isoConnection.isConnected()){
-				isoConnection.connect();
+				isoConnection.connect(String.valueOf(Thread.currentThread().getId()));
 			}
 			isoConnection.send(new SocketPayload(responseData, socketToRespond));
 			//isoConnection.resetSocket(true);
 		} catch (IOException | ConnectionException | InterruptedException e) {
 			System.out.println("Server [Callback]: "+ e.getMessage());
-			isoConnection.endConnection();
+			isoConnection.endConnection(String.valueOf(Thread.currentThread().getId()));
 			this.isoConnection = null;
 		}
 	}
 
 	@Override
 	public void log(String log) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public void end() {
-		// TODO Auto-generated method stub
 	}
 }

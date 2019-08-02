@@ -8,7 +8,6 @@ import java.awt.event.ComponentListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -28,7 +27,6 @@ public class PnlFieldCondition extends JPanel {
 
 	private static final long serialVersionUID = 2L;
 	
-	private JCheckBox ckDynamic = new JCheckBox("Dynamic");
 	private JComboBox<CmbItemVO> cmbDynaBit = new JComboBox<CmbItemVO>();
 	private JComboBox<CmbItemVO> cmbDynaOperator = new JComboBox<CmbItemVO>();
 	private JLabel lblDynaValue = new JLabel("Value");
@@ -48,8 +46,8 @@ public class PnlFieldCondition extends JPanel {
 		setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Condition", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		
 		//SINCRONIZAR VALORES ABAIXO COM O RESIZE
-		scrDynaCondition.setBounds(15, 100, getWidth() - 55, getHeight() - 109);
-		btnDynaValidate.setBounds(getWidth() - 35, getHeight() - 35, 25, 25);
+		scrDynaCondition.setBounds(15, 100, 395, 100);
+		btnDynaValidate.setBounds(415, 174, 25, 25);
 		//***************************************************************************
 
 		addComponentListener(new ComponentListener() {
@@ -57,8 +55,8 @@ public class PnlFieldCondition extends JPanel {
 			public void componentShown(ComponentEvent e) {}
 			@Override
 			public void componentResized(ComponentEvent e) {
-				scrDynaCondition.setBounds(15, 100, getWidth() - 55, getHeight() - 109);
-				btnDynaValidate.setBounds(getWidth() - 35, getHeight() - 35, 25, 25);
+				scrDynaCondition.setBounds(15, 100, getWidth() - 55, ((getHeight() - 120) <= 100 ? 100 : getHeight() - 120));
+				btnDynaValidate.setBounds(getWidth() - 35, ((getHeight() - 46) <= 174 ? 174 : getHeight() - 46), 25, 25);
 			}
 			@Override
 			public void componentMoved(ComponentEvent e) {}
@@ -66,8 +64,6 @@ public class PnlFieldCondition extends JPanel {
 			public void componentHidden(ComponentEvent e) {}
 		}); 
 		
-		ckDynamic.setBounds(8, 0, 77, 25);
-
 		cmbDynaOperator.addItem(new CmbItemVO("-- LOGIC OPERATION --", "-- LOGIC OPERATION --"));
 		cmbDynaOperator.addItem(new CmbItemVO("EQUAL (" + OperatorEnum.EQUAL.toString() + ")", OperatorEnum.EQUAL.toString()));
 		cmbDynaOperator.addItem(new CmbItemVO("DIFFERENT (" + OperatorEnum.DIFFERENT.toString() + ")", OperatorEnum.DIFFERENT.toString()));
@@ -119,15 +115,6 @@ public class PnlFieldCondition extends JPanel {
 			}
 		});
 		
-		ckDynamic.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ckDynamicClick();
-			}
-		});
-		
-		add(ckDynamic);
 		add(cmbDynaBit);
 		add(cmbDynaOperator);
 		add(lblDynaValue);
@@ -138,53 +125,36 @@ public class PnlFieldCondition extends JPanel {
 
 	}
 	
-	public void ckDynamicClick() {
-		if (ckDynamic.isSelected()) {
-			setEnabled(true);
-			ckDynamic.setEnabled(!txtDynaCondition.getText().equals("true"));
-			
-			FieldVO fieldVO = null;
-			FieldVO selectedFieldVO = (FieldVO) ((DefaultMutableTreeNode) pnlMain.getPnlGuiConfig().getSelectedNode()).getUserObject();
-			cmbDynaBit.removeAllItems();
-			cmbDynaBit.addItem(new CmbItemVO("-- BIT --", "-- BIT --"));
-			for (int i = 0; i < pnlMain.getPnlGuiConfig().getSelectedNodeParent().getChildCount(); i++) {
-				fieldVO = (FieldVO) ((DefaultMutableTreeNode) pnlMain.getPnlGuiConfig().getSelectedNodeParent().getChildAt(i)).getUserObject();
-				if (fieldVO.getBitNum().intValue() != selectedFieldVO.getBitNum().intValue())
-					cmbDynaBit.addItem(new CmbItemVO("BIT[" + fieldVO.getBitNum() + "] " + fieldVO.getName(), "BIT[" + fieldVO.getBitNum() + "]"));
-			}
-			
-			cmbDynaBit.addActionListener(new AddLogicActionListener(cmbDynaBit));
+	public void loadDynamicFields() {
+		FieldVO fieldVO = null;
+		FieldVO selectedFieldVO = (FieldVO) ((DefaultMutableTreeNode) pnlMain.getPnlGuiConfig().getSelectedNode()).getUserObject();
+		cmbDynaBit.removeAllItems();
+		cmbDynaBit.addItem(new CmbItemVO("-- BIT --", "-- BIT --"));
+		for (int i = 0; i < pnlMain.getPnlGuiConfig().getSelectedNodeParent().getChildCount(); i++) {
+			fieldVO = (FieldVO) ((DefaultMutableTreeNode) pnlMain.getPnlGuiConfig().getSelectedNodeParent().getChildAt(i)).getUserObject();
+			if (fieldVO.getBitNum().intValue() < selectedFieldVO.getBitNum().intValue())
+				cmbDynaBit.addItem(new CmbItemVO("BIT[" + fieldVO.getBitNum() + "] " + fieldVO.getName(), "BIT[" + fieldVO.getBitNum() + "]"));
 		}
-		else {
-			setEnabled(false);
-			ckDynamic.setEnabled(!txtDynaCondition.getText().equals("true"));
-			if (!txtDynaCondition.getText().equals("true")) clear();
-		}
+		
+		cmbDynaBit.addActionListener(new AddLogicActionListener(cmbDynaBit));
 	}
 
 	public void setMandatory(boolean value) {
 		if (value) {
 			txtDynaCondition.setText("true");
-			ckDynamic.setSelected(false);
-			ckDynamic.setEnabled(false);
 		}
 		else {
 			txtDynaCondition.setText("");
-			ckDynamic.setEnabled(true);
 		}
-		ckDynamicClick();
 	}
 	
 	public void setIgnored(boolean value) {
-		ckDynamic.setSelected(false);
-		ckDynamic.setEnabled(false);
 		txtDynaCondition.setText(value ? "false" : "");
 	}
 	
 	public void setEnabled(boolean value) {
 		super.setEnabled(value);
 		
-		ckDynamic.setEnabled(value);
 		cmbDynaBit.setEnabled(value);
 		cmbDynaOperator.setEnabled(value);
 		lblDynaValue.setEnabled(value);
@@ -202,17 +172,10 @@ public class PnlFieldCondition extends JPanel {
 		if (fieldVo != null) {
 			cmbDynaOperator.setSelectedItem(fieldVo.getDynaCondition());
 			txtDynaCondition.setText(fieldVo.getDynaCondition());
-			
-			final boolean isDynaConditionNotNull = fieldVo.getDynaCondition() != null;
-			final boolean isDynaConditionNotEmpty = fieldVo.getDynaCondition().trim().length() != 0 ;
-			final boolean isDynaConditionNotTrueString = !fieldVo.getDynaCondition().trim().equalsIgnoreCase("true");
-			final boolean isDynaConditionNotFalseString = !fieldVo.getDynaCondition().trim().equalsIgnoreCase("false");
-			ckDynamic.setSelected(isDynaConditionNotNull && isDynaConditionNotEmpty && isDynaConditionNotTrueString && isDynaConditionNotFalseString);
 		}
 	}
 	
 	public void clear() {
-		ckDynamic.setSelected(false);
 		cmbDynaBit.removeAllItems();
 		cmbDynaOperator.setSelectedIndex(0);
 		txtDynaValue.setText("");
@@ -220,9 +183,10 @@ public class PnlFieldCondition extends JPanel {
 		
 		final boolean fieldIsMandatory = pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxMandatory().isSelected();
 		final boolean fieldIsIgnored = pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxIgnored().isSelected();
-		if(fieldIsMandatory){
+		if (fieldIsMandatory) {
 			txtDynaCondition.setText("true");
-		}else if(fieldIsIgnored){
+		}
+		else if (fieldIsIgnored) {
 			txtDynaCondition.setText("false");
 		}
 		

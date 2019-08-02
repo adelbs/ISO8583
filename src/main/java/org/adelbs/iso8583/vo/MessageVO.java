@@ -62,7 +62,7 @@ public class MessageVO extends GenericIsoVO {
      */
     @XmlTransient
     public String getHeader() {
-        return header;
+        return (header == null ? "" : header);
     }
 
     /**
@@ -114,7 +114,7 @@ public class MessageVO extends GenericIsoVO {
 	}
 	
 	public String toString() {
-		return type + getValidationMessage();
+		return type;
 	}
 
 	@XmlAttribute(name="bitmap-encoding")

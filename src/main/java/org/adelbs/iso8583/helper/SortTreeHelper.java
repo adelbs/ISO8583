@@ -36,8 +36,6 @@ public class SortTreeHelper {
 				treeTypes.setSelectionPath(treePath);
 				updateTree = false;
 			}
-
-			pnlGuiConfig.getPnlFieldCondition().ckDynamicClick();
 		}
 	}
 	

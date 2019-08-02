@@ -1,0 +1,36 @@
+PRIORITARIOS:
+ok* Campos de propriedades desabilitados quando abre uma janela nova. Precisa clicar em outro campo e voltar no anterior para funcionar.
+ok* No devtest, campos dynamic não aparecem direito. Pensar em scroll
+ok* Remover validação de campos duplicados (talvez colocar uma aba com validações em formato de warning)
+ok* Flag show bit num deve vir seleionada por padrão
+ok* Ao mudar de aba parece que ele perde os subfields
+ok* Quando não tem header, no xml gerado aparece "null"
+ok* Lugares que tem encoding, mudar a ordem das opções, colocar UTF como padrão
+ok* Colocar checkbox em todos os subfields ao montar payload
+ok* Alterar numeração para identificar mais facilmente quem é subfield de quem (x.x.x)
+ok* Ao montar um request, ao alternar entre o XML e o visual, ele monta o XML errado (considera subfields não selecionados)
+ok* Fazer funcionar as condições para campos e subcampos
+* Tem algum problema que ele está substituindo os valores dos campos do ISO carregado
+* Ao voltar da visao XML do request, esta deixando ckbox dos subfields todos habilitados independente da presença do campo
+* Validação do campo de condições (não pode bit menor)
+* Testar campos mandatory e ignore
+* Se não confirmar a exclusão de uma mensagem, ele desabilita botoes e a tela
+
+CONSOLE:
+* Botão salvar payload deve salvar o XML
+* Testar botão carregar payload
+* Colocar botão para limpar console
+* Colocar opção de "verbose mode" na aba de console
+* Testar aba de console
+* Colocar a opção de salvar o output direto em um arquivo de log
+
+DEVTEST:
+* Configurações de console devem ser salvas no arquivo de modelo do devtest tambem
+* Colocar botão de "Connect" no devtest para poder testar direto pelos steps no design mode
+
+MELHORIAS DIVERSAS:
+* Campo descrição de cada mensagem (para explicar o que cada mensagem faz)
+* Verificar issues no github
+* Ver TODOs no codigo
+* Wiki
+* Versão do build e versão pegar do mesmo arquivo

@@ -14,21 +14,21 @@ import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 import org.xml.sax.SAXException;
 
-class MockISOClient extends MockISOConnection implements Callable<MockResult>{
+class MockISOClient extends MockISOConnection implements Callable<MockResult> {
 	
 	private MockClientCallback callback = new MockClientCallback(ISOCONFIG);
 	
-	public MockISOClient(final String host, final int port) throws IOException, ConnectionException{
+	public MockISOClient(final String host, final int port) throws IOException, ConnectionException {
 		this.conn = new ISOConnection(false, host, port, 1000);
 		conn.setIsoConfig(ISOCONFIG);
-		conn.setCallback(callback);
-		conn.connect();
+		conn.putCallback(String.valueOf(Thread.currentThread().getId()), callback);
+		conn.connect(String.valueOf(Thread.currentThread().getId()));
 		System.out.println("Client: Connected");
 	}
 	
 	@Override
 	public MockResult call() throws MockISOException {
-		try{
+		try {
 			final MessageVO mockMessage = MockMessageFactory.createMockMessage(DEFAULT_MESSAGE_TYPE, ISOCONFIG);
 			final MessageVO messageToBeSent = mockMessage.getInstanceCopy();
 			final ArrayList<FieldVO> fieldList = messageToBeSent.getFieldList();
@@ -43,19 +43,21 @@ class MockISOClient extends MockISOConnection implements Callable<MockResult>{
 			System.out.println("Client: Message Sent");
 			
 			System.out.println("Client: Waiting Response");
-			conn.processNextPayload(true, 0);
+			conn.processNextPayload(String.valueOf(Thread.currentThread().getId()), true, 0);
 			
 			Thread.sleep(100);
 			
 			//TODO Change to TaskResult(MEssageSent, MEssageReceived)
 			final MessageVO responseMessage = callback.getResponseMessage();
 			return new MockResult(messageToBeSent, responseMessage);
-		} catch (XPathExpressionException | SAXException | 
+		} 
+		catch (XPathExpressionException | SAXException | 
 				IOException | ParserConfigurationException | 
 				ParseException | InterruptedException e) {
 			System.out.println("Client: "+e.getMessage());
 			throw new MockISOException(e);
-		}finally{
+		}
+		finally{
 			System.out.println("Client: Close Connection");
 			terminate();
 		}

@@ -115,24 +115,24 @@ public class PnlMain extends JPanel {
 				parseXML();
 			}
 		});
-		
-		//TODO COMENTAR
-		//txtFilePath.setText("C:\\Users\\jacfe02\\Desktop\\testeISO.xml");
-		//openXML();
 	}
 	
 	private void parseXML() {	
 		pnlGuiConfig.save(this);
-		try{
-			if (tabbedPane.getSelectedComponent().equals(pnlGuiConfig)){
+		
+		try {
+			if (tabbedPane.getSelectedComponent().equals(pnlGuiConfig)) {
 				isoConfig.parseXmlToConfig(this);
-			}else{
+			}
+			else {
 				isoConfig.parseConfigToXML();
 			}
-		}catch(ISOConfigMarshallerException e){
+		}
+		catch (ISOConfigMarshallerException e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "An error ocurred while creating the XML.\n\n" + e.getMessage());
 		}
+		
 		pnlGuiConfig.updateTree();
 		pnlGuiConfig.expandAllNodes();
 	}
