@@ -323,7 +323,7 @@ public class FieldVO extends GenericIsoVO {
 	 * @param startPosition
 	 * @return
 	 */	
-	public int setValueFromPayload(byte[] payload, int startPosition, BSInterpreter bsInt, String preSnipet) throws OutOfBoundsException {
+	public int setValueFromPayload(byte[] payload, int startPosition, BSInterpreter bsInt, String preSnipet, boolean ignore) throws OutOfBoundsException {
 		int endPosition = startPosition;
 		String newContent = "";
 		
@@ -339,8 +339,8 @@ public class FieldVO extends GenericIsoVO {
 			ArrayList<FieldVO> newFieldList = new ArrayList<FieldVO>();
 			
 			for (FieldVO fieldVO : fieldList){
-				if (bsInt.evaluate(fieldVO.getDynaCondition())) {
-					endPosition = fieldVO.setValueFromPayload(payload, endPosition, bsInt, currentObjBS);
+				if ((fieldVO.getDynaCondition().indexOf("ignore()") > -1) || bsInt.evaluate(fieldVO.getDynaCondition())) {
+					endPosition = fieldVO.setValueFromPayload(payload, endPosition, bsInt, currentObjBS, (fieldVO.getDynaCondition().indexOf("ignore()") > -1));
 					newFieldList.add(fieldVO);
 				}
 			}
@@ -352,24 +352,29 @@ public class FieldVO extends GenericIsoVO {
 				if (typeLength == TypeLengthEnum.FIXED) {
 					int calculatedLength = (encoding == EncodingEnum.BCD) ? length / 2 : length;
 					endPosition = startPosition + encoding.getEncondedByteLength(calculatedLength);
-					newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
+					
+					if (!ignore) newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
 				}
 				else if (typeLength == TypeLengthEnum.NVAR) {
 					
 					String strVarValue = encoding.convert(ISOUtils.subArray(payload, startPosition, startPosition + encoding.getEncondedByteLength(length)));
-					int nVarValue = Integer.valueOf(strVarValue);
+					int nVarValue = Integer.valueOf(strVarValue.trim());
 
 					if (encoding == EncodingEnum.BCD)
 						endPosition = startPosition + (strVarValue.length() / 2) + nVarValue;
 					else
 						endPosition = startPosition + strVarValue.length() + nVarValue;
 	
-					newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
-					
-					if (encoding == EncodingEnum.BCD)
-						newContent = newContent.substring(strVarValue.length() / 2);
-					else
-						newContent = newContent.substring(strVarValue.length());
+					if (!ignore) {
+						newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
+						
+						if (encoding == EncodingEnum.BCD) {
+							newContent = newContent.substring(strVarValue.length() / 2);
+						}
+						else {
+							newContent = newContent.substring(strVarValue.length());
+						}
+					}
 				}
 				
 				value = newContent;

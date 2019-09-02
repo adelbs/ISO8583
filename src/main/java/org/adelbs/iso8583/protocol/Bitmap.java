@@ -115,8 +115,13 @@ public class Bitmap {
 							foundFieldVO.setLength(foundFieldVO.getLength() + 1);
 						}
 						
-						if (bsInt.evaluate(foundFieldVO.getDynaCondition())) {
-							startPosition = foundFieldVO.setValueFromPayload(adjustedPayload, startPosition, bsInt, "");
+						if (foundFieldVO.getDynaCondition().indexOf("ignore()") > -1 || bsInt.evaluate(foundFieldVO.getDynaCondition())) {
+							startPosition = foundFieldVO.setValueFromPayload(
+																adjustedPayload, 
+																startPosition, 
+																bsInt, 
+																"", 
+																(foundFieldVO.getDynaCondition().indexOf("ignore()") > -1));
 							
 							bitmap.put(foundFieldVO.getBitNum(), foundFieldVO);
 							bitmap.get(foundFieldVO.getBitNum()).setPresent(true);

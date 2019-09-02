@@ -141,7 +141,7 @@ public class PnlFieldCondition extends JPanel {
 
 	public void setMandatory(boolean value) {
 		if (value) {
-			txtDynaCondition.setText("true");
+			txtDynaCondition.setText("return true;");
 		}
 		else {
 			txtDynaCondition.setText("");
@@ -149,7 +149,7 @@ public class PnlFieldCondition extends JPanel {
 	}
 	
 	public void setIgnored(boolean value) {
-		txtDynaCondition.setText(value ? "false" : "");
+		txtDynaCondition.setText(value ? "return ignore();" : "");
 	}
 	
 	public void setEnabled(boolean value) {
@@ -184,10 +184,10 @@ public class PnlFieldCondition extends JPanel {
 		final boolean fieldIsMandatory = pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxMandatory().isSelected();
 		final boolean fieldIsIgnored = pnlMain.getPnlGuiConfig().getPnlFieldProperties().getChckbxIgnored().isSelected();
 		if (fieldIsMandatory) {
-			txtDynaCondition.setText("true");
+			txtDynaCondition.setText("return true;");
 		}
 		else if (fieldIsIgnored) {
-			txtDynaCondition.setText("false");
+			txtDynaCondition.setText("return ignore();");
 		}
 		
 	}

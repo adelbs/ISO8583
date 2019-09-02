@@ -162,7 +162,7 @@ public class PnlMain extends JPanel {
 		}
 	}
 	
-	private void openXML(){
+	public void openXML(){
 		if(!txtFilePath.getText().equals("")){
 			isoConfig.openFile(this, txtFilePath.getText());
 			isoConfig.parseXmlToConfig(this);

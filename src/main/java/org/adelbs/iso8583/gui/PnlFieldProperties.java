@@ -253,8 +253,8 @@ public class PnlFieldProperties extends JPanel {
 			cmbLength.setSelectedItem(fieldVo.getTypeLength());
 			txtLength.setText(String.valueOf(fieldVo.getLength()));
 			cmbEncoding.setSelectedItem(fieldVo.getEncoding());
-			chckbxMandatory.setSelected(fieldVo.getDynaCondition().trim().equalsIgnoreCase("true"));
-			chckbxIgnore.setSelected(fieldVo.getDynaCondition().trim().equalsIgnoreCase("false"));
+			chckbxMandatory.setSelected(fieldVo.getDynaCondition().trim().equalsIgnoreCase("return true;"));
+			chckbxIgnore.setSelected(fieldVo.getDynaCondition().trim().equalsIgnoreCase("return ignore();"));
 			
 			cmbLengthClick();
 		}

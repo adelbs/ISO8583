@@ -52,10 +52,7 @@ public class PayloadMessageConfig {
 	private String runTimeXML;
 	
 	public PayloadMessageConfig(String xml) throws ParseException {
-		this.runTimeXML = xml;
-		this.isoTest = getISOTestVOFromXML(xml);
-		this.isoConfig = new Iso8583Config(isoTest.getConfigFile());
-		this.pnlFields = new JPanel();
+		updateFromXML(xml);
 	}
 	
 	public PayloadMessageConfig(Iso8583Config isoConfig) {
@@ -297,6 +294,13 @@ public class PayloadMessageConfig {
 		}
 		
 		return fieldList;
+	}
+	
+	public void updateFromXML(String xml) throws ParseException {
+		this.runTimeXML = xml;
+		this.isoTest = getISOTestVOFromXML(xml);
+		this.isoConfig = new Iso8583Config(isoTest.getConfigFile());
+		this.pnlFields = new JPanel();
 	}
 	
 	public void updateFromPayload(byte[] bytes) throws ParseException {
