@@ -217,6 +217,45 @@ public class FieldVO extends GenericIsoVO {
 		return payloadValue;
 	}
 	
+	public StringBuilder getXML() {
+		return getXML(1);
+	}
+	
+	private StringBuilder getXML(int depth) {
+		StringBuilder xmlField = new StringBuilder();
+
+		String tabs = "";
+		for (int i = 0; i < depth; i++) tabs += "\t";
+		
+		xmlField.append("\n").append(tabs).append("<bit num=\"").append(getBitNum()).append("\"");
+
+		if (getType() == TypeEnum.TLV) {
+			xmlField.append(" tag=\"").append(getType()).
+					append("\" length=\"").append(getLength()).append("\"").
+					append(" value=\"").append(getValue()).append("\"");
+		}
+		
+		if (fieldList.size() > 0){
+			xmlField.append(">");
+		}
+		
+		fieldList.forEach(subfield -> {
+			xmlField.append(subfield.getXML(depth + 1));
+		});
+		
+		if (fieldList.size() > 0) {
+			xmlField.append("\n"+ tabs +"</bit>");
+		}
+		else if (getType() != TypeEnum.TLV) {
+			xmlField.append(" value=\"").append(getValue()).append("\"/>");
+		}
+		else {
+			xmlField.append("/>");
+		}
+		
+		return xmlField;
+	}
+	
 	private byte[] getPayloadValue(FieldVO superFieldVO) {
 		byte[] payload = encoding.convert("");
 

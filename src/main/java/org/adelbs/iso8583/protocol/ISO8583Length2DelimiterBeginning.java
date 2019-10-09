@@ -44,7 +44,8 @@ public class ISO8583Length2DelimiterBeginning implements ISO8583Delimiter {
 		
 		if (bytes.size() > 2) {
 			try {
-				result = bytes.size() == (getMessageSize(bytes) + 2);
+//				Troquei == por >= pq na rede recebe duas mensagens grudadas, testando para ver se ele quebra
+				result = bytes.size() >= (getMessageSize(bytes) + 2);
 			}
 			catch (Exception e) {
 				throw new InvalidPayloadException(e.getMessage(), e);

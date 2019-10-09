@@ -24,6 +24,11 @@ public class Out {
         if (callback != null)
         	callback.log(logMsg);
 	}
+	
+	public static void log(byte[] data) {
+		for (int i = 0; i < data.length; i++)
+			System.out.println("data["+ i +"] = "+ (int) data[i] +";");
+	}
 
 	private static boolean verbose = false;
 	private static boolean hasInit = false;

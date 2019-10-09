@@ -29,6 +29,8 @@ public class Bitmap {
 	private MessageVO messageVO;
 	private StringBuilder visualPayload = new StringBuilder();
 	
+	private BSInterpreter bsInt;
+	
 	/**
 	 * Builds the bitmap and the values of each bit from the payload.
 	 * @param payload
@@ -37,6 +39,7 @@ public class Bitmap {
 	 */
 	public Bitmap(byte[] payload, MessageVO messageVO) throws ParseException {
 		
+		this.bsInt = bsInt;
 		this.messageVO = messageVO.getInstanceCopy();
 		
 		String tempBitmap1 = "";
@@ -101,13 +104,13 @@ public class Bitmap {
 			this.messageVO.setFieldList(new ArrayList<FieldVO>());
 			int startPosition = headerSize + bitmapSize;
 			
-			BSInterpreter bsInt = new BSInterpreter();
 			byte[] adjustedPayload = payload;
+			BSInterpreter bsInt = new BSInterpreter();
 			
 			for (; bitNum < binaryBitmap.length(); bitNum++){
 				if (this.bitIsEnabled(bitNum)) {
 					ArrayList<FieldVO> foundFieldVOList = getFieldVOFromBitMap(messageVO, bitNum);
-					
+			
 					for (int i = 0; i < foundFieldVOList.size(); i++) {
 						final FieldVO foundFieldVO = foundFieldVOList.get(i);
 

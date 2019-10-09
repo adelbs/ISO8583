@@ -1,6 +1,5 @@
 package org.adelbs.iso8583.protocol;
 
-import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.util.ISOUtils;
 import org.adelbs.iso8583.vo.FieldVO;
@@ -19,11 +18,12 @@ public class ISOMessage {
 	}
 	
 	public ISOMessage(byte[] payload, MessageVO messageVO) throws ParseException {
+		
 		if (payload != null)
 			bitmap = new Bitmap(payload, messageVO);
 		else
 			bitmap = new Bitmap(messageVO);
-        
+		
         StringBuilder strMessage = new StringBuilder();
         this.payload = new byte[0];
 

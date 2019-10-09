@@ -4,7 +4,7 @@ import groovy.lang.GroovyShell;
 
 public class BSInterpreter {
 
-	private GroovyShell shell = new GroovyShell();
+	private static GroovyShell shell;
 	private String snipetBS;
 
 	public BSInterpreter() {
@@ -14,8 +14,12 @@ public class BSInterpreter {
 	
 	public boolean evaluate(String dynaCondition) {
 		boolean result = true;
-		if (dynaCondition != null && dynaCondition.length() > 0) {
-			final Object condition = shell.evaluate(snipetBS + dynaCondition);
+		String cond = (dynaCondition != null) ? dynaCondition.trim() : "";
+		if (cond.indexOf("return ignore();") > -1) {
+			result = false;
+		}
+		else if (cond.length() > 0 && !cond.equals("true")) {
+			final Object condition = getShell().evaluate(snipetBS + dynaCondition);
 			if (!(condition instanceof Boolean)) throw new IllegalArgumentException("The expression do not generates a boolean result");
 			
 			result = ((boolean) condition);
@@ -26,5 +30,13 @@ public class BSInterpreter {
 	
 	public void concatSnipet(String snipet) {
 		snipetBS += snipet;
-	}	
+	}
+	
+	private static GroovyShell getShell() {
+		if (shell == null) {
+			shell = new GroovyShell();
+			shell.evaluate("true");
+		}
+		return shell;
+	}
 }
