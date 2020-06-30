@@ -44,6 +44,8 @@ public class Iso8583Config {
     private DelimiterEnum isoDelimiter;
     private EncodingEnum headerEncoding;
     private Integer headerSize;
+    
+    private boolean TPDU;
 	
 	//Arquivo de configuracao carregado
 	private String xmlFilePath = null;
@@ -58,6 +60,7 @@ public class Iso8583Config {
         isoDelimiter = DelimiterEnum.getDelimiter("");
         headerEncoding = EncodingEnum.getEncoding("");
         headerSize = 0;
+        TPDU=false;
 		configTreeNode = new DefaultMutableTreeNode("ISO8583");
 	}
 	
@@ -134,6 +137,7 @@ public class Iso8583Config {
         isoConfigVO.setDelimiter(isoDelimiter);
         isoConfigVO.setHeaderEncoding(headerEncoding);
         isoConfigVO.setHeaderSize(headerSize);
+        isoConfigVO.setTPDU(TPDU);
 		xmlText.setText(xmlParser.marshal(isoConfigVO));
 	}
 	
@@ -155,6 +159,14 @@ public class Iso8583Config {
                 }
                 catch (Exception x) {
                     setHeaderSize(0);
+                }
+                
+                try {
+                    setTPDU(Boolean.parseBoolean(document.getDocumentElement().getAttribute("tpdu")));
+                    
+                }
+                catch (Exception x) {
+                	setTPDU(false);
                 }
 				
 				NodeList nodeList = document.getDocumentElement().getChildNodes();
@@ -190,7 +202,7 @@ public class Iso8583Config {
                 
                 newMessageVO.setHeaderEncoding(getHeaderEncoding());
                 newMessageVO.setHeaderSize(getHeaderSize());   
-
+                
 				break;
 			}
 		}		
@@ -359,6 +371,10 @@ public class Iso8583Config {
 		return isoDelimiter;
 	}
     
+    public ISO8583Delimiter getDelimiter() {
+		return isoDelimiter.getDelimiter();
+	}
+
     public EncodingEnum getHeaderEncoding() {
         return headerEncoding;
     }
@@ -366,6 +382,10 @@ public class Iso8583Config {
     public Integer getHeaderSize() {
         return headerSize;
     }
+
+	public boolean getTPDU() {
+		return TPDU;
+	}
 
 	public void setDelimiterEnum(DelimiterEnum isoDelimiter) {
 		this.isoDelimiter = isoDelimiter;
@@ -379,8 +399,8 @@ public class Iso8583Config {
         this.headerSize = headerSize;
     }
 
-	public ISO8583Delimiter getDelimiter() {
-		return isoDelimiter.getDelimiter();
+	public void setTPDU(boolean TPDU) {
+		this.TPDU=TPDU;
 	}
 	
 	/**
@@ -394,6 +414,9 @@ public class Iso8583Config {
                 
                 int messageTypeSize = (headerEncoding == EncodingEnum.BCD) ? 2 : 4;
                 int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
+                //falta tratamento, mas
+                calculatedHeaderSize+=10; //por conta do tpdu
+                //String messageType = headerEncoding.EBCDIC.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
                 String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
                 
 				if (result.getType().equals(messageType))

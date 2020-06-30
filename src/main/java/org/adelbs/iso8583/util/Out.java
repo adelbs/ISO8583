@@ -30,7 +30,7 @@ public class Out {
 			System.out.println("data["+ i +"] = "+ (int) data[i] +";");
 	}
 
-	private static boolean verbose = false;
+	private static boolean verbose = true;
 	private static boolean hasInit = false;
 	private static void init() {
 		if (!hasInit) {

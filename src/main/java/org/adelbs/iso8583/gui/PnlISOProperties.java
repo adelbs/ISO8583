@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,6 +34,10 @@ public class PnlISOProperties extends JPanel {
     private JLabel lblHeaderEncoding = new JLabel("Header Encoding");
     private JComboBox<EncodingEnum> cmbHeaderEncoding = new JComboBox<EncodingEnum>();
 
+    private JLabel lblTPDU = new JLabel("TPDU");
+    private JCheckBox chkTPDU = new JCheckBox();
+
+    
 	public PnlISOProperties(final Iso8583Config isoConfig) {
 
 		setLayout(null);
@@ -56,12 +61,13 @@ public class PnlISOProperties extends JPanel {
 		txtDesc.setEditable(false);
 		txtDesc.setLineWrap(true);
 		scrDesc.setViewportView(txtDesc);
-		scrDesc.setBounds(101, 59, 300, 111);
+		scrDesc.setBounds(101, 59, 300, 81);
+		
 
-        lblHeaderSize.setBounds(12, 190, 83, 16);
+        lblHeaderSize.setBounds(12, 160, 83, 16);
         lblHeaderSize.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        txtHeaderSize.setBounds(101, 187, 50, 22);
+        txtHeaderSize.setBounds(101, 157, 50, 22);
         txtHeaderSize.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -69,10 +75,10 @@ public class PnlISOProperties extends JPanel {
 			}
 		});
 
-        lblHeaderEncoding.setBounds(160, 190, 100, 16);
+        lblHeaderEncoding.setBounds(160, 160, 100, 16);
         lblHeaderEncoding.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        cmbHeaderEncoding.setBounds(270, 187, 132, 22);
+        cmbHeaderEncoding.setBounds(270, 157, 132, 22);
         EncodingEnum.addCmbItemList(cmbHeaderEncoding);
         cmbHeaderEncoding.setSelectedIndex(0);
         cmbHeaderEncoding.addActionListener(new ActionListener() {
@@ -81,14 +87,29 @@ public class PnlISOProperties extends JPanel {
 				save(isoConfig);
 			}
 		});
-
-		add(lblDelimiter);
+        
+        lblTPDU.setBounds(12, 190, 83, 16);
+        lblTPDU.setHorizontalAlignment(SwingConstants.RIGHT);
+        
+        chkTPDU.setBounds(101,190,20,20);
+        chkTPDU.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				save(isoConfig);
+			}
+		});
+        
+        add(lblDelimiter);
 		add(cmbDelimiter);
 		add(scrDesc);
 		add(lblHeaderSize);
 		add(txtHeaderSize);
 		add(lblHeaderEncoding);
 		add(cmbHeaderEncoding);
+		add(lblTPDU);
+		add(chkTPDU);
+		
+		
 	}
 	
 	public void save(Iso8583Config isoConfig) {
@@ -96,11 +117,18 @@ public class PnlISOProperties extends JPanel {
         isoConfig.setHeaderEncoding((EncodingEnum) cmbHeaderEncoding.getSelectedItem());
         if (!txtHeaderSize.getText().trim().equals("")) isoConfig.setHeaderSize(Integer.parseInt(txtHeaderSize.getText()));
         else isoConfig.setHeaderSize(0);
+        
+        isoConfig.setTPDU(chkTPDU.isSelected());
+        
 	}
 
 	public void load(Iso8583Config isoConfig) {
         cmbDelimiter.setSelectedItem(isoConfig.getDelimiterEnum());
         cmbHeaderEncoding.setSelectedItem(isoConfig.getHeaderEncoding());
         txtHeaderSize.setText(String.valueOf(isoConfig.getHeaderSize()));
+        
+        chkTPDU.setSelected((Boolean)isoConfig.getTPDU());
+        
+        
 	}
 }

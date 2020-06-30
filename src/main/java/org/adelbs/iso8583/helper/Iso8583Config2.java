@@ -27,6 +27,8 @@ public class Iso8583Config2 {
     private DelimiterEnum isoDelimiter;
     private EncodingEnum headerEncoding;
     private Integer headerSize;
+    
+    private boolean TPDU;
 	
     public Iso8583Config2(String configFilePath) {
     	openFile(configFilePath);
@@ -63,6 +65,14 @@ public class Iso8583Config2 {
                 }
                 catch (Exception x) {
                     setHeaderSize(0);
+                }
+                
+                try {
+                    setTPDU(Boolean.parseBoolean(document.getDocumentElement().getAttribute("tpdu")));
+                    
+                }
+                catch (Exception x) {
+                	setTPDU(false);
                 }
 				
 				NodeList nodeList = document.getDocumentElement().getChildNodes();
@@ -189,6 +199,10 @@ public class Iso8583Config2 {
 	private void setHeaderSize(Integer headerSize) {
         this.headerSize = headerSize;
     }
+
+	public void setTPDU(boolean TPDU) {
+		this.TPDU=TPDU;
+	}
 
 	public ISO8583Delimiter getDelimiter() {
 		return isoDelimiter.getDelimiter();

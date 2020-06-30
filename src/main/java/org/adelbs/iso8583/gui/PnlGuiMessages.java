@@ -16,6 +16,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.adelbs.iso8583.clientserver.CallbackAction;
 import org.adelbs.iso8583.clientserver.ISOConnection;
@@ -127,11 +129,37 @@ public class PnlGuiMessages extends JPanel {
 			public void componentHidden(ComponentEvent e) {}
 		}); 
 		
-	/*	tabbedPane.addChangeListener(new ChangeListener() {
+		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html>Console</html>");
+				try {
+					//tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html>Console</html>");
+					switch(tabbedPane.getSelectedIndex()) {
+					case(0): //Connection
+						
+						break;
+					
+					case(1): //Request
+						
+						break;
+					
+					case(2): //Response
+						pnlResponse.setTPDUResponseValue(pnlRequest.getTPDUValue(), pnlResponse.getTxtTPDU());
+						break;
+					
+					case(3): //Console
+						
+						break;
+					}
+					
+				}
+
+				catch (Exception x) {
+					JOptionPane.showMessageDialog(pnlMain, x.getMessage());
+				}
 			}
-		});*/
+		});
+		
+		
 
 		btnDisconnect.addActionListener(new ActionListener() {
 			@Override

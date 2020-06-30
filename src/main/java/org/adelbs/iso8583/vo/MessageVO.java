@@ -23,6 +23,8 @@ public class MessageVO extends GenericIsoVO {
     private String header;
     private Integer headerSize;
     private EncodingEnum headerEncoding;
+    
+    private String TPDUValue;
 
     public MessageVO() {
     }
@@ -71,6 +73,22 @@ public class MessageVO extends GenericIsoVO {
     public void setHeader(String header) {
         this.header = header;
     }
+    
+    
+    /**
+     * @return the TPDUValue
+     */
+    @XmlTransient
+    public String getTPDUValue() {
+        return TPDUValue;
+    }
+    
+    /**
+     * @param TPDUValue the TPDUValue to set
+     */
+    public void setTPDUValue(String TPDUValue) {
+        this.TPDUValue = TPDUValue;
+    }
 
     public MessageVO(String type, EncodingEnum bitmatEncoding) {
 		this.type = type;
@@ -91,7 +109,9 @@ public class MessageVO extends GenericIsoVO {
         newMessageVO.setHeader(getHeader());
         newMessageVO.setHeaderEncoding(getHeaderEncoding());
         newMessageVO.setHeaderSize(getHeaderSize());
-
+        
+        newMessageVO.setTPDUValue(getTPDUValue());
+        
 		return newMessageVO;
 	}
 	

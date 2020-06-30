@@ -13,6 +13,7 @@ import org.adelbs.iso8583.exception.PayloadIncompleteException;
 import org.adelbs.iso8583.helper.BSInterpreter;
 import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.ISOUtils;
+import org.adelbs.iso8583.util.Out;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.GenericIsoVO;
 import org.adelbs.iso8583.vo.MessageVO;
@@ -56,13 +57,19 @@ public class Bitmap {
 		
 		//This try block will extract the bitmap from the payload
 		try {
-			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
+			Out.log("bitmap()","message type: "+messageVO.getType());
             
+			visualPayload.append("Message Type: [").append(messageVO.getType()).append("]\n");
             if (messageVO.getHeaderSize() > 0) {
             	int headerSize = (messageVO.getHeaderEncoding() == EncodingEnum.BCD) ? (messageVO.getHeaderSize() / 2) : messageVO.getHeaderSize();
             	this.messageVO.setHeader(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, headerSize)));
             }
-
+            
+            //falta tratamento, mas...
+            String tpduValue=EncodingEnum.BYTE.convert(ISOUtils.subArray(payload, 0, 10));
+            this.messageVO.setTPDUValue(tpduValue);
+            headerPlusType+=10; //adicionando tpdu no header antes do type
+            
 			bitmapSize = messageVO.getBitmatEncoding().getMinBitmapSize();
 			tempBitmap1 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerPlusType, headerPlusType + bitmapSize));
 			
@@ -75,6 +82,8 @@ public class Bitmap {
 	
 			payloadBitmap = messageVO.getBitmatEncoding().convert(binaryBitmap.substring(0, bitmapSize));
 			visualPayload.append("Bitmap: [").append(new String(payloadBitmap)).append("]\n\n");
+			
+			Out.log("bitmap()","visualPayload: "+visualPayload.toString());
 		}
 		catch (OutOfBoundsException x) {
 			throw new PayloadIncompleteException("Error trying to parse the Bitmap from payload. Payload incomplete.", 0);

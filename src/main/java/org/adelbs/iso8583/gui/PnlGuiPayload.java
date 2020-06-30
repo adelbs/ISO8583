@@ -34,6 +34,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import org.adelbs.iso8583.gui.xmlEditor.XmlTextPane;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.helper.PayloadMessageConfig;
+import org.adelbs.iso8583.util.Out;
 import org.adelbs.iso8583.vo.MessageVO;
 
 public class PnlGuiPayload extends JPanel {
@@ -57,6 +58,12 @@ public class PnlGuiPayload extends JPanel {
 	private JPanel pnlFields = new JPanel();
     private JLabel lblHeader = new JLabel("Header:");
     private JTextField txtHeader = new JTextField();
+    
+    /**/
+    private JLabel lblTPDU = new JLabel("TPDU:");
+    private JTextField txtTPDU = new JTextField();
+    /**/
+    
     private JLabel lblBit = new JLabel("Bit #");
 	private JLabel lblFieldName = new JLabel("Field Name");
 	private JLabel lblFieldValue = new JLabel("Field Value");
@@ -177,11 +184,8 @@ public class PnlGuiPayload extends JPanel {
         
         lblHeader.setFont(new Font("Tahoma", Font.BOLD, 14));
         lblHeader.setBounds(30, 10, 60, 16);
-        pnlFormattedFields.add(lblHeader);
         
-        txtHeader.setBounds(100, 10, 570, 20);
-        pnlFormattedFields.add(txtHeader);
-
+        txtHeader.setBounds(100, 10, 370, 20);
         txtHeader.addKeyListener(new KeyListener(){
             public void keyTyped(KeyEvent e) { }
             public void keyReleased(KeyEvent e) {
@@ -189,6 +193,36 @@ public class PnlGuiPayload extends JPanel {
             }
             public void keyPressed(KeyEvent e) { }
         });
+        
+        if(payloadMessageConfig.getIsoConfig().getHeaderSize()>0) {
+        	pnlFormattedFields.add(lblHeader);
+            pnlFormattedFields.add(txtHeader);
+        }
+        
+        /**/
+        
+        lblTPDU.setFont(new Font("Tahoma", Font.BOLD, 14));
+        lblTPDU.setBounds(500, 10, 50, 16);
+        
+        txtTPDU.setBounds(560, 10, 100, 20);
+        txtTPDU.addKeyListener(new KeyListener(){
+            public void keyTyped(KeyEvent e) { }
+            public void keyReleased(KeyEvent e) {
+                try {
+                	payloadMessageConfig.setTPDUValue(txtTPDU.getText());
+                }
+                catch(Exception ex) {
+                	JOptionPane.showMessageDialog(pnlMain, ex.getMessage());
+                }
+            }
+            public void keyPressed(KeyEvent e) { }
+        });
+        
+        if(payloadMessageConfig.getIsoConfig().getTPDU()){
+        	pnlFormattedFields.add(lblTPDU);
+        	pnlFormattedFields.add(txtTPDU);
+        }   	
+        /**/
 
 		lblBit.setFont(new Font("Tahoma", Font.BOLD, 14));
 		lblBit.setBounds(30, 45, 40, 16);
@@ -303,6 +337,7 @@ public class PnlGuiPayload extends JPanel {
 								cmbMessageType.setSelectedItem(payloadMessageVO);
 								payloadMessageConfig.updateFromPayload(pnlMain, data);
 								updateScrFields();
+								updateTextValues(payloadMessageVO);
 							}
 						}
 						else {
@@ -325,14 +360,16 @@ public class PnlGuiPayload extends JPanel {
 						if (server && !request || !server && request) {
                             messageVO = payloadMessageConfig.updateMessageValuesFromXML(xmlText.getText());
                             payloadMessageConfig.setMessageVO(messageVO); 
+
                         }
                         else {
                             messageVO = payloadMessageConfig.buildMessageStructureFromXML(xmlText.getText());
-                            payloadMessageConfig.setMessageVO(messageVO); 
+                            payloadMessageConfig.setMessageVO(messageVO);
+
 							setReadOnly();
                         }
 
-                        txtHeader.setText(messageVO.getHeader());
+						updateTextValues(messageVO);
                     }
                     else if (tabbedPane.getSelectedIndex() == 1){
 						xmlText.setText(payloadMessageConfig.getXML(pnlMain));
@@ -355,7 +392,7 @@ public class PnlGuiPayload extends JPanel {
 			public void keyPressed(KeyEvent e) {}
 		});
 	}
-
+	
 	public void checkAdvancedTag() {
 		if (xmlText.getText().indexOf("<%") > -1 || xmlText.getText().indexOf("%>") > -1) {
             enablePnl(false);
@@ -377,6 +414,7 @@ public class PnlGuiPayload extends JPanel {
 		tabbedPane.setEnabled(false);
         tabbedPane.setSelectedIndex(0);
         txtHeader.setText("");
+        setTPDUValue();
 		pnlFields.removeAll();
 		
 		if (cmbMessageType.getSelectedItem() != null) {
@@ -388,11 +426,49 @@ public class PnlGuiPayload extends JPanel {
 		}
 	}
 	
-	private void updateScrFields() {
+	public void setTPDUResponseValue(String TPDUValue, JTextField txtTPDU) {
+        String TPDUResponseValue="";
+        if (TPDUValue!=null)
+	    	if(!TPDUValue.isEmpty()){
+	    		TPDUResponseValue=TPDUValue.substring(0,2).concat(TPDUValue.substring(6,10)).concat(TPDUValue.substring(2,6));
+	    		txtTPDU.setText(TPDUResponseValue);
+	            try{
+	            	payloadMessageConfig.setTPDUValue(TPDUResponseValue);
+	            }
+	            catch(Exception ex) {
+	            	Out.log("setTPDUResponseValue",ex.getMessage());
+	            }
+	    	}
+    }
+	
+	public void setTPDUValue() {
+		//verificar se vem do request ou do response
+		//se vier do response, pegar o tpdu do request tratado
+		
+		System.out.println("Alimentando valor do TPDU");
+		System.out.println("this.listenerList.toString()");
+		System.out.println(this.listenerList.toString());
+		System.out.println("this.tabbedPane.getName()");
+		System.out.println(this.tabbedPane.getName());
+		System.out.println("this.tabbedPane.getParent().getName()");
+		System.out.println(this.tabbedPane.getParent().getName());
+	}
+
+	public void updateTextValues(MessageVO messageVO) {
+		txtHeader.setText(messageVO.getHeader());
+        txtTPDU.setText(messageVO.getTPDUValue());
+	}
+	
+	public void updateScrFields() {
 		scrFields.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrFields.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		pnlFields.setPreferredSize(new Dimension(500, (payloadMessageConfig.getNumLines() * 25) + 20));
 		scrFields.getVerticalScrollBar().setUnitIncrement(10);
+		
+		if(payloadMessageConfig.getIsoConfig().getTPDU()){
+        	pnlFormattedFields.add(lblTPDU);
+        	pnlFormattedFields.add(txtTPDU);
+        }
 	}
 	
 	public void setReadOnly() {
@@ -412,6 +488,7 @@ public class PnlGuiPayload extends JPanel {
 		
         tabbedPane.setEnabled(value);
         txtHeader.setEnabled(value);
+        txtTPDU.setEditable(value);
 	}
 	
 	private void setEnableXmlPanel(boolean value){
@@ -472,5 +549,13 @@ public class PnlGuiPayload extends JPanel {
 	
 	public XmlTextPane getXmlText() {
 		return xmlText;
+	}
+	
+	public JTextField getTxtTPDU() {
+		return txtTPDU;
+	}
+	
+	public String getTPDUValue() {
+		return txtTPDU.getText();
 	}
 }

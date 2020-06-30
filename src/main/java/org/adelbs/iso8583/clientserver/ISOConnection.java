@@ -107,7 +107,7 @@ public class ISOConnection {
 		}
 		
 		if (payloadQueue.hasMorePayloadIn()) {
-			Out.log("ISOConnection", "Parsing bytes...", callbackMap.get(threadName));
+			Out.log("ISOConnection", "Parsing bytes for Thread ["+threadName+"]...", callbackMap.get(threadName));
 			callbackMap.get(threadName).dataReceived(payloadQueue.getNextPayloadIn());
 		}
 	}

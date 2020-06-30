@@ -5,6 +5,7 @@ import javax.swing.JComboBox;
 import org.adelbs.iso8583.util.Encoding;
 import org.adelbs.iso8583.util.EncodingBASE64;
 import org.adelbs.iso8583.util.EncodingBCD;
+import org.adelbs.iso8583.util.EncodingBYTE;
 import org.adelbs.iso8583.util.EncodingEBCDIC;
 import org.adelbs.iso8583.util.EncodingHEXA;
 import org.adelbs.iso8583.util.EncodingUTF8;
@@ -20,7 +21,9 @@ public enum EncodingEnum implements Encoding {
 	ISO88591("ISO 8859-1", new EncodingUTF8()), 
 	UTF8("UTF-8", new EncodingUTF8()), 
 	HEXA("HEXA", new EncodingHEXA()),
-	BASE64("BASE64", new EncodingBASE64());
+	BASE64("BASE64", new EncodingBASE64()),
+	BYTE("BYTE", new EncodingBYTE());
+	
 	
 	private String value;
 	private Encoding encodingImpl;

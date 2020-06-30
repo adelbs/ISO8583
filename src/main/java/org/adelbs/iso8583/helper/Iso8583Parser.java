@@ -125,6 +125,16 @@ public class Iso8583Parser {
                     newMessageVO.setHeaderEncoding(this.isoConfig.getHeaderEncoding());
                     newMessageVO.setHeaderSize(this.isoConfig.getHeaderSize());
 
+                    String tpduValue = ISOUtils.getAttr(node, "tpdu", "");
+                    if (tpduValue != null) {
+                        if (tpduValue.length() > 10) {
+                            newMessageVO.setTPDUValue(tpduValue.substring(0, 10));
+                        }
+                        else {
+                            newMessageVO.setTPDUValue(tpduValue);
+                        }
+                    }
+                    
 					final ArrayList<FieldVO> messageFieldList = newMessageVO.getFieldList();
 					final ArrayList<FieldVO> xmlFieldList = getFieldsFromXML(node.getChildNodes(), messageFieldList);
 					final List<FieldVO> newFieldList = fieldListMege.merge(messageFieldList, xmlFieldList);

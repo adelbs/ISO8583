@@ -73,7 +73,7 @@ public class ISOClient extends Thread {
 					if (this.isConnected) {
 						byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
 						
-						Out.log("ISOClient", "Bytes received ("+ clientName +") - (Parsing in milliseconds: "+ (System.currentTimeMillis() - parsingTime) +"): " + bytesToConsole(ISOUtils.listToArray(bytes)), callback);
+						Out.log("ISOClient", "Bytes received ("+ clientName +") - (Parsing in milliseconds: "+ (System.currentTimeMillis() - parsingTime) +"): \n" + bytesToConsole(ISOUtils.listToArray(bytes)), callback);
 						
 						registerActionTimeMilis();
 						payloadQueue.addPayloadIn(new SocketPayload(data, socket));

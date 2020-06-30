@@ -118,7 +118,7 @@ public class PayloadMessageConfig {
 			xmlMessage.append(isoTest.toXML(false));
 
 		if (messageVO != null) {
-			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\">");
+			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\" tpdu=\"").append(messageVO.getTPDUValue()).append("\">");
 			
 			for (GuiPayloadField payloadField : fieldList)
 				xmlMessage.append(payloadField.getXML(1));
@@ -151,6 +151,22 @@ public class PayloadMessageConfig {
             }
         }
     }
+    
+    /**/
+    //public void setTPDU(String tpdu) throws ParseException {
+    public void setTPDUValue(String tpdu) {
+        
+        if (tpdu != null) {
+            if (tpdu.length() != 10) {
+            	this.messageVO.setTPDUValue(this.messageVO.getTPDUValue());
+                //throw new ParseException("Invalid TPDU. This need to be a 10 bytes sized value.");
+            }
+            else {
+                this.messageVO.setTPDUValue(tpdu);
+            }
+        }
+    }
+    /**/
 		
 	private static NodeList convertToDOMNodes(final String xml) throws ParserConfigurationException, SAXException, IOException {
 		final Document document = XMLUtils.convertXMLToDOM(xml);
@@ -203,6 +219,16 @@ public class PayloadMessageConfig {
                     newMessageVO.setHeaderEncoding(isoConfig.getHeaderEncoding());
                     newMessageVO.setHeaderSize(isoConfig.getHeaderSize());
 
+                    String tpduValue = ISOUtils.getAttr(node, "tpdu", "");
+                    if (tpduValue != null) {
+                        if (tpduValue.length() > 10) {
+                            newMessageVO.setTPDUValue(tpduValue.substring(0, 10));
+                        }
+                        else {
+                            newMessageVO.setTPDUValue(tpduValue);
+                        }
+                    }
+                    
 					final ArrayList<FieldVO> messageFieldList = newMessageVO.getFieldList();
 					final ArrayList<FieldVO> xmlFieldList = getFieldsFromXML(node.getChildNodes(), messageFieldList);
 					final List<FieldVO> newFieldList = fieldListMege.merge(messageFieldList, xmlFieldList);
