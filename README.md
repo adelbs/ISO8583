@@ -1,3 +1,7 @@
+*This project is not actively maintained, so I can take a time for responding the issues.*
+
+*Jul-2020: Soon I'll update the wiki and send some updates.*
+
 # Adelbs-ISO8583
 This is a gui tool for testing ISO8583 protocol (requests and responses), and a java library as well.
 Through this tool you can:
