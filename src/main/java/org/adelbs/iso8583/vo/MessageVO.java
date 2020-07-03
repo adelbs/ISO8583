@@ -89,6 +89,14 @@ public class MessageVO extends GenericIsoVO {
     public void setTPDUValue(String TPDUValue) {
         this.TPDUValue = TPDUValue;
     }
+    
+    /**
+     * @return the TPDUResponseValue
+     */
+    @XmlTransient
+    public String getTPDUResponseValue() {
+    	return TPDUValue.substring(0,2).concat(TPDUValue.substring(6,10)).concat(TPDUValue.substring(2,6));
+    }
 
     public MessageVO(String type, EncodingEnum bitmatEncoding) {
 		this.type = type;

@@ -187,6 +187,10 @@ public class Iso8583Config2 {
 	public Integer getHeaderSize() {
         return headerSize;
     }
+	
+	public boolean getTPDU() {
+		return TPDU;
+	}
 
 	private void setDelimiterEnum(DelimiterEnum isoDelimiter) {
 		this.isoDelimiter = isoDelimiter;

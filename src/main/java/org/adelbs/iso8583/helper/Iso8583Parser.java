@@ -48,7 +48,8 @@ public class Iso8583Parser {
 		
         int messageTypeSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? 2 : 4;
         int calculatedHeaderSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? (this.isoConfig.getHeaderSize() / 2) : this.isoConfig.getHeaderSize();
-        String messageType = this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
+        int tpduSize=this.isoConfig.getTPDU() ? 10 : 0;
+        String messageType = this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize + tpduSize), (calculatedHeaderSize + tpduSize + messageTypeSize)));
         
 		try {
 			ISOMessage isoMessage = new ISOMessage(bytes, this.isoConfig.getMessageByType(messageType));
@@ -76,7 +77,7 @@ public class Iso8583Parser {
 		xmlMessage.append("<document>\n\n");
 
 		if (messageVO != null) {
-			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\">");
+			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\" tpdu=\"").append(messageVO.getTPDUValue()).append("\" tpduresponse=\"").append(messageVO.getTPDUResponseValue()).append("\">");
 			
 			for (FieldVO fieldVO : messageVO.getFieldList())
 				xmlMessage.append(fieldVO.getXML());
