@@ -118,7 +118,7 @@ public class PayloadMessageConfig {
 			xmlMessage.append(isoTest.toXML(false));
 
 		if (messageVO != null) {
-			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\" tpdu=\"").append(messageVO.getTPDUValue()).append("\">");
+			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\"").append(xmlIfTpdu()).append(">");
 			
 			for (GuiPayloadField payloadField : fieldList)
 				xmlMessage.append(payloadField.getXML(1));
@@ -129,6 +129,16 @@ public class PayloadMessageConfig {
 		xmlMessage.append("\n\n</document>");
 
 		return xmlMessage.toString();
+	}
+	
+	private String xmlIfTpdu() {
+		StringBuilder sbResult = new StringBuilder();
+		
+		if(!messageVO.getTPDUValue().isEmpty()) {
+			sbResult.append(" tpdu=\"").append(messageVO.getTPDUValue()).append("\"");
+		} 
+		
+		return sbResult.toString();
 	}
 	
 	public MessageVO getMessageVO() throws ParseException {

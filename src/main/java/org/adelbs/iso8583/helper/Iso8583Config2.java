@@ -28,7 +28,7 @@ public class Iso8583Config2 {
     private EncodingEnum headerEncoding;
     private Integer headerSize;
     
-    private boolean TPDU;
+    private boolean TPDU=false;
 	
     public Iso8583Config2(String configFilePath) {
     	openFile(configFilePath);
@@ -189,7 +189,7 @@ public class Iso8583Config2 {
     }
 	
 	public boolean getTPDU() {
-		return TPDU;
+		return this.TPDU;
 	}
 
 	private void setDelimiterEnum(DelimiterEnum isoDelimiter) {

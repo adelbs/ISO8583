@@ -65,10 +65,12 @@ public class Bitmap {
             	this.messageVO.setHeader(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, headerSize)));
             }
             
-            //falta tratamento, mas...
-            String tpduValue=EncodingEnum.BYTE.convert(ISOUtils.subArray(payload, 0, 10));
-            this.messageVO.setTPDUValue(tpduValue);
-            headerPlusType+=10; //adicionando tpdu no header antes do type
+            //TODO: improve this verification
+            if(!messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("0")) { //validate if the "0" of message type is at the beginning of the message
+	            String tpduValue=EncodingEnum.BYTE.convert(ISOUtils.subArray(payload, 0, 10));
+	            this.messageVO.setTPDUValue(tpduValue);
+	            headerPlusType+=10; //adding tpdu size
+            }
             
 			bitmapSize = messageVO.getBitmatEncoding().getMinBitmapSize();
 			tempBitmap1 = messageVO.getBitmatEncoding().convertBitmap(ISOUtils.subArray(payload, headerPlusType, headerPlusType + bitmapSize));

@@ -48,19 +48,30 @@ public class Iso8583Parser {
 		
         int messageTypeSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? 2 : 4;
         int calculatedHeaderSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? (this.isoConfig.getHeaderSize() / 2) : this.isoConfig.getHeaderSize();
-        int tpduSize=this.isoConfig.getTPDU() ? 10 : 0;
-        String messageType = this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize + tpduSize), (calculatedHeaderSize + tpduSize + messageTypeSize)));
+        String messageType =""; 
         
-		try {
-			ISOMessage isoMessage = new ISOMessage(bytes, this.isoConfig.getMessageByType(messageType));
-			this.messageVO = isoMessage.getMessageVO();
-		}
-		catch (ParseException x) {
-			x.printStackTrace();
-			throw x;
-		}
-
-		return getXML();
+        messageType= this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize), (calculatedHeaderSize + messageTypeSize)));
+        if(!messageType.substring(0,1).equals("0")) { //TODO: improve this verification
+        	int tpduSize=10;
+        	this.isoConfig.setTPDU(true);
+        	messageType = this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize + tpduSize), (calculatedHeaderSize + tpduSize + messageTypeSize)));
+        }
+        
+        if(!messageType.isEmpty()) {
+			try {
+				ISOMessage isoMessage = new ISOMessage(bytes, this.isoConfig.getMessageByType(messageType));
+				this.messageVO = isoMessage.getMessageVO();
+			}
+			catch (ParseException x) {
+				x.printStackTrace();
+				throw x;
+			}
+	
+			return getXML();
+        }
+        else {
+        	throw new ParseException("Impossible to get messageType from this payload");
+        }
 	}
 
 	public MessageVO parseXmlToMessageVO(String xml) throws ParseException {
@@ -77,7 +88,7 @@ public class Iso8583Parser {
 		xmlMessage.append("<document>\n\n");
 
 		if (messageVO != null) {
-			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\" tpdu=\"").append(messageVO.getTPDUValue()).append("\" tpduresponse=\"").append(messageVO.getTPDUResponseValue()).append("\">");
+			xmlMessage.append("<message type=\"").append(messageVO.getType()).append("\" header=\"").append(messageVO.getHeader()).append("\"").append(xmlIfTpdu()).append(">");
 			
 			for (FieldVO fieldVO : messageVO.getFieldList())
 				xmlMessage.append(fieldVO.getXML());
@@ -88,6 +99,16 @@ public class Iso8583Parser {
 		xmlMessage.append("\n\n</document>");
 
 		return xmlMessage.toString();
+	}
+	
+	private String xmlIfTpdu() {
+		StringBuilder sbResult = new StringBuilder();
+		
+		if(!messageVO.getTPDUValue().isEmpty()) {
+			sbResult.append(" tpdu=\"").append(messageVO.getTPDUValue()).append("\" tpduresponse=\"").append(messageVO.getTPDUResponseValue()).append("\"");
+		}
+		
+		return sbResult.toString();
 	}
 	
 	private static NodeList convertToDOMNodes(final String xml) throws ParserConfigurationException, SAXException, IOException {

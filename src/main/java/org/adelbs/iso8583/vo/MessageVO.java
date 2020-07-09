@@ -80,6 +80,9 @@ public class MessageVO extends GenericIsoVO {
      */
     @XmlTransient
     public String getTPDUValue() {
+    	if(TPDUValue==null)
+    		TPDUValue="";
+    	
         return TPDUValue;
     }
     

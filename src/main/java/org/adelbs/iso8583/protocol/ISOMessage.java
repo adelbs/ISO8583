@@ -57,7 +57,7 @@ public class ISOMessage {
         		this.payload = ISOUtils.mergeArray(this.payload, bitmap.getMessageVO().getHeaderEncoding().convert(bitmap.getMessageVO().getHeader()));
         	}
         }
-        if (bitmap.getMessageVO().getTPDUValue() != null) {
+        if (!bitmap.getMessageVO().getTPDUValue().isEmpty()) {
             strMessage.append(bitmap.getMessageVO().getTPDUValue());
             this.payload = ISOUtils.mergeArray(this.payload, bytesTPDU(bitmap.getMessageVO().getTPDUValue()));
         }

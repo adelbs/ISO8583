@@ -409,15 +409,15 @@ public class Iso8583Config {
 	public MessageVO findMessageVOByPayload(byte[] payload) {
 		MessageVO result = null;
 		try {
+			int messageTypeSize = (headerEncoding == EncodingEnum.BCD) ? 2 : 4;
+            int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
+            
+            calculatedHeaderSize+=getIfTpdu(payload) ? 10 : 0; //por conta do tpdu
+            
+            String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
+            
 			for (int i = 0; i < configTreeNode.getChildCount(); i++) {
                 result = (MessageVO) ((DefaultMutableTreeNode) configTreeNode.getChildAt(i)).getUserObject();
-                
-                int messageTypeSize = (headerEncoding == EncodingEnum.BCD) ? 2 : 4;
-                int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
-                //falta tratamento, mas
-                calculatedHeaderSize+=10; //por conta do tpdu
-                //String messageType = headerEncoding.EBCDIC.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
-                String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
                 
 				if (result.getType().equals(messageType))
 					break;
@@ -430,5 +430,22 @@ public class Iso8583Config {
 		}
 		
 		return result;
+	}
+	
+	private boolean getIfTpdu(byte[] payload) {
+		//Validate if ther is TPDU in payload between size and message type
+		
+		//TODO: improve this verification
+		try {
+			if(headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("0") ) { //validate if the 0 of message type is right after the message size byte
+				return false;
+			}
+			else {
+				return true;
+			}
+		}
+		catch(Exception ex) {
+			return false;
+		}
 	}
 }
