@@ -18,23 +18,19 @@ public class ISOMessage {
 		this(null, messageVO);
 	}
 	
-	/*
-	private byte[] bytesTPDU5(String TPDU) {
-		//formatar de 2 em 2 => 10 números = 5 bytes
-		TPDU="6008180002";
-		byte[] resultBytes = new byte[5];
-		for(int i=0;i<5;i++) {
-			resultBytes[i] = (byte) Integer.parseInt(TPDU.substring((i*2),(i*2)+2));
-		}
-		
-		return resultBytes;
-	}*/
-	
 	private byte[] bytesTPDU(String TPDU) {
+		/*
 		//formatar como 10 bytes
 		byte[] resultBytes = new byte[10];
 		for(int i=0;i<10;i++) {
 			resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i,(i+1)));
+		}*/
+		
+		//formatar como 5 bytes
+		byte[] resultBytes = new byte[5];
+		for(int i=0;i<5;i++) {
+			//resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i*2,(i*2+2)));
+			resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i*2,(i*2+2)),16);
 		}
 		
 		return resultBytes;
@@ -66,7 +62,6 @@ public class ISOMessage {
 		strMessage.append(bitmap.getPayloadBitmap());
         
 		this.payload = ISOUtils.mergeArray(this.payload, messageVO.getHeaderEncoding().convert(messageVO.getType()));
-		//this.payload = ISOUtils.mergeArray(this.payload, EncodingEnum.EBCDIC.convert(messageVO.getType()));
 		this.payload = ISOUtils.mergeArray(this.payload, bitmap.getPayloadBitmap());
 		
 		for (int i = 0; i <= bitmap.getSize(); i++) {

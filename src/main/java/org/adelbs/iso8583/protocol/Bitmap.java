@@ -54,7 +54,7 @@ public class Bitmap {
 		else {
 			headerPlusType = messageVO.getHeaderSize() + 4;
 		}
-		
+				
 		//This try block will extract the bitmap from the payload
 		try {
 			Out.log("bitmap()","message type: "+messageVO.getType());
@@ -67,9 +67,9 @@ public class Bitmap {
             
             //TODO: improve this verification
             if(!messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("0")) { //validate if the "0" of message type is at the beginning of the message
-	            String tpduValue=EncodingEnum.BYTE.convert(ISOUtils.subArray(payload, 0, 10));
+	            String tpduValue=EncodingEnum.BYTE.convert(ISOUtils.subArray(payload, 0, 5));
 	            this.messageVO.setTPDUValue(tpduValue);
-	            headerPlusType+=10; //adding tpdu size
+	            headerPlusType+=5; //adding tpdu size
             }
             
 			bitmapSize = messageVO.getBitmatEncoding().getMinBitmapSize();

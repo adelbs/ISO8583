@@ -48,11 +48,12 @@ public class Iso8583Parser {
 		
         int messageTypeSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? 2 : 4;
         int calculatedHeaderSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? (this.isoConfig.getHeaderSize() / 2) : this.isoConfig.getHeaderSize();
+                
         String messageType =""; 
         
         messageType= this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize), (calculatedHeaderSize + messageTypeSize)));
         if(!messageType.substring(0,1).equals("0")) { //TODO: improve this verification
-        	int tpduSize=10;
+        	int tpduSize=5;
         	this.isoConfig.setTPDU(true);
         	messageType = this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize + tpduSize), (calculatedHeaderSize + tpduSize + messageTypeSize)));
         }

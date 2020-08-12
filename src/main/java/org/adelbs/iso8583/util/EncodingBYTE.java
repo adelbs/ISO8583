@@ -8,7 +8,16 @@ public class EncodingBYTE implements Encoding {
             StringBuilder strResult = new StringBuilder();
     		
     		for(int i=0;i<bytesToConvert.length;i++) {
-    			strResult.append((int) bytesToConvert[i]);
+    			/*
+    			int y = ((int) bytesToConvert[i]);
+    			String x=Integer.toString(y);
+    			*/
+    			String x = Integer.toHexString((int) bytesToConvert[i]);
+    			x=x.replace("f", "");
+    			if(Integer.parseInt(x) < 10)
+    				x="0".concat(x);
+    			
+    			strResult.append(x);
     		}
     		return strResult.toString();
             

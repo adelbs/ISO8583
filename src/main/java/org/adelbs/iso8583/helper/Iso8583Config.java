@@ -410,9 +410,9 @@ public class Iso8583Config {
 		MessageVO result = null;
 		try {
 			int messageTypeSize = (headerEncoding == EncodingEnum.BCD) ? 2 : 4;
-            int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
-            
-            calculatedHeaderSize+=getIfTpdu(payload) ? 10 : 0; //por conta do tpdu
+			int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
+			
+            calculatedHeaderSize+=getIfTpdu(payload) ? 5 : 0; //por conta do tpdu
             
             String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
             

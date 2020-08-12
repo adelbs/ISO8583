@@ -9,7 +9,6 @@ public class ISOUtils {
 	 * TODO: 
 	 * - implement check for TPDU
 	 * - implement subArray to extract TPDU
-	 * - implement TPDUResponse as the example Request = 6008180002 Response = 6000020818 
 	 * */
 	public static String hexToBin(String hex){
 		String bin = "";
