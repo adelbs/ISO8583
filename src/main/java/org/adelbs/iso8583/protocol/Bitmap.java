@@ -81,11 +81,13 @@ public class Bitmap {
 			}
 			
 			binaryBitmap = tempBitmap1 + tempBitmap2;
-	
+			
 			payloadBitmap = messageVO.getBitmatEncoding().convert(binaryBitmap.substring(0, bitmapSize));
 			visualPayload.append("Bitmap: [").append(new String(payloadBitmap)).append("]\n\n");
 			
 			Out.log("bitmap()","visualPayload: "+visualPayload.toString());
+			Out.log("bitmap()","binaryBitmap: "+binaryBitmap.toString());
+			
 		}
 		catch (OutOfBoundsException x) {
 			throw new PayloadIncompleteException("Error trying to parse the Bitmap from payload. Payload incomplete.", 0);
@@ -150,7 +152,8 @@ public class Bitmap {
 			}
 		}
 		catch (OutOfBoundsException x) {
-			throw new PayloadIncompleteException("Error trying to parse the fields from the payload. Payload incomplete.", bitNum + 1);
+			//throw new PayloadIncompleteException("Error trying to parse the fields from the payload. Payload incomplete.", bitNum + 1);
+			Out.log("extractValueFromPayload()", "Error trying to parse the fields from the payload. Payload incomplete "+(bitNum + 1)+".");
 		}
 		catch (Exception x) {
 			throw new ParseException("Error parsing the message body.\n" + x.getMessage() + "\n" + visualPayload);

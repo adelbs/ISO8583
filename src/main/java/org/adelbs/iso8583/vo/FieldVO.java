@@ -303,14 +303,18 @@ public class FieldVO extends GenericIsoVO {
 
 		if (typeLength == TypeLengthEnum.NVAR) {
 			
-			if (encoding == EncodingEnum.BCD)
+			if (encoding == EncodingEnum.BCD) {
 				size = getMaxSizeStr(String.valueOf(value.length), length * 2);
-			else			
+				maxSize = Integer.parseInt(size)*2;
+			}
+			else {			
 				size = getMaxSizeStr(String.valueOf(value.length), length);
+				maxSize = Integer.parseInt(size);
+			}
 			
 			payload = encoding.convert(size);
 			
-			maxSize = Integer.parseInt(size);
+			
 		}
 		
 		if (type == TypeEnum.TLV)

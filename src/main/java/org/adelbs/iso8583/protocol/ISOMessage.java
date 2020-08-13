@@ -3,6 +3,7 @@ package org.adelbs.iso8583.protocol;
 import org.adelbs.iso8583.constants.EncodingEnum;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.util.ISOUtils;
+import org.adelbs.iso8583.util.Out;
 import org.adelbs.iso8583.vo.FieldVO;
 import org.adelbs.iso8583.vo.MessageVO;
 
@@ -66,8 +67,18 @@ public class ISOMessage {
 		
 		for (int i = 0; i <= bitmap.getSize(); i++) {
 			if (bitmap.getBit(i) != null) {
-				this.payload = ISOUtils.mergeArray(this.payload, bitmap.getBit(i).getPayloadValue());
-				strMessage.append(bitmap.getBit(i).getPayloadValue());
+				try {
+					if(i==47)
+						System.out.println("");
+					
+					Out.log("ISOMessage()","bit ["+i+"]"+bitmap.getBit(i).getEncoding().toString()+": {"+bitmap.getBit(i).getEncoding().convert(bitmap.getBit(i).getPayloadValue())+"}");
+					
+					this.payload = ISOUtils.mergeArray(this.payload, bitmap.getBit(i).getPayloadValue());
+					strMessage.append(bitmap.getBit(i).getPayloadValue());
+				}
+				catch(Exception exx) {
+					Out.log("ISOMessage()","bit ["+i+"]: error. "+exx.getMessage());
+				}
 			}
 		}
 		
