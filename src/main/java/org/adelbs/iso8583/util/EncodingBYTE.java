@@ -12,11 +12,17 @@ public class EncodingBYTE implements Encoding {
     			int y = ((int) bytesToConvert[i]);
     			String x=Integer.toString(y);
     			*/
-    			String x = Integer.toHexString((int) bytesToConvert[i]);
-    			x=x.replace("f", "");
-    			if(Integer.parseInt(x) < 10)
-    				x="0".concat(x);
+    			String x="";
+    			try {
+    	    		x = Integer.toHexString((int) bytesToConvert[i]);
+    	    		x=x.replace("f", "");
     			
+    				if(Integer.parseInt(x) < 10)
+	    				x="0".concat(x);
+    			}
+    			catch(Exception ex) {
+    				//System.out.println("non numeric tpdu char "+x);
+    			}
     			strResult.append(x);
     		}
     		return strResult.toString();

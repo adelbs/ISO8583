@@ -27,11 +27,23 @@ public class ISOMessage {
 			resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i,(i+1)));
 		}*/
 		
+		String strByteTPDU;
+		byte x;
+		
 		//formatar como 5 bytes
 		byte[] resultBytes = new byte[5];
 		for(int i=0;i<5;i++) {
 			//resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i*2,(i*2+2)));
-			resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i*2,(i*2+2)),16);
+			
+			strByteTPDU=TPDU.substring(i*2,(i*2+2)).replaceAll("f", "0");
+			try {
+				x=(byte) Integer.parseInt(strByteTPDU,16);
+			}
+			catch(Exception xx) {
+				System.out.println("Error parsing TPDU byte ["+strByteTPDU+"]. Setting to 0");
+				x=0;
+			}
+			resultBytes[i] = x; 
 		}
 		
 		return resultBytes;

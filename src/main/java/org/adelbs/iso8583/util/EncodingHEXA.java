@@ -16,17 +16,22 @@ public class EncodingHEXA implements Encoding {
     @Override
     public byte[] convert(String strToConvert) {
         try {
-            String hexStr = String.format("%1x", new java.math.BigInteger(1, strToConvert.getBytes()));
-
-            int len = hexStr.length();
-            byte[] data = new byte[len / 2];
-            for (int i = 0; i < len; i += 2) {
-                data[i / 2] = (byte) ((Character.digit(hexStr.charAt(i), 16) << 4)
-                             + Character.digit(hexStr.charAt(i+1), 16));
-            }
-            return data;
-        } 
-        catch (Exception e) {
+        	if(!strToConvert.equals("")) {
+	            String hexStr = String.format("%1x", new java.math.BigInteger(1, strToConvert.getBytes()));
+	
+	            int len = hexStr.length();
+	            byte[] data = new byte[len / 2];
+	            for (int i = 0; i < len; i += 2) {
+	                data[i / 2] = (byte) ((Character.digit(hexStr.charAt(i), 16) << 4)
+	                             + Character.digit(hexStr.charAt(i+1), 16));
+	            }
+	            return data;
+        	}
+        	else {
+        		return null;
+	        }
+        }
+	    catch (Exception e) {
             e.printStackTrace();
             return null;
         }

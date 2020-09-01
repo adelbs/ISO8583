@@ -411,12 +411,13 @@ public class FieldVO extends GenericIsoVO {
 					if (!ignore) {
 						newContent = encoding.convert(ISOUtils.subArray(payload, startPosition, endPosition));
 						
-						if (encoding == EncodingEnum.BCD) {
-							newContent = newContent.substring(strVarValue.length() / 2);
-						}
-						else {
+						//suppressed because the field size does not need to appear 
+						//if (encoding == EncodingEnum.BCD) {
+						//	newContent = newContent.substring(strVarValue.length() / 2);
+						//}
+						//else {
 							newContent = newContent.substring(strVarValue.length());
-						}
+						//}
 					}
 				}
 				

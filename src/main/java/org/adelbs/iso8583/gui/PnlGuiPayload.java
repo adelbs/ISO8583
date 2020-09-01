@@ -444,7 +444,8 @@ public class PnlGuiPayload extends JPanel {
 	public void setTPDUValue() {
 		//verificar se vem do request ou do response
 		//se vier do response, pegar o tpdu do request tratado
-		
+		System.out.println("Checking TPDU Value");
+		/*
 		System.out.println("Alimentando valor do TPDU");
 		System.out.println("this.listenerList.toString()");
 		System.out.println(this.listenerList.toString());
@@ -452,6 +453,7 @@ public class PnlGuiPayload extends JPanel {
 		System.out.println(this.tabbedPane.getName());
 		System.out.println("this.tabbedPane.getParent().getName()");
 		System.out.println(this.tabbedPane.getParent().getName());
+		*/
 	}
 
 	public void updateTextValues(MessageVO messageVO) {
