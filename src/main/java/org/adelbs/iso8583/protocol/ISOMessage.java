@@ -32,15 +32,16 @@ public class ISOMessage {
 		
 		//formatar como 5 bytes
 		byte[] resultBytes = new byte[5];
+		
 		for(int i=0;i<5;i++) {
 			//resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i*2,(i*2+2)));
-			
-			strByteTPDU=TPDU.substring(i*2,(i*2+2)).replaceAll("f", "0");
+			strByteTPDU="";
 			try {
+				strByteTPDU=TPDU.substring(i*2,(i*2+2)).replaceAll("f", "0");
 				x=(byte) Integer.parseInt(strByteTPDU,16);
 			}
 			catch(Exception xx) {
-				System.out.println("Error parsing TPDU byte ["+strByteTPDU+"]. Setting to 0");
+				System.out.println("Error parsing TPDU byte ["+strByteTPDU+"]. Setting to 0. [i="+i+"]. "+xx.getMessage());
 				x=0;
 			}
 			resultBytes[i] = x; 

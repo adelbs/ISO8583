@@ -98,6 +98,7 @@ public class MessageVO extends GenericIsoVO {
      */
     @XmlTransient
     public String getTPDUResponseValue() {
+    	System.out.println("TPDU:"+ TPDUValue);
     	return TPDUValue.substring(0,2).concat(TPDUValue.substring(6,10)).concat(TPDUValue.substring(2,6));
     }
 
