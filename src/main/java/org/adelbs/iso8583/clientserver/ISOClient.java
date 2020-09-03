@@ -58,14 +58,16 @@ public class ISOClient extends Thread {
 					
 					byte bRead;
 					parsingTime = 0;
+					System.out.println("Reading payload");
 					while (this.isConnected) {
 						bRead = new Byte((byte) input.read());
-						if (bRead == -1) {
-							this.isConnected = false;
-							break;
-						}
+						//if (bRead == -1) {
+						//	this.isConnected = false;
+						//	break;
+						//}
 
-						if (bRead != -1) bytes.add(new Byte(bRead));
+						//if (bRead != -1) bytes.add(new Byte(bRead));
+						bytes.add(new Byte(bRead));
 						if (isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig)) break;
 						if (parsingTime == 0) parsingTime = System.currentTimeMillis();
 					}
@@ -73,7 +75,6 @@ public class ISOClient extends Thread {
 					if (this.isConnected) {
 						byte[] data = isoConfig.getDelimiter().clearPayload(ISOUtils.listToArray(bytes), isoConfig);
 						
-						Out.log("ISOClient", "Bytes received ("+ clientName +") - (Parsing in milliseconds: "+ (System.currentTimeMillis() - parsingTime) +"): \n" + bytesToConsole(ISOUtils.listToArray(bytes)), callback);
 						
 						registerActionTimeMilis();
 						payloadQueue.addPayloadIn(new SocketPayload(data, socket));
@@ -82,10 +83,13 @@ public class ISOClient extends Thread {
 				catch (InvalidPayloadException e) {
 					Out.log("ISOClient", "Invalid Payload ("+ e.getMessage() +")", callback);
 				}
+				catch (Exception ex) {
+					System.out.println("2Catch Unknown error ("+ ex.getMessage() +")");
+				}
 			}
 		}
 		catch (Exception x) {
-			Out.log("ISOClient", "Error "+ x.getMessage(), callback);
+			Out.log("ISOClient", "1catch Error "+ x.getMessage(), callback);
 			Out.log("ISOClient", "IsConnected = "+ isConnected, callback);
 		}
 		finally {
@@ -96,6 +100,7 @@ public class ISOClient extends Thread {
 				System.out.println(x);
 			}
 			finally {
+				System.out.println("2finally");
 				socket = null;
 			}
 		}

@@ -15,13 +15,16 @@ public class EncodingBYTE implements Encoding {
     			String x="";
     			try {
     	    		x = Integer.toHexString((int) bytesToConvert[i]);
-    	    		x=x.replace("f", "");
-    			
+    	    		x=x.replace("ffffff", "");
+    	    		
     				if(x.length() < 2)
 	    				x="0".concat(x);
+    				else
+    					if(x.length() > 2);
+    						x=x.substring(0,2);
     			}
     			catch(Exception ex) {
-    				System.out.println("TPDU non numeric tpdu char "+x);
+    				System.out.println("TPDU invalid char "+x);
     			}
     			strResult.append(x);
     		}

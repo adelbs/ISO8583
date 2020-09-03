@@ -37,7 +37,7 @@ public class ISOMessage {
 			//resultBytes[i] = (byte) Integer.parseInt(TPDU.substring(i*2,(i*2+2)));
 			strByteTPDU="";
 			try {
-				strByteTPDU=TPDU.substring(i*2,(i*2+2)).replaceAll("f", "0");
+				strByteTPDU=TPDU.substring(i*2,(i*2+2));//.replaceAll("f", "0");
 				x=(byte) Integer.parseInt(strByteTPDU,16);
 			}
 			catch(Exception xx) {
