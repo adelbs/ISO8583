@@ -64,7 +64,6 @@ public class ISOClient extends Thread {
 					while (this.isConnected) {
 						ix=input.read();
 						if(ix>=0){
-							System.out.println("int:"+ix);
 							bRead = new Byte((byte) ix);
 							//bRead = new Byte((byte) input.read());
 							//if (bRead == -1) {
