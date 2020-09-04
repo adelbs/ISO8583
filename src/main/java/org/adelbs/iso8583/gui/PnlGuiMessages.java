@@ -26,6 +26,7 @@ import org.adelbs.iso8583.exception.ConnectionException;
 import org.adelbs.iso8583.exception.ParseException;
 import org.adelbs.iso8583.helper.Iso8583Config;
 import org.adelbs.iso8583.protocol.ISOMessage;
+import org.adelbs.iso8583.util.Out;
 import org.adelbs.iso8583.vo.ISOTestVO;
 
 
@@ -365,21 +366,30 @@ public class PnlGuiMessages extends JPanel {
 		
 		public void dataReceived(SocketPayload payload) throws ParseException {
 			PnlGuiPayload pnlGui;
-			
-			if (isRequest) {
-				pnlGui = pnlRequest;
-				pnlResponse.enablePnl(true);
+			if(payload.getData().length != 65537) {
+				if (isRequest) {
+					pnlGui = pnlRequest;
+					pnlResponse.enablePnl(true);
+				}
+				else {
+					pnlGui = pnlResponse;
+				}
+				try {
+					pnlGui.updateCmbMessage(pnlMain.getIso8583Config(), pnlMain.getIso8583Config().findMessageVOByPayload(payload.getData()).getType());
+					pnlGui.getPayloadMessageConfig().updateFromPayload(pnlMain, payload.getData());
+					pnlGui.setReadOnly();
+					
+					socketToRespnd = payload.getSocket();
+				}
+				catch(Exception ex) {
+					Out.log("dataReceived", "payload.size={"+payload.getData().length+"}. Error parsin data received. "+ex.getMessage());
+				}
 			}
 			else {
-				pnlGui = pnlResponse;
+				Out.log("dataReceived","dirty message");
 			}
-			
-			pnlGui.updateCmbMessage(pnlMain.getIso8583Config(), pnlMain.getIso8583Config().findMessageVOByPayload(payload.getData()).getType());
-			pnlGui.getPayloadMessageConfig().updateFromPayload(pnlMain, payload.getData());
-			pnlGui.setReadOnly();
-			
-			socketToRespnd = payload.getSocket();
 		}
+			
 
 		public void log(String log) {
 			//tabbedPane.setTitleAt(tabbedPane.getTabCount() - 1, "<html><i>*Console</i></html>");

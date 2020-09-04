@@ -45,7 +45,8 @@ public class ISOClient extends Thread {
 	public void run() {
 		String clientName = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
 		long parsingTime = 0;
-		
+		int lx;
+		int ix;
 		Out.log("ISOClient", "Client connected " + clientName, callback);
 		
 		try {
@@ -58,18 +59,28 @@ public class ISOClient extends Thread {
 					
 					byte bRead;
 					parsingTime = 0;
-					System.out.println("Reading payload");
+					lx=0;
+					
 					while (this.isConnected) {
-						bRead = new Byte((byte) input.read());
-						//if (bRead == -1) {
-						//	this.isConnected = false;
-						//	break;
-						//}
-
-						//if (bRead != -1) bytes.add(new Byte(bRead));
-						bytes.add(new Byte(bRead));
-						if (isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig)) break;
-						if (parsingTime == 0) parsingTime = System.currentTimeMillis();
+						ix=input.read();
+						if(ix>=0){
+							System.out.println("int:"+ix);
+							bRead = new Byte((byte) ix);
+							//bRead = new Byte((byte) input.read());
+							//if (bRead == -1) {
+								//this.isConnected = false;
+								//break;
+							//}
+							
+							//if (bRead != -1) bytes.add(new Byte(bRead));
+							bytes.add(new Byte(bRead));
+							if (isoConfig.getDelimiter().isPayloadComplete(bytes, isoConfig)) {
+								//Message complete.
+								break;
+							}
+							
+							if (parsingTime == 0) parsingTime = System.currentTimeMillis();
+						}
 					}
 					
 					if (this.isConnected) {
@@ -77,7 +88,9 @@ public class ISOClient extends Thread {
 						
 						
 						registerActionTimeMilis();
-						payloadQueue.addPayloadIn(new SocketPayload(data, socket));
+						if(data.length!=65537) {
+							payloadQueue.addPayloadIn(new SocketPayload(data, socket));
+						}
 					}
 				}
 				catch (InvalidPayloadException e) {
