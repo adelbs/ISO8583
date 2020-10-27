@@ -83,12 +83,12 @@ public class PnlGuiPayload extends JPanel {
 		lblMessageType.setBounds(12, 13, 90, 16);
 		cmbMessageType.setBounds(114, 10, 178, 22);
 		btnUpdate.setBounds(295, 10, 22, 22);
-		btnUpdate.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/update.png")));
-		btnSendRequest.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/enter.png")));
-		btnSendResponse.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/enter.png")));
-		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/openFile.png")));
-		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/saveFile.png")));
-		btnNextPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/update.png")));
+		btnUpdate.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/update.png")));
+		btnSendRequest.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/enter.png")));
+		btnSendResponse.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/enter.png")));
+		btnOpenPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/openFile.png")));
+		btnSavePayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/saveFile.png")));
+		btnNextPayload.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/update.png")));
         
         txtHeader.setEnabled(false);
 		tabbedPane.setEnabled(false);
@@ -444,7 +444,7 @@ public class PnlGuiPayload extends JPanel {
 	public void setTPDUValue() {
 		//verificar se vem do request ou do response
 		//se vier do response, pegar o tpdu do request tratado
-		System.out.println("Checking TPDU Value");
+		System.out.println("");
 		/*
 		System.out.println("Alimentando valor do TPDU");
 		System.out.println("this.listenerList.toString()");

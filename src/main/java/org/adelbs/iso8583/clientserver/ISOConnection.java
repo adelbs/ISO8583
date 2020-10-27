@@ -197,7 +197,8 @@ public class ISOConnection {
 					OutputStream out = payload.getSocket().getOutputStream();
 					
 					Out.log("ISOConnection", "Sending data...", callbackMap.get(threadName));
-			        out.write(payload.getData());
+					
+					out.write(payload.getData());
 			        out.flush();
 				}
 				else {
@@ -205,5 +206,6 @@ public class ISOConnection {
 				}
 			}
 		}
+
 	}
 }

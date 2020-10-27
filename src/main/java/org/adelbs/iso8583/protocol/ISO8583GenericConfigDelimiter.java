@@ -59,4 +59,9 @@ public class ISO8583GenericConfigDelimiter implements ISO8583Delimiter {
 		return 0;
 	}
 
+	@Override
+	public byte[] preparePayload(ISOMessage isoMessage, boolean stxEtx) {
+		return isoMessage.getPayload();
+	}
+
 }

@@ -82,7 +82,7 @@ public class PnlMain extends JPanel {
 		
 		btnOpen = new JButton("");
 		btnOpen.setToolTipText("Open");
-		btnOpen.setIcon(new ImageIcon(PnlMain.class.getResource("/org/adelbs/iso8583/resource/openFile.png")));
+		btnOpen.setIcon(new ImageIcon(PnlMain.class.getResource("/img/openFile.png")));
 		btnOpen.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				openFile();
@@ -97,7 +97,7 @@ public class PnlMain extends JPanel {
 				save();
 			}
 		});
-		btnSave.setIcon(new ImageIcon(PnlMain.class.getResource("/org/adelbs/iso8583/resource/saveFile.png")));
+		btnSave.setIcon(new ImageIcon(PnlMain.class.getResource("/img/saveFile.png")));
 		add(btnSave);
 		
 		btnNew = new JButton("");
@@ -107,7 +107,7 @@ public class PnlMain extends JPanel {
 				newFile();
 			}
 		});
-		btnNew.setIcon(new ImageIcon(PnlMain.class.getResource("/org/adelbs/iso8583/resource/newFile.png")));
+		btnNew.setIcon(new ImageIcon(PnlMain.class.getResource("/img/newFile.png")));
 		add(btnNew);
 		
 		tabbedPane.addChangeListener(new ChangeListener() {

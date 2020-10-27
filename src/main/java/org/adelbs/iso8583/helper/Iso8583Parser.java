@@ -41,7 +41,7 @@ public class Iso8583Parser {
 		if (isoTest != null) this.isoConfig = new Iso8583Config2(isoTest.getConfigFile());
 		
 		ISOMessage isoMessage = new ISOMessage(updateMessageValuesFromXML(xml));
-		return this.isoConfig.getDelimiter().preparePayload(isoMessage, null);
+		return this.isoConfig.getDelimiter().preparePayload(isoMessage, isoConfig.getStxEtx());
 	}
 	
 	public String parseBytesToXml(byte[] bytes) throws ParseException, OutOfBoundsException {
@@ -50,6 +50,9 @@ public class Iso8583Parser {
         int calculatedHeaderSize = (this.isoConfig.getHeaderEncoding() == EncodingEnum.BCD) ? (this.isoConfig.getHeaderSize() / 2) : this.isoConfig.getHeaderSize();
                 
         String messageType =""; 
+        /*TODO: remove stx etx
+         * prepare isoconfig2 to check this attribute
+         * */
         
         messageType= this.isoConfig.getHeaderEncoding().convert(ISOUtils.subArray(bytes, (calculatedHeaderSize), (calculatedHeaderSize + messageTypeSize)));
         if(!messageType.substring(0,1).equals("0")) { //TODO: improve this verification

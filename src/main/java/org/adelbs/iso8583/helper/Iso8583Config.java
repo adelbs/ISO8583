@@ -46,6 +46,7 @@ public class Iso8583Config {
     private Integer headerSize;
     
     private boolean TPDU;
+    private boolean StxEtx;
 	
 	//Arquivo de configuracao carregado
 	private String xmlFilePath = null;
@@ -61,6 +62,7 @@ public class Iso8583Config {
         headerEncoding = EncodingEnum.getEncoding("");
         headerSize = 0;
         TPDU=false;
+        StxEtx=false;
 		configTreeNode = new DefaultMutableTreeNode("ISO8583");
 	}
 	
@@ -138,6 +140,7 @@ public class Iso8583Config {
         isoConfigVO.setHeaderEncoding(headerEncoding);
         isoConfigVO.setHeaderSize(headerSize);
         isoConfigVO.setTPDU(TPDU);
+        isoConfigVO.setStxEtx(StxEtx);
 		xmlText.setText(xmlParser.marshal(isoConfigVO));
 	}
 	
@@ -169,6 +172,15 @@ public class Iso8583Config {
                 	setTPDU(false);
                 }
 				
+                try {
+                    setStxEtx(Boolean.parseBoolean(document.getDocumentElement().getAttribute("stxetx")));
+                    
+                }
+                catch (Exception x) {
+                	System.out.println("(error) on setting stxetx");
+                	setStxEtx(false);
+                }
+                
 				NodeList nodeList = document.getDocumentElement().getChildNodes();
 				Node node;
 				
@@ -403,6 +415,10 @@ public class Iso8583Config {
 		this.TPDU=TPDU;
 	}
 	
+	public void setStxEtx(boolean StxEtx) {
+		this.StxEtx=StxEtx;
+	}
+	
 	/**
 	 * It returns the MessageVO from the loaded tree, according to what comes from the payload
 	 */
@@ -412,7 +428,7 @@ public class Iso8583Config {
 			int messageTypeSize = (headerEncoding == EncodingEnum.BCD) ? 2 : 4;
 			int calculatedHeaderSize = (headerEncoding == EncodingEnum.BCD) ? (headerSize / 2) : headerSize;
 			
-            calculatedHeaderSize+=getIfTpdu(payload) ? 5 : 0; //por conta do tpdu
+			calculatedHeaderSize+=getIfTpdu(payload) ? 5 : 0; //por conta do tpdu
             
             String messageType = headerEncoding.convert(ISOUtils.subArray(payload, calculatedHeaderSize, (calculatedHeaderSize + messageTypeSize)));
             
@@ -437,7 +453,15 @@ public class Iso8583Config {
 		
 		//TODO: improve this verification
 		try {
-			if(headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("0") ) { //validate if the 0 of message type is right after the message size byte
+			if(headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("0") || 
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("01") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("02") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("03") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("04") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("05") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("06") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("07") ||
+					headerEncoding.convert(ISOUtils.subArray(payload,0,1)).equals("08")) { //validate if the 0 of message type is right after the message size byte
 				return false;
 			}
 			else {
@@ -447,5 +471,9 @@ public class Iso8583Config {
 		catch(Exception ex) {
 			return false;
 		}
+	}
+
+	public boolean getStxEtx() {
+		return StxEtx;
 	}
 }

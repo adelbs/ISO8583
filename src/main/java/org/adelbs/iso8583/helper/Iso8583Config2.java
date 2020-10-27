@@ -29,6 +29,7 @@ public class Iso8583Config2 {
     private Integer headerSize;
     
     private boolean TPDU=false;
+    private boolean StxEtx=false;
 	
     public Iso8583Config2(String configFilePath) {
     	openFile(configFilePath);
@@ -73,6 +74,15 @@ public class Iso8583Config2 {
                 }
                 catch (Exception x) {
                 	setTPDU(false);
+                }
+				
+                try {
+                    setStxEtx(Boolean.parseBoolean(document.getDocumentElement().getAttribute("stxetx")));
+                    
+                }
+                catch (Exception x) {
+                	System.out.println("(error) on setting stxetx");
+                	setStxEtx(false);
                 }
 				
 				NodeList nodeList = document.getDocumentElement().getChildNodes();
@@ -192,6 +202,10 @@ public class Iso8583Config2 {
 		return this.TPDU;
 	}
 
+	public boolean getStxEtx() {
+		return this.StxEtx;
+	}
+	
 	private void setDelimiterEnum(DelimiterEnum isoDelimiter) {
 		this.isoDelimiter = isoDelimiter;
 	}
@@ -206,6 +220,10 @@ public class Iso8583Config2 {
 
 	public void setTPDU(boolean TPDU) {
 		this.TPDU=TPDU;
+	}
+	
+	public void setStxEtx(boolean StxEtx) {
+		this.StxEtx=StxEtx;
 	}
 
 	public ISO8583Delimiter getDelimiter() {

@@ -7,6 +7,7 @@ import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 import org.adelbs.iso8583.gui.PnlGuiConfig;
@@ -47,8 +48,9 @@ public final class Main extends JFrame {
 		
 		//*** Configuracoes da janela principal ***
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/org/adelbs/iso8583/resource/package.png")));
-		setTitle("Adelbs-ISO8583 v.1.6.0");
+		setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/img/package.png")));
+				
+		setTitle("Adelbs-ISO8583 v.1.6.50");
 		
 		//Tamanho e posicao
 		setBounds(0, 0, MIN_WIDTH, MIN_HEIGHT);

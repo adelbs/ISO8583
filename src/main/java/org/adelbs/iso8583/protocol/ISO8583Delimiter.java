@@ -19,5 +19,7 @@ public interface ISO8583Delimiter {
 	boolean isPayloadComplete(List<Byte> bytes, Iso8583Config isoConfig) throws InvalidPayloadException;
 
 	int getMessageSize(List<Byte> bytes) throws OutOfBoundsException;
+
+	byte[] preparePayload(ISOMessage isoMessage, boolean stxEtx);
 	
 }

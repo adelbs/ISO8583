@@ -81,9 +81,6 @@ public class ISOMessage {
 		for (int i = 0; i <= bitmap.getSize(); i++) {
 			if (bitmap.getBit(i) != null) {
 				try {
-					if(i==47)
-						System.out.println("");
-					
 					Out.log("ISOMessage()","bit ["+i+"]"+bitmap.getBit(i).getEncoding().toString()+": {"+bitmap.getBit(i).getEncoding().convert(bitmap.getBit(i).getPayloadValue())+"}");
 					
 					this.payload = ISOUtils.mergeArray(this.payload, bitmap.getBit(i).getPayloadValue());
@@ -94,8 +91,8 @@ public class ISOMessage {
 				}
 			}
 		}
-		
 		this.messageSize = strMessage.length();
+
 	}
 	
 	public byte[] getPayload() {

@@ -428,7 +428,7 @@ public class PayloadMessageConfig {
 			lblFieldName = new JLabel(fieldVO.getName());
 			lblType = new JLabel(fieldVO.getType().toString());
 			lblDynamic = new JLabel();
-			lblDynamic.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/org/adelbs/iso8583/resource/search.png")));
+			lblDynamic.setIcon(new ImageIcon(PnlGuiPayload.class.getResource("/img/search.png")));
 			lblDynamic.setToolTipText(fieldVO.getDynaCondition());
 
 			lineNum = numLines;

@@ -26,6 +26,7 @@ public class ISOConfigVO {
     private Integer headerSize;
     
     private boolean TPDU;
+    private boolean StxEtx;
     
     private final List<MessageVO> messageList = new ArrayList<MessageVO>();
     
@@ -90,11 +91,26 @@ public class ISOConfigVO {
         return TPDU;
     }
 	
+    /**
+     * @return the StxEtx
+     */
+    //@XmlAttribute(name="stxetx")
+    public boolean StxEtx() {
+        return StxEtx;
+    }
+    
 	/**
      * @param TPDU the TPDU to set
      */
 	public void setTPDU(boolean TPDU) {
 		this.TPDU=TPDU;		
+	}
+	
+	/**
+     * @param StxEtx the StxEtx to set
+     */
+	public void setStxEtx(boolean StxEtx) {
+		this.StxEtx=StxEtx;		
 	}
 
 

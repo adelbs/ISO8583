@@ -66,7 +66,15 @@ public class Bitmap {
             }
             
             //TODO: improve this verification
-            if(!messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("0")) { //validate if the "0" of message type is at the beginning of the message
+            if(!(messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("0") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("01") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("02") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("03") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("04") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("05") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("06") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("07") ||
+            		messageVO.getHeaderEncoding().convert(ISOUtils.subArray(payload, 0, 1)).equals("08"))) { //validate if the "0" of message type is at the beginning of the message
 	            String tpduValue=EncodingEnum.BYTE.convert(ISOUtils.subArray(payload, 0, 5));
 	            this.messageVO.setTPDUValue(tpduValue);
 	            headerPlusType+=5; //adding tpdu size

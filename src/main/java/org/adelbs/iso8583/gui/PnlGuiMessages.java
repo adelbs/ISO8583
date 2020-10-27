@@ -383,6 +383,7 @@ public class PnlGuiMessages extends JPanel {
 				}
 				catch(Exception ex) {
 					Out.log("dataReceived", "payload.size={"+payload.getData().length+"}. Error parsin data received. "+ex.getMessage());
+					ex.printStackTrace();
 				}
 			}
 			else {
