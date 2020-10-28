@@ -1,0 +1,24 @@
+
+#Use these messages on ISO8583 tests. Copy this XML on the ISO8583 sender component and use them to send messages of request and/or response.
+
+<message type="0800" header="" tpdu="9988774411">
+	<bit num="3" value="990000"/>
+	<bit num="11" value="000001"/>
+	<bit num="24" value="1181"/>
+	<bit num="41" value="12345678"/>
+	<bit num="42" value="1"/>
+	<bit num="47" value="3A000420200803"/>
+	<bit num="48" value="54010802023132333435363738883136495750393031303231364120303030309200342020202020202020202020202020202020202020202020202031313131313131313193001920202020202020202020202020202020202058"/>
+</message>
+
+<message type="0810" header="" tpdu="8796543214">
+	<bit num="3" value="004000"/>
+	<bit num="11" value="040995"/>
+	<bit num="12" value="120547"/>
+	<bit num="13" value="0722"/>
+	<bit num="24" value="1181"/>
+	<bit num="37" value="11746215    "/>
+	<bit num="39" value="00"/>
+	<bit num="41" value="CC068695"/>
+	<bit num="47" value="073A000420200722"/>
+</message>

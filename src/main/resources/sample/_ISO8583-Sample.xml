@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<iso8583 delimiter="LENGTH2_DELIMITER_BEG" headerEncoding="BCD" headerSize="0" tpdu="false">
+    <message type="0800" bitmap-encoding="BCD">
+        <field name="ProcessingCode" bitnum="3" condition="true" length-type="FIXED" length="6" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="SystemTraceAuditNumber(STAN)" bitnum="11" condition="true" length-type="FIXED" length="6" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="NII" bitnum="24" condition="true" length-type="FIXED" length="4" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="NumTerm" bitnum="41" condition="true" length-type="FIXED" length="8" type="ALPHANUMERIC" encoding="HEXA"/>
+        <field name="RedecardMerchantNumber" bitnum="42" condition="true" length-type="FIXED" length="15" type="ALPHANUMERIC" encoding="HEXA"/>
+        <field name="DataHost" bitnum="47" condition="true" length-type="NVAR" length="2" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="bIT48" bitnum="48" condition="true" length-type="NVAR" length="2" type="ALPHANUMERIC" encoding="BCD"/>
+    </message>
+    <message type="0810" bitmap-encoding="BCD">
+        <field name="ProcessingCode" bitnum="3" condition="true" length-type="FIXED" length="6" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="SystemTraceAuditNumber(STAN)" bitnum="11" condition="true" length-type="FIXED" length="6" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="Time,LocalTransaction" bitnum="12" condition="true" length-type="FIXED" length="6" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="Data,LocalTransaction" bitnum="13" condition="true" length-type="FIXED" length="4" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="NII" bitnum="24" condition="true" length-type="FIXED" length="4" type="ALPHANUMERIC" encoding="BCD"/>
+        <field name="RedecardTransactionNumber(NSU)" bitnum="37" condition="true" length-type="FIXED" length="12" type="ALPHANUMERIC" encoding="HEXA"/>
+        <field name="TransactionReturnCode" bitnum="39" condition="true" length-type="FIXED" length="2" type="ALPHANUMERIC" encoding="HEXA"/>
+        <field name="NumTerm" bitnum="41" condition="true" length-type="FIXED" length="8" type="ALPHANUMERIC" encoding="HEXA"/>
+        <field name="DataHost" bitnum="47" condition="true" length-type="NVAR" length="2" type="ALPHANUMERIC" encoding="BCD"/>
+    </message>
+</iso8583>
